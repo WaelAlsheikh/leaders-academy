@@ -19,7 +19,7 @@
 <!-- ===== Colleges (Swiper) ===== -->
 <section id="colleges" class="section" style="padding-top:48px; padding-bottom:48px;">
   <div class="container">
-    <h2 style="text-align:center; margin-bottom:22px;">test</h2>
+    <h2 style="text-align:center; margin-bottom:22px;">{{ __('messages.University Faculties') }}</h2>
 
     <div class="three-cards-swiper" data-swiper-id="colleges" dir="rtl" aria-label="colleges carousel">
       <!-- Navigation buttons (local to container) -->
