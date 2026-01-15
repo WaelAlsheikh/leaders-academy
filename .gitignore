@@ -5,3 +5,4 @@
 /storage/app/*
 /storage/*.key
 /public/storage
+.vscode/
