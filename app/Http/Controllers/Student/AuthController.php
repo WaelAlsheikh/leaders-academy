@@ -11,25 +11,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function showLogin()
-    {
-        return view('student.auth.login');
-    }
-
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-
-        if (Auth::guard('student')->attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->route('student.dashboard');
-        }
-
-        return back()->withErrors(['email' => 'بيانات الدخول غير صحيحة']);
-    }
+    /* ================== Register ================== */
 
     public function showRegister()
     {
@@ -38,23 +20,63 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:students',
+        $request->validate([
+            'first_name' => 'required|string|min:2',
+            'last_name' => 'required|string|min:2',
+            'first_name_en' => [
+                'required',
+                'regex:/^[a-zA-Z]{2,}$/'
+            ],
+            'email' => 'required|email|unique:students,email',
+            'phone' => 'required|string|min:8',
+            'password' => 'required|min:6|confirmed',
+        ], [
+            'first_name_en.regex' => 'الاسم الإنكليزي يجب أن يحتوي أحرف إنكليزية فقط وبدون فراغات',
         ]);
 
-        $acceptanceNumber = strtoupper(Str::random(8));
+        // توليد username فريد
+        $base = strtolower($request->first_name_en);
+
+        do {
+            $username = $base . '_' . random_int(100000, 999999);
+        } while (Student::where('username', $username)->exists());
 
         $student = Student::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'acceptance_number' => $acceptanceNumber,
-            'password' => Hash::make($acceptanceNumber),
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'first_name_en' => $request->first_name_en,
+            'username' => $username,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'acceptance_number' => strtoupper(Str::random(10)),
         ]);
 
-        Auth::guard('student')->login($student);
+        return view('student.auth.register_success', compact('student'));
+    }
 
-        return redirect()->route('student.dashboard');
+    /* ================== Login ================== */
+
+    public function showLogin()
+    {
+        return view('student.auth.login');
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        if (Auth::guard('student')->attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->route('student.dashboard');
+        }
+
+        return back()->withErrors([
+            'login' => 'اسم المستخدم أو كلمة المرور غير صحيحة',
+        ]);
     }
 
     public function logout(Request $request)

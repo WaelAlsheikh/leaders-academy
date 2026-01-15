@@ -53,7 +53,6 @@ Route::get('/programs/{slug}', [\App\Http\Controllers\ProgramController::class, 
 |--------------------------------------------------------------------------
 */
 Route::get('/accreditations', [AccreditationController::class, 'index'])->name('accreditations.index');
-Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
 
 /*
 |--------------------------------------------------------------------------

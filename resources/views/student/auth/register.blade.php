@@ -40,13 +40,9 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             الاسم الأول
                         </label>
-                        <input
-                            type="text"
-                            name="first_name"
-                            value="{{ old('first_name') }}"
-                            required
-                            placeholder="مثال: أحمد"
-                            style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
+                        <input type="text" name="first_name" value="{{ old('first_name') }}"
+                               required placeholder="مثال: أحمد"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
                     </div>
 
                     {{-- Last Name --}}
@@ -54,13 +50,9 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             الكنية
                         </label>
-                        <input
-                            type="text"
-                            name="last_name"
-                            value="{{ old('last_name') }}"
-                            required
-                            placeholder="مثال: النصر"
-                            style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
+                        <input type="text" name="last_name" value="{{ old('last_name') }}"
+                               required placeholder="مثال: النصر"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
                     </div>
 
                     {{-- English Name --}}
@@ -68,13 +60,9 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             الاسم بالإنكليزي
                         </label>
-                        <input
-                            type="text"
-                            name="name_en"
-                            value="{{ old('name_en') }}"
-                            required
-                            placeholder="Ahmed Alnasser"
-                            style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
+                        <input type="text" name="first_name_en" value="{{ old('first_name_en') }}"
+                               required placeholder="Ahmed"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
                     </div>
 
                     {{-- Email --}}
@@ -82,32 +70,43 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             البريد الإلكتروني
                         </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            required
-                            placeholder="example@email.com"
-                            style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
+                        <input type="email" name="email" value="{{ old('email') }}"
+                               required placeholder="example@email.com"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
                     </div>
 
                     {{-- Phone --}}
-                    <div style="margin-bottom:20px;text-align:right;">
+                    <div style="margin-bottom:15px;text-align:right;">
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             رقم الهاتف
                         </label>
-                        <input
-                            type="text"
-                            name="phone"
-                            value="{{ old('phone') }}"
-                            required
-                            placeholder="09XXXXXXXX"
-                            style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
+                        <input type="text" name="phone" value="{{ old('phone') }}"
+                               required placeholder="09XXXXXXXX"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
                     </div>
 
-                    {{-- Submit Button --}}
-                    <button
-                        type="submit"
+                    {{-- Password --}}
+                    <div style="margin-bottom:15px;text-align:right;">
+                        <label style="display:block;margin-bottom:6px;font-weight:600;">
+                            كلمة المرور
+                        </label>
+                        <input type="password" name="password" required
+                               placeholder="********"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
+                    </div>
+
+                    {{-- Confirm Password --}}
+                    <div style="margin-bottom:20px;text-align:right;">
+                        <label style="display:block;margin-bottom:6px;font-weight:600;">
+                            تأكيد كلمة المرور
+                        </label>
+                        <input type="password" name="password_confirmation" required
+                               placeholder="********"
+                               style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
+                    </div>
+
+                    {{-- Submit --}}
+                    <button type="submit"
                         style="
                             width:100%;
                             padding:14px;
@@ -119,10 +118,7 @@
                             font-weight:600;
                             cursor:pointer;
                             transition:0.3s;
-                        "
-                        onmouseover="this.style.opacity='0.9'"
-                        onmouseout="this.style.opacity='1'"
-                    >
+                        ">
                         إنشاء الحساب
                     </button>
                 </form>
