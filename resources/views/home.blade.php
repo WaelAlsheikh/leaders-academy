@@ -19,105 +19,49 @@
 <!-- ===== Colleges (Swiper) ===== -->
 <section id="colleges" class="section" style="padding-top:48px; padding-bottom:48px;">
   <div class="container">
-    <h2 style="text-align:center; margin-bottom:22px;">
-      {{ __('messages.University Faculties') }}
-    </h2>
+    <h2 style="text-align:center; margin-bottom:22px;">{{ __('messages.University Faculties') }}</h2>
 
     <div class="three-cards-swiper" data-swiper-id="colleges" dir="rtl" aria-label="colleges carousel">
-      <!-- Navigation buttons -->
+      <!-- Navigation buttons (local to container) -->
       <button class="three-cards-btn swiper-button-prev" aria-label="السابق" title="السابق">‹</button>
 
       <!-- Swiper -->
       <div class="swiper three-swiper" dir="rtl">
         <div class="swiper-wrapper">
-
           @if(isset($colleges) && $colleges->count() > 0)
             @foreach($colleges as $college)
               <div class="swiper-slide" role="group">
                 <div class="program-card-wrapper">
-
-                  <div class="card program-card"
-                       onclick="location.href='{{ route('colleges.show', $college->slug ?? $college->id) }}'"
-                       style="position:relative; cursor:pointer;">
-
-                    {{-- Price Badge --}}
-                    @if(!empty($college->price))
-                      <div style="
-                          position:absolute;
-                          top:12px;
-                          left:12px;
-                          background:var(--primary);
-                          color:#fff;
-                          padding:6px 12px;
-                          border-radius:20px;
-                          font-size:0.85rem;
-                          font-weight:600;
-                          z-index:2;
-                          box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                      ">
-                        {{ number_format($college->price) }} $
-                      </div>
-                    @endif
-
-                    {{-- Image --}}
+                  <div class="card program-card" onclick="location.href='{{ route('colleges.show', $college->slug ?? $college->id) }}'">
                     <div class="card-media">
                       @php
-                        $collegeImage = !empty($college->image)
-                          ? asset('storage/' . $college->image)
-                          : asset('assets/images/placeholder.png');
+                        $collegeImage = !empty($college->image) ? asset('storage/' . $college->image) : asset('assets/images/placeholder.png');
                       @endphp
-
-                      <img src="{{ $collegeImage }}"
-                           alt="{{ $college->title }}"
-                           onerror="this.src='{{ asset('assets/images/placeholder.png') }}'">
+                      <img src="{{ $collegeImage }}" alt="{{ $college->title }}" onerror="this.src='{{ asset('assets/images/placeholder.png') }}'">
                     </div>
 
-                    {{-- Body --}}
                     <div class="card-body">
                       <h3 class="program-title">{{ $college->title }}</h3>
-
                       <p class="program-short">
                         {{ Str::limit(strip_tags($college->short_description ?? $college->long_description ?? ''), 140) }}
                       </p>
-
-                      {{-- Price line --}}
-                      @if(!empty($college->price))
-                        <div style="
-                            margin-top:10px;
-                            font-weight:600;
-                            color:var(--secondary);
-                            font-size:0.95rem;
-                        ">
-                          السعر:
-                          <span style="color:var(--primary);">
-                            {{ number_format($college->price) }} $
-                          </span>
-                        </div>
-                      @endif
-
-                      <div class="program-actions" style="text-align:left; margin-top:12px;">
-                        <a href="{{ route('colleges.show', $college->slug ?? $college->id) }}"
-                           class="btn-secondary">
+                      <div class="program-actions" style="text-align:left;">
+                        <a href="{{ route('colleges.show', $college->slug ?? $college->id) }}" class="btn-secondary">
                           {{ __('messages.Read More') }}
                         </a>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </div>
             @endforeach
-
           @else
             <div class="swiper-slide">
               <div class="program-card-wrapper">
-                <p style="text-align:center; color:#666;">
-                  لا توجد كليات للعرض حالياً.
-                </p>
+                <p style="text-align:center; color:#666;">لا توجد كليات للعرض حالياً.</p>
               </div>
             </div>
           @endif
-
         </div>
 
         <!-- pagination -->
@@ -128,7 +72,6 @@
     </div>
   </div>
 </section>
-
 
 <!-- ===== University Programs (Swiper) ===== -->
 <section id="university-programs" class="section" style="padding-top:48px; padding-bottom:48px;">

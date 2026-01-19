@@ -13,7 +13,6 @@ class College extends Model
         'short_description',
         'long_description',
         'image',
-        'price',
     ];
 
     // إذا لم يتم تمرير slug نحوله تلقائياً من title (اختياري)
