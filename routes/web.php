@@ -11,9 +11,10 @@ use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\StudentPlatformController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\ApplicationController;
-
+use App\Http\Controllers\Admin\StudentAdminController;
 use App\Http\Controllers\Student\AuthController;
 use App\Http\Controllers\Student\DashboardController;
+use App\Http\Controllers\Admin\DoctorAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +71,33 @@ Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
 });
 
+Route::group([
+    'prefix' => 'admin',
+    'middleware' => ['web', 'admin.user'], // ✅ middleware الصحيح
+], function () {
+
+    Route::get('/students/management', [StudentAdminController::class, 'index'])
+        ->name('admin.students.management');
+
+    Route::post('/students/{student}/toggle', [StudentAdminController::class, 'toggle'])
+        ->name('admin.students.toggle');
+});
+
+Route::group([
+    'prefix' => 'admin',
+    'middleware' => ['web', 'auth'],
+], function () {
+
+    Route::get('doctors', [DoctorAdminController::class, 'index'])
+        ->name('admin.doctors.index');
+
+    Route::post('doctors', [DoctorAdminController::class, 'store'])
+        ->name('admin.doctors.store');
+
+    Route::post('doctors/{doctor}/toggle', [DoctorAdminController::class, 'toggle'])
+        ->name('admin.doctors.toggle');
+});
+
 // قائمة الكليات (صفحة عامة)
 Route::get('/colleges', [CollegeController::class, 'index'])->name('colleges.index');
 
@@ -107,10 +135,5 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     });
 });
-
-
-
-
-
 
 

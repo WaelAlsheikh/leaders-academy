@@ -18,6 +18,7 @@ class Student extends Authenticatable
         'username',
         'email',
         'phone',
+        'is_active',
         'password',
         'acceptance_number',
     ];
@@ -26,4 +27,34 @@ class Student extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+/**
+ * عرض جميع الطلاب (افتراضي)
+ */
+public function scopeAllStudents($query)
+{
+    return $query;
 }
+
+/**
+ * الطلاب النشطون
+ */
+public function scopeActive($query)
+{
+    return $query->where('is_active', true);
+}
+
+/**
+ * الطلاب غير النشطين
+ */
+public function scopeInactive($query)
+{
+    return $query->where('is_active', false);
+}
+
+}
+
