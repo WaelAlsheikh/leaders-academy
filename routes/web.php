@@ -1,20 +1,27 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use TCG\Voyager\Facades\Voyager;
+use Illuminate\Support\Facades\Auth;
+
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\AccreditationController;
 use App\Http\Controllers\GalleryController;
-use TCG\Voyager\Facades\Voyager;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\StudentPlatformController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\ApplicationController;
+
+// Admin
 use App\Http\Controllers\Admin\StudentAdminController;
+use App\Http\Controllers\Admin\DoctorAdminController;
+
+// Student
 use App\Http\Controllers\Student\AuthController;
 use App\Http\Controllers\Student\DashboardController;
-use App\Http\Controllers\Admin\DoctorAdminController;
+use App\Http\Controllers\Student\StudentRegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,85 +51,119 @@ Route::get('/virtual_university/virtual-university', [HomeController::class, 'vi
 | Programs
 |--------------------------------------------------------------------------
 */
-Route::get('/programs', [\App\Http\Controllers\ProgramController::class, 'index'])->name('programs.index');
-Route::get('/programs/{slug}', [\App\Http\Controllers\ProgramController::class, 'show'])->name('programs.show');
-
+Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
+Route::get('/programs/{slug}', [ProgramController::class, 'show'])->name('programs.show');
 
 /*
 |--------------------------------------------------------------------------
-| Accreditations & Gallery
+| Accreditations
 |--------------------------------------------------------------------------
 */
-Route::get('/accreditations', [AccreditationController::class, 'index'])->name('accreditations.index');
+Route::get('/accreditations', [AccreditationController::class, 'index'])
+    ->name('accreditations.index');
 
 /*
 |--------------------------------------------------------------------------
 | CMS pages (Voyager)
 |--------------------------------------------------------------------------
 */
-Route::get('/page/{slug}', [PageController::class, 'show'])->name('page.show');
+Route::get('/page/{slug}', [PageController::class, 'show'])
+    ->name('page.show');
 
 /*
 |--------------------------------------------------------------------------
-| Admin (Voyager)
+| Admin (Voyager Core)
 |--------------------------------------------------------------------------
 */
-Route::group(['prefix' => 'admin'], function () {
+Route::prefix('admin')->group(function () {
     Voyager::routes();
 });
 
-Route::group([
-    'prefix' => 'admin',
-    'middleware' => ['web', 'admin.user'], // ✅ middleware الصحيح
-], function () {
+/*
+|--------------------------------------------------------------------------
+| Admin - Custom Management
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')
+    ->middleware(['web', 'admin.user'])
+    ->group(function () {
 
-    Route::get('/students/management', [StudentAdminController::class, 'index'])
-        ->name('admin.students.management');
+        // Students
+        Route::get('/students/management', [StudentAdminController::class, 'index'])
+            ->name('admin.students.management');
 
-    Route::post('/students/{student}/toggle', [StudentAdminController::class, 'toggle'])
-        ->name('admin.students.toggle');
-});
+        Route::post('/students/{student}/toggle', [StudentAdminController::class, 'toggle'])
+            ->name('admin.students.toggle');
+    });
 
-Route::group([
-    'prefix' => 'admin',
-    'middleware' => ['web', 'auth'],
-], function () {
+Route::prefix('admin')
+    ->middleware(['web', 'auth'])
+    ->group(function () {
 
-    Route::get('doctors', [DoctorAdminController::class, 'index'])
-        ->name('admin.doctors.index');
+        // Doctors
+        Route::get('/doctors', [DoctorAdminController::class, 'index'])
+            ->name('admin.doctors.index');
 
-    Route::post('doctors', [DoctorAdminController::class, 'store'])
-        ->name('admin.doctors.store');
+        Route::post('/doctors', [DoctorAdminController::class, 'store'])
+            ->name('admin.doctors.store');
 
-    Route::post('doctors/{doctor}/toggle', [DoctorAdminController::class, 'toggle'])
-        ->name('admin.doctors.toggle');
-});
+        Route::post('/doctors/{doctor}/toggle', [DoctorAdminController::class, 'toggle'])
+            ->name('admin.doctors.toggle');
+    });
 
-// قائمة الكليات (صفحة عامة)
-Route::get('/colleges', [CollegeController::class, 'index'])->name('colleges.index');
+/*
+|--------------------------------------------------------------------------
+| Colleges
+|--------------------------------------------------------------------------
+*/
+Route::get('/colleges', [CollegeController::class, 'index'])
+    ->name('colleges.index');
 
-// صفحة تفاصيل كلية (باستخدام slug)
-Route::get('/colleges/{slug}', [CollegeController::class, 'show'])->name('colleges.show');
+Route::get('/colleges/{slug}', [CollegeController::class, 'show'])
+    ->name('colleges.show');
 
-Route::get('/student-platform', [StudentPlatformController::class, 'index'])->name('student-platform.index');
-Route::get('/student-platform/{slug}', [StudentPlatformController::class, 'show'])->name('student-platform.show');
+/*
+|--------------------------------------------------------------------------
+| Student Platform (Public)
+|--------------------------------------------------------------------------
+*/
+Route::get('/student-platform', [StudentPlatformController::class, 'index'])
+    ->name('student-platform.index');
 
-// قائمة البرامج التدريبية
-Route::get('/training-programs', [TrainingProgramController::class, 'index'])->name('training.index');
+Route::get('/student-platform/{slug}', [StudentPlatformController::class, 'show'])
+    ->name('student-platform.show');
 
-// صفحة تفاصيل برنامج تدريبي (نستخدم slug)
-Route::get('/training-programs/{trainingProgram}', [TrainingProgramController::class, 'show'])->name('training.show');
+/*
+|--------------------------------------------------------------------------
+| Training Programs
+|--------------------------------------------------------------------------
+*/
+Route::get('/training-programs', [TrainingProgramController::class, 'index'])
+    ->name('training.index');
 
-// صفحة عرض فورم التسجيل لبرنامج (GET)
+Route::get('/training-programs/{trainingProgram}', [TrainingProgramController::class, 'show'])
+    ->name('training.show');
+
+/*
+|--------------------------------------------------------------------------
+| Applications
+|--------------------------------------------------------------------------
+*/
 Route::get('/apply/{type}/{slug}', [ApplicationController::class, 'create'])
     ->where('type', 'program|training')
     ->name('applications.create');
 
-// إرسال بيانات الفورم (POST)
-Route::post('/apply', [ApplicationController::class, 'store'])->name('applications.store');
+Route::post('/apply', [ApplicationController::class, 'store'])
+    ->name('applications.store');
 
+/*
+|--------------------------------------------------------------------------
+| Student Auth + Dashboard + Registration
+|--------------------------------------------------------------------------
+*/
 Route::prefix('student')->name('student.')->group(function () {
 
+    // Auth
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login'])->name('login.submit');
 
@@ -131,9 +172,25 @@ Route::prefix('student')->name('student.')->group(function () {
 
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
+    // Protected
     Route::middleware('auth:student')->group(function () {
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        // 🔥 NEW: Registration system
+        Route::get('registration', [StudentRegistrationController::class, 'create'])
+            ->name('registration.create');
+
+        Route::post('registration', [StudentRegistrationController::class, 'store'])
+            ->name('registration.store');
+
+        Route::get('/registrations', [StudentRegistrationController::class, 'index'])
+            ->name('registrations.index');
     });
 });
 
-
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/login');
+})->name('logout');

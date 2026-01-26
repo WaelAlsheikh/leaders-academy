@@ -607,6 +607,71 @@ h2{text-align:center;color:var(--secondary);margin-bottom:40px}
 .logos { margin-top: 6px; display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; }
 
 /* ===========================
+   Student Dashboard Layout
+   =========================== */
+
+.student-layout{
+  display:flex;
+  min-height:calc(100vh - 80px);
+}
+
+/* Sidebar */
+.student-sidebar{
+  width:260px;
+  background:#fff;
+  border-left:1px solid #eee;
+  padding:25px 15px;
+  position:sticky;
+  top:80px;
+  height:calc(100vh - 80px);
+}
+
+.sidebar-title{
+  font-size:1.2rem;
+  margin-bottom:25px;
+  color:var(--secondary);
+  text-align:center;
+}
+
+.sidebar-link{
+  display:block;
+  padding:12px 15px;
+  margin-bottom:8px;
+  border-radius:8px;
+  text-decoration:none;
+  color:#444;
+  font-weight:500;
+  transition:.2s;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active{
+  background:var(--primary);
+  color:#000;
+}
+
+/* Content */
+.student-content{
+  flex:1;
+  padding:40px;
+  background:#f9f9f9;
+}
+
+/* Responsive */
+@media (max-width:900px){
+  .student-layout{
+    flex-direction:column;
+  }
+  .student-sidebar{
+    width:100%;
+    height:auto;
+    position:relative;
+    border-left:none;
+    border-bottom:1px solid #eee;
+  }
+}
+
+/* ===========================
    Footer social icons (improved)
    =========================== */
 .footer-socials{
