@@ -16,8 +16,8 @@
         </a>
 
         {{-- لاحقاً --}}
-        <a href="#" class="sidebar-link">📚 تسجيلاتي</a>
-        <a href="#" class="sidebar-link">💳 الفواتير</a>
+        <a href="{{ route('student.registrations.index') }}" class="sidebar-link">📚 تسجيلاتي</a>
+        <a href="{{ route('student.invoices.index') }}" class="sidebar-link">💳 الفواتير</a>
         <a href="#" class="sidebar-link">⚙️ الإعدادات</a>
     </aside>
 

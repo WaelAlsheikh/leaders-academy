@@ -25,6 +25,13 @@
         </li>
 
         <li>
+            <a href="{{ route('student.invoices.index') }}"
+               class="block px-4 py-2 rounded hover:bg-gray-700">
+                💳 الفواتير
+            </a>
+        </li>
+
+        <li>
             <a href="{{ route('logout') }}"
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                class="block px-4 py-2 rounded hover:bg-red-600">

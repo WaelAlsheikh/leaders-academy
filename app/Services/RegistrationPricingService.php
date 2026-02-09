@@ -3,31 +3,41 @@
 namespace App\Services;
 
 use App\Models\PricingSetting;
+use App\Models\College;
 use App\Models\Subject;
 
 class RegistrationPricingService
 {
-    public function calculate(array $subjectIds): array
+    public function calculate(int $collegeId, array $subjectIds): array
     {
-        $pricing = PricingSetting::firstOrFail();
-        $subjects = Subject::whereIn('id', $subjectIds)->get();
+        $pricing = PricingSetting::query()->latest()->first();
+        $minSubjects = $pricing?->min_subjects ?? 4;
+        $registrationFee = (float) ($pricing?->registration_fee ?? 0);
 
-        if ($subjects->count() < $pricing->min_subjects) {
+        $college = College::findOrFail($collegeId);
+        $pricePerHour = (float) ($college->price_per_credit_hour ?? 0);
+
+        $subjects = Subject::whereIn('id', $subjectIds)
+            ->where('college_id', $college->id)
+            ->where('is_active', true)
+            ->get();
+
+        if ($subjects->count() < $minSubjects) {
             throw new \Exception(
-                'الحد الأدنى للتسجيل هو ' . $pricing->min_subjects . ' مواد'
+                'الحد الأدنى للتسجيل هو ' . $minSubjects . ' مواد'
             );
         }
 
         $totalHours = $subjects->sum('credit_hours');
-        $subtotal = $totalHours * $pricing->price_per_credit_hour;
-        $total = $subtotal + $pricing->registration_fee;
+        $subtotal = $totalHours * $pricePerHour;
+        $total = $subtotal + $registrationFee;
 
         return [
             'subjects'        => $subjects,
             'subjects_count'  => $subjects->count(),
             'total_hours'     => $totalHours,
-            'price_per_hour'  => $pricing->price_per_credit_hour,
-            'registration_fee'=> $pricing->registration_fee,
+            'price_per_hour'  => $pricePerHour,
+            'registration_fee'=> $registrationFee,
             'subtotal'        => $subtotal,
             'total'           => $total,
         ];
