@@ -65,11 +65,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'student_username' => 'required|string',
+            'student_password' => 'required|string',
         ]);
 
-        if (Auth::guard('student')->attempt($credentials)) {
+        if (Auth::guard('student')->attempt([
+            'username' => $credentials['student_username'],
+            'password' => $credentials['student_password'],
+        ])) {
             $request->session()->regenerate();
             return redirect()->route('student.dashboard');
         }

@@ -56,5 +56,12 @@ public function scopeInactive($query)
     return $query->where('is_active', false);
 }
 
+    public function sections()
+    {
+        return $this->belongsToMany(ClassSection::class, 'student_sections', 'student_id', 'section_id')
+            ->withPivot(['status'])
+            ->withTimestamps();
+    }
+
 }
 

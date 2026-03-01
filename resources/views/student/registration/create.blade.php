@@ -11,6 +11,11 @@
 
             <h3 style="margin-bottom:20px;">📝 تسجيل جديد</h3>
 
+            @if($colleges->isEmpty())
+                <div style="padding:20px;border:1px dashed #ccc;border-radius:6px;text-align:center;">
+                    لا توجد دورات تسجيل مفتوحة حالياً
+                </div>
+            @else
             <form method="POST" action="{{ route('student.registration.store') }}">
                 @csrf
 
@@ -39,7 +44,15 @@
                              data-college="{{ $college->id }}"
                              style="display:none;padding:15px;border:1px solid #ddd;border-radius:6px;">
 
-                            @foreach($college->subjects as $subject)
+                            @php
+                                $subjectsForCollege = $collegeSubjects[$college->id] ?? collect();
+                            @endphp
+
+                            @if($subjectsForCollege->isEmpty())
+                                <div style="color:#888;">لا توجد مواد متاحة لهذه الكلية حالياً</div>
+                            @endif
+
+                            @foreach($subjectsForCollege as $subject)
                                 <label style="display:block;margin-bottom:10px;">
                                     <input type="checkbox"
                                            class="subject-checkbox"
@@ -92,6 +105,7 @@
                 </button>
 
             </form>
+            @endif
 
         </div>
     </main>
@@ -150,36 +164,38 @@
         pricingBox.style.display = selectedOption?.value ? 'block' : 'none';
     }
 
-    collegeSelect.addEventListener('change', function () {
-        document.querySelectorAll('.college-subjects')
-            .forEach(el => el.style.display = 'none');
+    if (collegeSelect) {
+        collegeSelect.addEventListener('change', function () {
+            document.querySelectorAll('.college-subjects')
+                .forEach(el => el.style.display = 'none');
 
-        document.querySelectorAll('.subject-checkbox')
-            .forEach(cb => cb.checked = false);
+            document.querySelectorAll('.subject-checkbox')
+                .forEach(cb => cb.checked = false);
 
-        submitBtn.disabled = true;
-        minWarning.style.display = 'none';
+            submitBtn.disabled = true;
+            minWarning.style.display = 'none';
 
-        if (this.value) {
-            subjectsBox.style.display = 'block';
-            const box = document.querySelector(
-                `.college-subjects[data-college="${this.value}"]`
-            );
-            if (box) box.style.display = 'block';
-        } else {
-            subjectsBox.style.display = 'none';
-        }
+            if (this.value) {
+                subjectsBox.style.display = 'block';
+                const box = document.querySelector(
+                    `.college-subjects[data-college="${this.value}"]`
+                );
+                if (box) box.style.display = 'block';
+            } else {
+                subjectsBox.style.display = 'none';
+            }
+
+            updatePricing();
+        });
+
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('subject-checkbox')) {
+                updateSubmitState();
+                updatePricing();
+            }
+        });
 
         updatePricing();
-    });
-
-    document.addEventListener('change', function (e) {
-        if (e.target.classList.contains('subject-checkbox')) {
-            updateSubmitState();
-            updatePricing();
-        }
-    });
-
-    updatePricing();
+    }
 </script>
 @endsection

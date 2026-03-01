@@ -32,4 +32,14 @@ class College extends Model
     {
         return $this->hasMany(Subject::class);
     }
+
+    public function enrollmentCycles()
+    {
+        return $this->hasMany(EnrollmentCycle::class);
+    }
+
+    public function semesters()
+    {
+        return $this->hasMany(Semester::class);
+    }
 }

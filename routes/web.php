@@ -24,15 +24,19 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Admin\StudentAdminController;
 use App\Http\Controllers\Admin\DoctorAdminController;
 use App\Http\Controllers\Admin\CollegeSubjectController;
+use App\Http\Controllers\Admin\EnrollmentCycleController;
+use App\Http\Controllers\Admin\SemesterSectionController;
 
 // Student
 use App\Http\Controllers\Student\AuthController as StudentAuthController;
 use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\StudentRegistrationController;
 use App\Http\Controllers\Student\InvoiceController;
+use App\Http\Controllers\Student\ScheduleController;
 
 // Breeze
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CollegeScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,6 +132,49 @@ Route::prefix('admin')
         Route::delete('/subjects/{subject}',
             [CollegeSubjectController::class, 'destroy']
         )->name('admin.subjects.destroy');
+
+        // Enrollment Cycles
+        Route::get('/enrollment-cycles', [EnrollmentCycleController::class, 'index'])
+            ->name('admin.enrollment_cycles.index');
+        Route::post('/enrollment-cycles', [EnrollmentCycleController::class, 'store'])
+            ->name('admin.enrollment_cycles.store');
+        Route::get('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'show'])
+            ->name('admin.enrollment_cycles.show');
+        Route::put('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'update'])
+            ->name('admin.enrollment_cycles.update');
+        Route::post('/enrollment-cycles/{cycle}/subjects', [EnrollmentCycleController::class, 'updateSubjects'])
+            ->name('admin.enrollment_cycles.subjects');
+        Route::post('/enrollment-cycles/{cycle}/open', [EnrollmentCycleController::class, 'open'])
+            ->name('admin.enrollment_cycles.open');
+        Route::post('/enrollment-cycles/{cycle}/close', [EnrollmentCycleController::class, 'close'])
+            ->name('admin.enrollment_cycles.close');
+        Route::post('/enrollment-cycles/{cycle}/approve', [EnrollmentCycleController::class, 'approve'])
+            ->name('admin.enrollment_cycles.approve');
+        Route::post('/enrollment-cycles/{cycle}/start-semester', [EnrollmentCycleController::class, 'startSemester'])
+            ->name('admin.enrollment_cycles.start_semester');
+        Route::post('/enrollment-cycles/{cycle}/registrations/{registration}/status',
+            [EnrollmentCycleController::class, 'updateRegistrationStatus']
+        )->name('admin.enrollment_cycles.registrations.status');
+        Route::post('/enrollment-cycles/{cycle}/registrations/bulk-status',
+            [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus']
+        )->name('admin.enrollment_cycles.registrations.bulk_status');
+
+        Route::get('/semesters/{semester}/sections', [SemesterSectionController::class, 'index'])
+            ->name('admin.semesters.sections.index');
+        Route::post('/semesters/{semester}/sections', [SemesterSectionController::class, 'store'])
+            ->name('admin.semesters.sections.store');
+        Route::put('/sections/{section}', [SemesterSectionController::class, 'update'])
+            ->name('admin.sections.update');
+        Route::delete('/sections/{section}', [SemesterSectionController::class, 'destroy'])
+            ->name('admin.sections.destroy');
+        Route::get('/sections/{section}/meetings', [SemesterSectionController::class, 'meetings'])
+            ->name('admin.sections.meetings.index');
+        Route::post('/sections/{section}/meetings', [SemesterSectionController::class, 'storeMeeting'])
+            ->name('admin.sections.meetings.store');
+        Route::put('/meetings/{meeting}', [SemesterSectionController::class, 'updateMeeting'])
+            ->name('admin.meetings.update');
+        Route::delete('/meetings/{meeting}', [SemesterSectionController::class, 'destroyMeeting'])
+            ->name('admin.meetings.destroy');
     });
 
 /*
@@ -154,6 +201,8 @@ Route::prefix('admin')
 | Colleges (Public)
 |--------------------------------------------------------------------------
 */
+Route::get('/colleges/{college}/schedule', [CollegeScheduleController::class, 'show'])
+    ->name('colleges.schedule');
 Route::get('/colleges', [CollegeController::class, 'index'])->name('colleges.index');
 Route::get('/colleges/{slug}', [CollegeController::class, 'show'])->name('colleges.show');
 
@@ -224,6 +273,9 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::get('invoices', [InvoiceController::class, 'index'])
             ->name('invoices.index');
+
+        Route::get('schedule', [ScheduleController::class, 'index'])
+            ->name('schedule.index');
     });
 });
 

@@ -1,46 +1,35 @@
-<!-- Student Sidebar -->
-<aside class="w-64 bg-gray-800 text-white min-h-screen p-4">
-    <h2 class="text-xl font-bold mb-6">لوحة الطالب</h2>
+<aside class="student-sidebar">
+    <h3 class="sidebar-title">لوحة الطالب</h3>
 
-    <ul class="space-y-3">
-        <li>
-            <a href="{{ route('student.dashboard') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-700">
-                🏠 الرئيسية
-            </a>
-        </li>
+    <a href="{{ route('student.dashboard') }}"
+       class="sidebar-link {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
+        🏠 الرئيسية
+    </a>
 
-        <li>
-            <a href="{{ route('student.registration.create') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-700">
-                📝 تسجيل المواد
-            </a>
-        </li>
+    <a href="{{ route('student.registration.create') }}"
+       class="sidebar-link {{ request()->routeIs('student.registration.create') ? 'active' : '' }}">
+        📝 تسجيل جديد
+    </a>
 
-        <li>
-            <a href="{{ route('student.registrations.index') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-700">
-                📚 تسجيلاتي
-            </a>
-        </li>
+    <a href="{{ route('student.registrations.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.registrations.index') ? 'active' : '' }}">
+        📚 تسجيلاتي
+    </a>
 
-        <li>
-            <a href="{{ route('student.invoices.index') }}"
-               class="block px-4 py-2 rounded hover:bg-gray-700">
-                💳 الفواتير
-            </a>
-        </li>
+    <a href="{{ route('student.invoices.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.invoices.index') ? 'active' : '' }}">
+        💳 الفواتير
+    </a>
 
-        <li>
-            <a href="{{ route('logout') }}"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-               class="block px-4 py-2 rounded hover:bg-red-600">
-                🚪 تسجيل الخروج
-            </a>
-        </li>
-    </ul>
+    <a href="{{ route('student.schedule.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.schedule.index') ? 'active' : '' }}">
+        📅 الجدول
+    </a>
 
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+    <form method="POST" action="{{ route('student.logout') }}">
         @csrf
+        <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">
+            🚪 تسجيل الخروج
+        </button>
     </form>
 </aside>

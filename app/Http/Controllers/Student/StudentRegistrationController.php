@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\College;
+use App\Models\EnrollmentCycle;
 use App\Models\PricingSetting;
 use App\Models\Registration;
 use App\Models\Subject;
@@ -14,13 +15,33 @@ class StudentRegistrationController extends Controller
 {
     public function create()
     {
-        $colleges = College::with('subjects')->get();
+        $openCycles = EnrollmentCycle::with(['college', 'subjects' => function ($q) {
+            $q->wherePivot('is_open', true);
+        }])
+            ->where('status', 'open')
+            ->get()
+            ->filter(fn ($cycle) => $cycle->isOpenNow())
+            ->values();
+
+        $colleges = $openCycles->map(function ($cycle) {
+            return $cycle->college;
+        })->unique('id')->values();
+
+        $collegeSubjects = $openCycles
+            ->sortByDesc('id')
+            ->groupBy('college_id')
+            ->map(function ($cyclesForCollege) {
+                return $cyclesForCollege->first()->subjects ?? collect();
+            });
+
         $pricing = PricingSetting::query()->latest()->first();
         $minSubjects = $pricing?->min_subjects ?? 4;
         $registrationFee = (float) ($pricing?->registration_fee ?? 0);
 
         return view('student.registration.create', compact(
             'colleges',
+            'openCycles',
+            'collegeSubjects',
             'minSubjects',
             'registrationFee'
         ));
@@ -47,7 +68,25 @@ class StudentRegistrationController extends Controller
 
         $college = College::findOrFail($data['college_id']);
 
+        $cycle = EnrollmentCycle::where('college_id', $college->id)
+            ->where('status', 'open')
+            ->orderByDesc('id')
+            ->get()
+            ->first(fn ($c) => $c->isOpenNow());
+
+        if (!$cycle) {
+            return back()
+                ->withInput()
+                ->withErrors(['college_id' => 'لا توجد دورة تسجيل مفتوحة لهذه الكلية حالياً.']);
+        }
+
+        $allowedSubjectIds = $cycle->subjects()
+            ->wherePivot('is_open', true)
+            ->pluck('subjects.id')
+            ->toArray();
+
         $subjects = Subject::whereIn('id', $subjectIds)
+            ->whereIn('id', $allowedSubjectIds)
             ->where('college_id', $college->id)
             ->where('is_active', true)
             ->get();
@@ -66,6 +105,7 @@ class StudentRegistrationController extends Controller
         DB::transaction(function () use (
             $student,
             $college,
+            $cycle,
             $subjects,
             $pricePerHour,
             $totalHours,
@@ -76,7 +116,8 @@ class StudentRegistrationController extends Controller
             $registration = Registration::create([
                 'student_id' => $student->id,
                 'college_id' => $college->id,
-                'status' => 'pending',
+                'enrollment_cycle_id' => $cycle->id,
+                'status' => 'under_review',
                 'subjects_count' => $subjects->count(),
                 'total_hours' => $totalHours,
                 'subtotal_amount' => $subtotalAmount,
@@ -105,7 +146,7 @@ class StudentRegistrationController extends Controller
             abort(403);
         }
 
-        $registrations = Registration::with(['college', 'subjects'])
+        $registrations = Registration::with(['college', 'subjects', 'enrollmentCycle', 'semester'])
             ->where('student_id', $student->id)
             ->latest()
             ->get();

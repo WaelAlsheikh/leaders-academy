@@ -10,6 +10,8 @@ class Registration extends Model
     protected $fillable = [
         'student_id',
         'college_id',
+        'enrollment_cycle_id',
+        'semester_id',
         'status',
         'subjects_count',
         'total_hours',
@@ -26,6 +28,16 @@ class Registration extends Model
     public function college()
     {
         return $this->belongsTo(College::class);
+    }
+
+    public function enrollmentCycle()
+    {
+        return $this->belongsTo(EnrollmentCycle::class);
+    }
+
+    public function semester()
+    {
+        return $this->belongsTo(Semester::class);
     }
 
     public function subjects()

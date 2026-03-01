@@ -613,6 +613,7 @@ h2{text-align:center;color:var(--secondary);margin-bottom:40px}
 .student-layout{
   display:flex;
   min-height:calc(100vh - 80px);
+  padding-top:80px;
 }
 
 /* Sidebar */
@@ -622,7 +623,7 @@ h2{text-align:center;color:var(--secondary);margin-bottom:40px}
   border-left:1px solid #eee;
   padding:25px 15px;
   position:sticky;
-  top:80px;
+  top:0;
   height:calc(100vh - 80px);
 }
 
@@ -648,6 +649,20 @@ h2{text-align:center;color:var(--secondary);margin-bottom:40px}
 .sidebar-link.active{
   background:var(--primary);
   color:#000;
+}
+
+.sidebar-link-button{
+  width:100%;
+  border:none;
+  text-align:right;
+  font:inherit;
+  background:transparent;
+  cursor:pointer;
+}
+
+.sidebar-logout:hover{
+  background:#ef4444;
+  color:#fff;
 }
 
 /* Content */

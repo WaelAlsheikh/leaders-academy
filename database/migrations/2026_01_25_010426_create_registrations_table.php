@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('college_id')->constrained()->cascadeOnDelete();
 
-            $table->enum('status', ['pending', 'approved', 'paid'])->default('pending');
+            $table->enum('status', ['under_review', 'accepted', 'rejected'])->default('under_review');
 
             $table->unsignedInteger('subjects_count');
             $table->unsignedInteger('total_hours');

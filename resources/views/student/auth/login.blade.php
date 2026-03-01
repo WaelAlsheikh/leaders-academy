@@ -28,7 +28,7 @@
                 @endif
 
                 {{-- Login Form --}}
-                <form method="POST" action="{{ route('student.login.submit') }}">
+                <form method="POST" action="{{ route('student.login.submit') }}" autocomplete="on">
                     @csrf
 
                     {{-- Username --}}
@@ -36,7 +36,11 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             اسم المستخدم
                         </label>
-                        <input type="text" name="username" value="{{ old('username') }}"
+                        <input type="text"
+                               name="student_username"
+                               id="student_username"
+                               value="{{ old('student_username') }}"
+                               autocomplete="section-student username"
                                required placeholder="مثال: ahmed_123456"
                                style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;direction:ltr;">
                     </div>
@@ -46,7 +50,11 @@
                         <label style="display:block;margin-bottom:6px;font-weight:600;">
                             كلمة المرور
                         </label>
-                        <input type="password" name="password" required
+                        <input type="password"
+                               name="student_password"
+                               id="student_password"
+                               autocomplete="section-student current-password"
+                               required
                                placeholder="********"
                                style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;">
                     </div>

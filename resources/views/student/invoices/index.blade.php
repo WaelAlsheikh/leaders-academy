@@ -27,15 +27,15 @@
                             <div>
                                 @php
                                     $statusLabel = [
-                                        'pending' => 'قيد المراجعة',
-                                        'approved' => 'معتمدة',
-                                        'paid' => 'مدفوعة',
+                                        'under_review' => 'قيد المراجعة',
+                                        'accepted' => 'مقبول',
+                                        'rejected' => 'مرفوض',
                                     ][$registration->status] ?? $registration->status;
 
                                     $statusColor = [
-                                        'pending' => '#f59e0b',
-                                        'approved' => '#3b82f6',
-                                        'paid' => '#10b981',
+                                        'under_review' => '#f59e0b',
+                                        'accepted' => '#10b981',
+                                        'rejected' => '#ef4444',
                                     ][$registration->status] ?? '#6b7280';
                                 @endphp
                                 <span style="background:{{ $statusColor }};color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;">
@@ -45,6 +45,10 @@
                         </div>
 
                         <div style="padding:16px;">
+                            <div style="margin-bottom:12px;">
+                                <strong>الفصل:</strong>
+                                {{ $registration->semester?->name ?? '—' }}
+                            </div>
                             <div style="margin-bottom:12px;">
                                 <strong>المواد:</strong>
                                 <ul style="margin-top:8px;">

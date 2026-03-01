@@ -4,22 +4,7 @@
 <div class="student-layout">
 
     {{-- Sidebar --}}
-    <aside class="student-sidebar">
-        <h3 class="sidebar-title">لوحة الطالب</h3>
-
-        <a href="{{ route('student.dashboard') }}" class="sidebar-link active">
-            🏠 الرئيسية
-        </a>
-
-        <a href="{{ route('student.registration.create') }}" class="sidebar-link">
-            📝 تسجيل جديد
-        </a>
-
-        {{-- لاحقاً --}}
-        <a href="{{ route('student.registrations.index') }}" class="sidebar-link">📚 تسجيلاتي</a>
-        <a href="{{ route('student.invoices.index') }}" class="sidebar-link">💳 الفواتير</a>
-        <a href="#" class="sidebar-link">⚙️ الإعدادات</a>
-    </aside>
+    @include('student.partials.sidebar')
 
     {{-- Main Content --}}
     <main class="student-content">

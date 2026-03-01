@@ -18,4 +18,23 @@ class Subject extends Model
     {
         return $this->belongsTo(College::class);
     }
+
+    public function enrollmentCycles()
+    {
+        return $this->belongsToMany(EnrollmentCycle::class, 'enrollment_cycle_subject')
+            ->withPivot(['is_open'])
+            ->withTimestamps();
+    }
+
+    public function semesters()
+    {
+        return $this->belongsToMany(Semester::class, 'semester_subject')
+            ->withPivot(['is_active', 'registered_count'])
+            ->withTimestamps();
+    }
+
+    public function classSections()
+    {
+        return $this->hasMany(ClassSection::class);
+    }
 }
