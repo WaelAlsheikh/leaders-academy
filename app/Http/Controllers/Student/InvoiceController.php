@@ -15,7 +15,7 @@ class InvoiceController extends Controller
             abort(403);
         }
 
-        $registrations = Registration::with(['college', 'subjects', 'semester'])
+        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'semester'])
             ->where('student_id', $student->id)
             ->latest()
             ->get();

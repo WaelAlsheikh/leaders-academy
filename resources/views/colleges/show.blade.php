@@ -17,8 +17,8 @@
         @if($college->short_description)
           <p class="college-short" style="margin-top:10px;">{{ $college->short_description }}</p>
         @endif
-        <a href="{{ route('contact') }}" class="btn-primary college-contact-btn" style="margin-top:12px; display:inline-block;">
-          {{ __('messages.Contact Us') }}
+        <a href="{{ route('student.login') }}" class="btn-primary college-contact-btn" style="margin-top:12px; display:inline-block;">
+          تسجيل
         </a>
       </div>
     </div>

@@ -11,7 +11,14 @@
 
             <h3 style="margin-bottom:20px;">📝 تسجيل جديد</h3>
 
-            @if($colleges->isEmpty())
+            @php
+                $allEntitiesCount = ($entitiesByType['college']->count() ?? 0)
+                    + ($entitiesByType['program_branch']->count() ?? 0)
+                    + ($entitiesByType['training_program_branch']->count() ?? 0);
+                $defaultType = 'college';
+            @endphp
+
+            @if($allEntitiesCount === 0)
                 <div style="padding:20px;border:1px dashed #ccc;border-radius:6px;text-align:center;">
                     لا توجد دورات تسجيل مفتوحة حالياً
                 </div>
@@ -19,16 +26,29 @@
             <form method="POST" action="{{ route('student.registration.store') }}">
                 @csrf
 
-                {{-- اختيار الكلية --}}
+                <div class="registration-tabs">
+                    <button type="button" class="reg-tab @if($defaultType === 'college') active @endif" data-type="college">الكليات</button>
+                    <button type="button" class="reg-tab @if($defaultType === 'program_branch') active @endif" data-type="program_branch">البرامج الجامعية</button>
+                    <button type="button" class="reg-tab @if($defaultType === 'training_program_branch') active @endif" data-type="training_program_branch">البرامج التدريبية</button>
+                </div>
+
+                <input type="hidden" name="entity_type" id="entityTypeInput" value="{{ $defaultType }}">
+
+                {{-- اختيار الكيان --}}
                 <div style="margin-bottom:20px;">
-                    <label class="form-label">اختر الكلية</label>
-                    <select id="collegeSelect" name="college_id" class="form-control" required>
+                    <label class="form-label">اختر خيار التسجيل</label>
+                    <select id="entitySelect" name="registrable_entity_id" class="form-control" required>
                         <option value="">-- اختر --</option>
-                        @foreach($colleges as $college)
-                            <option value="{{ $college->id }}"
-                                    data-price="{{ $college->price_per_credit_hour }}">
-                                {{ $college->title }}
-                            </option>
+                        @foreach(['college', 'program_branch', 'training_program_branch'] as $type)
+                            @foreach($entitiesByType[$type] as $entity)
+                                <option
+                                    value="{{ $entity->id }}"
+                                    data-type="{{ $type }}"
+                                    data-price="{{ $entity->price_per_credit_hour }}"
+                                    style="display:none;">
+                                    {{ $entity->title_snapshot }}
+                                </option>
+                            @endforeach
                         @endforeach
                     </select>
                 </div>
@@ -39,17 +59,18 @@
                         اختر المواد <small>({{ $minSubjects }} مواد على الأقل)</small>
                     </h4>
 
-                    @foreach($colleges as $college)
+                    @foreach(['college', 'program_branch', 'training_program_branch'] as $type)
+                        @foreach($entitiesByType[$type] as $entity)
                         <div class="college-subjects"
-                             data-college="{{ $college->id }}"
+                             data-entity="{{ $entity->id }}"
                              style="display:none;padding:15px;border:1px solid #ddd;border-radius:6px;">
 
                             @php
-                                $subjectsForCollege = $collegeSubjects[$college->id] ?? collect();
+                                $subjectsForCollege = $entitySubjects[$entity->id] ?? collect();
                             @endphp
 
                             @if($subjectsForCollege->isEmpty())
-                                <div style="color:#888;">لا توجد مواد متاحة لهذه الكلية حالياً</div>
+                                <div style="color:#888;">لا توجد مواد متاحة لهذا الخيار حالياً</div>
                             @endif
 
                             @foreach($subjectsForCollege as $subject)
@@ -67,6 +88,7 @@
                             @endforeach
 
                         </div>
+                        @endforeach
                     @endforeach
                 </div>
 
@@ -111,9 +133,54 @@
     </main>
 </div>
 
+<style>
+    .registration-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .registration-tabs .reg-tab {
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #374151;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-weight: 600;
+        transition: all .15s ease-in-out;
+    }
+
+    .registration-tabs .reg-tab:hover {
+        border-color: #f2b800;
+        color: #111827;
+    }
+
+    .registration-tabs .reg-tab.active {
+        background: #f2b800;
+        border-color: #f2b800;
+        color: #111827;
+        box-shadow: 0 2px 8px rgba(242, 184, 0, .28);
+    }
+
+    @media (max-width: 700px) {
+        .registration-tabs {
+            gap: 8px;
+        }
+
+        .registration-tabs .reg-tab {
+            flex: 1 1 100%;
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
 {{-- JavaScript --}}
 <script>
-    const collegeSelect = document.getElementById('collegeSelect');
+    const entitySelect = document.getElementById('entitySelect');
+    const entityTypeInput = document.getElementById('entityTypeInput');
+    const tabs = document.querySelectorAll('.reg-tab');
     const subjectsBox = document.getElementById('subjectsBox');
     const submitBtn = document.getElementById('submitBtn');
     const minWarning = document.getElementById('minWarning');
@@ -140,7 +207,7 @@
     }
 
     function updatePricing() {
-        const selectedOption = collegeSelect.options[collegeSelect.selectedIndex];
+        const selectedOption = entitySelect.options[entitySelect.selectedIndex];
         const pricePerHour = selectedOption?.dataset?.price
             ? parseFloat(selectedOption.dataset.price)
             : 0;
@@ -164,8 +231,37 @@
         pricingBox.style.display = selectedOption?.value ? 'block' : 'none';
     }
 
-    if (collegeSelect) {
-        collegeSelect.addEventListener('change', function () {
+    function refreshEntityOptions(activeType) {
+        entityTypeInput.value = activeType;
+        Array.from(entitySelect.options).forEach(option => {
+            if (!option.value) return;
+            const visible = option.dataset.type === activeType;
+            option.style.display = visible ? '' : 'none';
+            if (!visible && option.selected) {
+                option.selected = false;
+            }
+        });
+        entitySelect.value = '';
+        subjectsBox.style.display = 'none';
+        document.querySelectorAll('.college-subjects').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
+        submitBtn.disabled = true;
+        minWarning.style.display = 'none';
+        updatePricing();
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            refreshEntityOptions(this.dataset.type);
+        });
+    });
+
+    if (entitySelect) {
+        refreshEntityOptions('{{ $defaultType }}');
+
+        entitySelect.addEventListener('change', function () {
             document.querySelectorAll('.college-subjects')
                 .forEach(el => el.style.display = 'none');
 
@@ -178,7 +274,7 @@
             if (this.value) {
                 subjectsBox.style.display = 'block';
                 const box = document.querySelector(
-                    `.college-subjects[data-college="${this.value}"]`
+                    `.college-subjects[data-entity="${this.value}"]`
                 );
                 if (box) box.style.display = 'block';
             } else {

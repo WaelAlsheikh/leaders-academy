@@ -16,10 +16,10 @@
                 </div>
             @else
                 @foreach($registrations as $registration)
-                    <div style="border:1px solid #e5e5e5;border-radius:8px;margin-bottom:20px;overflow:hidden;">
-                        <div style="background:#f8f8f8;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                    <div class="student-record-item">
+                        <div class="student-record-head">
                             <div>
-                                <strong>{{ $registration->college?->title ?? 'غير محدد' }}</strong>
+                                <strong>{{ $registration->registrableEntity?->display_title ?? $registration->college?->title ?? 'غير محدد' }}</strong>
                                 <div style="font-size:12px;color:#666;">
                                     {{ $registration->created_at?->format('Y-m-d') }}
                                 </div>
@@ -44,7 +44,7 @@
                             </div>
                         </div>
 
-                        <div style="padding:16px;">
+                        <div class="student-record-body">
                             <div style="margin-bottom:12px;">
                                 <strong>الدورة:</strong>
                                 {{ $registration->enrollmentCycle?->name ?? '—' }}
@@ -56,7 +56,7 @@
                             <div style="margin-bottom:12px;">
                                 <strong>المواد:</strong>
                                 <ul style="margin-top:8px;">
-                                    @foreach($registration->subjects as $subject)
+                                    @foreach($registration->registrableSubjects as $subject)
                                         <li style="margin-bottom:6px;">
                                             {{ $subject->name }}
                                             <small style="color:#666;">
@@ -67,7 +67,7 @@
                                 </ul>
                             </div>
 
-                            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+                            <div class="student-record-meta-grid">
                                 <div>عدد المواد: <strong>{{ $registration->subjects_count }}</strong></div>
                                 <div>مجموع الساعات: <strong>{{ $registration->total_hours }}</strong></div>
                                 <div>المجموع الجزئي: <strong>${{ number_format($registration->subtotal_amount, 2) }}</strong></div>

@@ -20,19 +20,23 @@
             @method('PUT')
             <div class="row">
                 <div class="col-md-3">
-                    <label>الكلية</label>
-                    <input type="text" class="form-control" value="{{ $cycle->college?->title }}" disabled>
+                    <label>كيان التسجيل</label>
+                    <input type="text" class="form-control" value="{{ $cycle->registrableEntity?->display_title }}" disabled>
+                </div>
+                <div class="col-md-3">
+                    <label>النوع</label>
+                    <input type="text" class="form-control" value="{{ $cycle->registrableEntity?->entity_type }}" disabled>
                 </div>
                 <div class="col-md-3">
                     <label>اسم الدورة</label>
                     <input type="text" name="name" class="form-control" value="{{ $cycle->name }}" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label>بداية التسجيل</label>
                     <input type="datetime-local" name="registration_starts_at" class="form-control"
                            value="{{ $cycle->registration_starts_at?->format('Y-m-d\\TH:i') }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label>نهاية التسجيل</label>
                     <input type="datetime-local" name="registration_ends_at" class="form-control"
                            value="{{ $cycle->registration_ends_at?->format('Y-m-d\\TH:i') }}">
@@ -61,7 +65,7 @@
                     <div class="col-md-4" style="margin-bottom:10px;">
                         <label>
                             <input type="checkbox" name="subjects[]" value="{{ $subject->id }}"
-                                   @checked($cycle->subjects->contains($subject->id))>
+                                   @checked($cycle->registrableSubjects->contains($subject->id))>
                             {{ $subject->name }}
                             <small class="text-muted">
                                 ({{ $subjectStats[$subject->id] ?? 0 }} تسجيل)
@@ -201,7 +205,7 @@
                 </div>
             </form>
 
-            <form method="POST" action="{{ route('admin.enrollment_cycles.registrations.bulk_status', $cycle) }}" style="margin-bottom:10px;">
+            <form id="bulkStatusForm" method="POST" action="{{ route('admin.enrollment_cycles.registrations.bulk_status', $cycle) }}" style="margin-bottom:10px;">
                 @csrf
                 <div class="row">
                     <div class="col-md-3">
@@ -217,7 +221,7 @@
                         <button type="submit" class="btn btn-primary">تطبيق على المحدد</button>
                     </div>
                 </div>
-
+            </form>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -239,7 +243,12 @@
                         @endphp
                         <tr>
                             <td>
-                                <input type="checkbox" name="registration_ids[]" value="{{ $registration->id }}">
+                                <input
+                                    type="checkbox"
+                                    name="registration_ids[]"
+                                    value="{{ $registration->id }}"
+                                    form="bulkStatusForm"
+                                >
                             </td>
                             <td>
                                 {{ $registration->student?->first_name }} {{ $registration->student?->last_name }}
@@ -248,7 +257,7 @@
                                 </div>
                             </td>
                             <td>
-                                    @foreach($registration->subjects as $subject)
+                                    @foreach($registration->registrableSubjects as $subject)
                                         <div>{{ $subject->name }}</div>
                                     @endforeach
                             </td>
@@ -273,7 +282,6 @@
                     @endif
                 </tbody>
             </table>
-            </form>
         </div>
     </div>
 </div>
@@ -281,7 +289,7 @@
     const selectAll = document.getElementById('selectAllRegistrations');
     if (selectAll) {
         selectAll.addEventListener('change', function () {
-            document.querySelectorAll('input[name="registration_ids[]"]').forEach(cb => {
+            document.querySelectorAll('input[name="registration_ids[]"][form="bulkStatusForm"]').forEach(cb => {
                 cb.checked = selectAll.checked;
             });
         });

@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\StudentAdminController;
 use App\Http\Controllers\Admin\DoctorAdminController;
 use App\Http\Controllers\Admin\CollegeSubjectController;
 use App\Http\Controllers\Admin\EnrollmentCycleController;
+use App\Http\Controllers\Admin\RegistrableController;
 use App\Http\Controllers\Admin\SemesterSectionController;
 
 // Student
@@ -69,7 +70,8 @@ Route::get('/virtual_university/virtual-university', [HomeController::class, 'vi
 |--------------------------------------------------------------------------
 */
 Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
-Route::get('/programs/{slug}', [ProgramController::class, 'show'])->name('programs.show');
+Route::get('/programs/{program}', [ProgramController::class, 'show'])->name('programs.show');
+Route::get('/programs/{program}/{branch}', [ProgramController::class, 'showBranch'])->name('programs.branches.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +135,19 @@ Route::prefix('admin')
             [CollegeSubjectController::class, 'destroy']
         )->name('admin.subjects.destroy');
 
+        Route::get('/registrables', [RegistrableController::class, 'index'])
+            ->name('admin.registrables.index');
+        Route::put('/registrables/{entity}', [RegistrableController::class, 'updatePrice'])
+            ->name('admin.registrables.update');
+        Route::get('/registrables/{entity}/subjects', [RegistrableController::class, 'subjects'])
+            ->name('admin.registrables.subjects');
+        Route::post('/registrables/{entity}/subjects', [RegistrableController::class, 'storeSubject'])
+            ->name('admin.registrables.subjects.store');
+        Route::put('/registrable-subjects/{subject}', [RegistrableController::class, 'updateSubject'])
+            ->name('admin.registrable_subjects.update');
+        Route::delete('/registrable-subjects/{subject}', [RegistrableController::class, 'destroySubject'])
+            ->name('admin.registrable_subjects.destroy');
+
         // Enrollment Cycles
         Route::get('/enrollment-cycles', [EnrollmentCycleController::class, 'index'])
             ->name('admin.enrollment_cycles.index');
@@ -171,6 +186,10 @@ Route::prefix('admin')
             ->name('admin.sections.meetings.index');
         Route::post('/sections/{section}/meetings', [SemesterSectionController::class, 'storeMeeting'])
             ->name('admin.sections.meetings.store');
+        Route::post('/sections/{section}/students', [SemesterSectionController::class, 'attachStudent'])
+            ->name('admin.sections.students.attach');
+        Route::delete('/sections/{section}/students/{student}', [SemesterSectionController::class, 'detachStudent'])
+            ->name('admin.sections.students.detach');
         Route::put('/meetings/{meeting}', [SemesterSectionController::class, 'updateMeeting'])
             ->name('admin.meetings.update');
         Route::delete('/meetings/{meeting}', [SemesterSectionController::class, 'destroyMeeting'])
@@ -227,6 +246,9 @@ Route::get('/training-programs', [TrainingProgramController::class, 'index'])
 
 Route::get('/training-programs/{trainingProgram}', [TrainingProgramController::class, 'show'])
     ->name('training.show');
+
+Route::get('/training-programs/{trainingProgram}/{branch}', [TrainingProgramController::class, 'showBranch'])
+    ->name('training.branches.show');
 
 /*
 |--------------------------------------------------------------------------

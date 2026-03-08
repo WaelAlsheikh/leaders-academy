@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\TrainingProgram;
+use App\Models\TrainingProgramBranch;
 
 class TrainingProgramController extends Controller
 {
@@ -17,7 +17,26 @@ class TrainingProgramController extends Controller
     // عرض برنامج تفصيلي (route-model binding عبر slug)
     public function show(TrainingProgram $trainingProgram)
     {
-        // $trainingProgram محمّل تلقائياً لأننا اعتمدنا getRouteKeyName()
-        return view('training.show', ['program' => $trainingProgram]);
+        $branches = $trainingProgram->branches()
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        return view('training.show', [
+            'program' => $trainingProgram,
+            'branches' => $branches,
+        ]);
+    }
+
+    public function showBranch(TrainingProgram $trainingProgram, TrainingProgramBranch $branch)
+    {
+        if ((int) $branch->training_program_id !== (int) $trainingProgram->id) {
+            abort(404);
+        }
+
+        return view('training.branch-show', [
+            'program' => $trainingProgram,
+            'branch' => $branch,
+        ]);
     }
 }

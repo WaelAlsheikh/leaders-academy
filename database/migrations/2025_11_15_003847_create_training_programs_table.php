@@ -10,17 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('training_programs', function (Blueprint $table) {
-        $table->id();
-        $table->string('title');
-        $table->string('slug')->unique();
-        $table->string('image')->nullable();
-        $table->text('short_description')->nullable();
-        $table->longText('content')->nullable();
-        $table->timestamps();
-    });
-}
+    {
+        if (Schema::hasTable('training_programs')) {
+            return;
+        }
+
+        Schema::create('training_programs', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->string('image')->nullable();
+            $table->text('short_description')->nullable();
+            $table->longText('content')->nullable();
+            $table->timestamps();
+        });
+    }
 
 
     /**

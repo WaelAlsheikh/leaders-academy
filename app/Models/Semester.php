@@ -42,6 +42,13 @@ class Semester extends Model
             ->withTimestamps();
     }
 
+    public function registrableSubjects(): BelongsToMany
+    {
+        return $this->belongsToMany(RegistrableSubject::class, 'semester_subject', 'semester_id', 'registrable_subject_id')
+            ->withPivot(['is_active', 'registered_count', 'subject_id'])
+            ->withTimestamps();
+    }
+
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class);

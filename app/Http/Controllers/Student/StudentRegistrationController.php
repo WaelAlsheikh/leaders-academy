@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
-use App\Models\College;
 use App\Models\EnrollmentCycle;
 use App\Models\PricingSetting;
 use App\Models\Registration;
-use App\Models\Subject;
+use App\Models\RegistrableEntity;
+use App\Models\RegistrableSubject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,9 @@ class StudentRegistrationController extends Controller
 {
     public function create()
     {
-        $openCycles = EnrollmentCycle::with(['college', 'subjects' => function ($q) {
+        RegistrableEntity::syncFromSources();
+
+        $openCycles = EnrollmentCycle::with(['registrableEntity', 'registrableSubjects' => function ($q) {
             $q->wherePivot('is_open', true);
         }])
             ->where('status', 'open')
@@ -23,25 +25,31 @@ class StudentRegistrationController extends Controller
             ->filter(fn ($cycle) => $cycle->isOpenNow())
             ->values();
 
-        $colleges = $openCycles->map(function ($cycle) {
-            return $cycle->college;
-        })->unique('id')->values();
+        $registrableEntities = $openCycles->map(function ($cycle) {
+            return $cycle->registrableEntity;
+        })->filter()->unique('id')->values();
 
-        $collegeSubjects = $openCycles
+        $entitySubjects = $openCycles
             ->sortByDesc('id')
-            ->groupBy('college_id')
-            ->map(function ($cyclesForCollege) {
-                return $cyclesForCollege->first()->subjects ?? collect();
+            ->groupBy('registrable_entity_id')
+            ->map(function ($cyclesForEntity) {
+                return $cyclesForEntity->first()->registrableSubjects ?? collect();
             });
+
+        $entitiesByType = [
+            'college' => $registrableEntities->where('entity_type', 'college')->values(),
+            'program_branch' => $registrableEntities->where('entity_type', 'program_branch')->values(),
+            'training_program_branch' => $registrableEntities->where('entity_type', 'training_program_branch')->values(),
+        ];
 
         $pricing = PricingSetting::query()->latest()->first();
         $minSubjects = $pricing?->min_subjects ?? 4;
         $registrationFee = (float) ($pricing?->registration_fee ?? 0);
 
         return view('student.registration.create', compact(
-            'colleges',
+            'entitiesByType',
             'openCycles',
-            'collegeSubjects',
+            'entitySubjects',
             'minSubjects',
             'registrationFee'
         ));
@@ -54,9 +62,9 @@ class StudentRegistrationController extends Controller
         $registrationFee = (float) ($pricing?->registration_fee ?? 0);
 
         $data = $request->validate([
-            'college_id' => 'required|integer|exists:colleges,id',
+            'registrable_entity_id' => 'required|integer|exists:registrable_entities,id',
             'subjects' => 'required|array|min:' . $minSubjects,
-            'subjects.*' => 'required|integer|exists:subjects,id',
+            'subjects.*' => 'required|integer|exists:registrable_subjects,id',
         ]);
 
         $student = Auth::guard('student')->user();
@@ -66,9 +74,15 @@ class StudentRegistrationController extends Controller
 
         $subjectIds = array_values(array_unique($data['subjects']));
 
-        $college = College::findOrFail($data['college_id']);
+        $entity = RegistrableEntity::findOrFail($data['registrable_entity_id']);
+        if (!$entity->is_active) {
+            return back()
+                ->withInput()
+                ->withErrors(['registrable_entity_id' => 'هذا الخيار غير متاح للتسجيل حالياً.']);
+        }
+        $collegeId = $entity->entity_type === 'college' ? $entity->entity_id : null;
 
-        $cycle = EnrollmentCycle::where('college_id', $college->id)
+        $cycle = EnrollmentCycle::where('registrable_entity_id', $entity->id)
             ->where('status', 'open')
             ->orderByDesc('id')
             ->get()
@@ -77,34 +91,34 @@ class StudentRegistrationController extends Controller
         if (!$cycle) {
             return back()
                 ->withInput()
-                ->withErrors(['college_id' => 'لا توجد دورة تسجيل مفتوحة لهذه الكلية حالياً.']);
+                ->withErrors(['registrable_entity_id' => 'لا توجد دورة تسجيل مفتوحة لهذا الخيار حالياً.']);
         }
 
-        $allowedSubjectIds = $cycle->subjects()
+        $allowedSubjectIds = $cycle->registrableSubjects()
             ->wherePivot('is_open', true)
-            ->pluck('subjects.id')
+            ->pluck('registrable_subjects.id')
             ->toArray();
 
-        $subjects = Subject::whereIn('id', $subjectIds)
+        $subjects = RegistrableSubject::whereIn('id', $subjectIds)
             ->whereIn('id', $allowedSubjectIds)
-            ->where('college_id', $college->id)
             ->where('is_active', true)
             ->get();
 
         if ($subjects->count() !== count($subjectIds)) {
             return back()
                 ->withInput()
-                ->withErrors(['subjects' => 'يجب اختيار مواد صحيحة من نفس الكلية.']);
+                ->withErrors(['subjects' => 'يجب اختيار مواد صحيحة من نفس الخيار.']);
         }
 
-        $pricePerHour = (float) ($college->price_per_credit_hour ?? 0);
+        $pricePerHour = (float) ($entity->price_per_credit_hour ?? 0);
         $totalHours = (int) $subjects->sum('credit_hours');
         $subtotalAmount = $totalHours * $pricePerHour;
         $totalAmount = $subtotalAmount + $registrationFee;
 
         DB::transaction(function () use (
             $student,
-            $college,
+            $entity,
+            $collegeId,
             $cycle,
             $subjects,
             $pricePerHour,
@@ -115,7 +129,8 @@ class StudentRegistrationController extends Controller
         ) {
             $registration = Registration::create([
                 'student_id' => $student->id,
-                'college_id' => $college->id,
+                'college_id' => $collegeId,
+                'registrable_entity_id' => $entity->id,
                 'enrollment_cycle_id' => $cycle->id,
                 'status' => 'under_review',
                 'subjects_count' => $subjects->count(),
@@ -126,7 +141,7 @@ class StudentRegistrationController extends Controller
             ]);
 
             foreach ($subjects as $subject) {
-                $registration->subjects()->attach($subject->id, [
+                $registration->registrableSubjects()->attach($subject->id, [
                     'credit_hours' => $subject->credit_hours,
                     'price_per_hour' => $pricePerHour,
                     'total_price' => $subject->credit_hours * $pricePerHour,
@@ -146,7 +161,7 @@ class StudentRegistrationController extends Controller
             abort(403);
         }
 
-        $registrations = Registration::with(['college', 'subjects', 'enrollmentCycle', 'semester'])
+        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'enrollmentCycle', 'semester'])
             ->where('student_id', $student->id)
             ->latest()
             ->get();

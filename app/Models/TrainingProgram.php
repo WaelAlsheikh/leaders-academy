@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class TrainingProgram extends Model
@@ -36,5 +37,10 @@ class TrainingProgram extends Model
                 $model->slug = Str::slug($model->title) . '-' . uniqid();
             }
         });
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(TrainingProgramBranch::class)->orderBy('order');
     }
 }

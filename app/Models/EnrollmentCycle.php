@@ -13,6 +13,7 @@ class EnrollmentCycle extends Model
 {
     protected $fillable = [
         'college_id',
+        'registrable_entity_id',
         'name',
         'registration_starts_at',
         'registration_ends_at',
@@ -33,9 +34,21 @@ class EnrollmentCycle extends Model
         return $this->belongsTo(College::class);
     }
 
+    public function registrableEntity(): BelongsTo
+    {
+        return $this->belongsTo(RegistrableEntity::class);
+    }
+
     public function subjects(): BelongsToMany
     {
         return $this->belongsToMany(Subject::class, 'enrollment_cycle_subject')
+            ->withPivot(['is_open'])
+            ->withTimestamps();
+    }
+
+    public function registrableSubjects(): BelongsToMany
+    {
+        return $this->belongsToMany(RegistrableSubject::class, 'enrollment_cycle_registrable_subject')
             ->withPivot(['is_open'])
             ->withTimestamps();
     }

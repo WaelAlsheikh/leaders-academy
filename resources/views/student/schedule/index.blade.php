@@ -18,12 +18,12 @@
                 @foreach($schedule as $item)
                     @php
                         $section = $item['section'];
-                        $subjectName = $section->subject?->name ?? '—';
+                        $subjectName = $section->registrableSubject?->name ?? $section->subject?->name ?? '—';
                         $semesterName = $section->semester?->name ?? '—';
                         $dayName = $dayNames[$item['day_of_week']] ?? '';
                     @endphp
-                    <div style="border:1px solid #e5e5e5;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-                        <div style="background:#f8f8f8;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+                    <div class="student-schedule-item">
+                        <div class="student-schedule-head">
                             <div>
                                 <strong>{{ $subjectName }}</strong>
                                 <div style="font-size:12px;color:#666;">{{ $semesterName }}</div>
@@ -32,17 +32,21 @@
                                 {{ $dayName }} — {{ $item['starts_at'] }} إلى {{ $item['ends_at'] }}
                             </div>
                         </div>
-                        <div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+                        <div class="student-schedule-body">
                             <div>
                                 @if($item['is_now'])
                                     <span style="background:#10b981;color:#fff;padding:3px 8px;border-radius:10px;font-size:12px;">الآن</span>
                                 @endif
                             </div>
                             <div>
-                                @if($section->mode === 'online' && $section->zoom_url && $item['can_join'])
+                                @if($section->mode !== 'online')
+                                    <span style="color:#999;font-size:12px;">المحاضرة حضورية</span>
+                                @elseif(!$section->zoom_url)
+                                    <span style="color:#999;font-size:12px;">لا يوجد رابط للمحاضرة بعد</span>
+                                @elseif($item['can_join'])
                                     <a href="{{ $section->zoom_url }}" target="_blank" class="btn btn-primary">دخول المحاضرة</a>
                                 @else
-                                    <span style="color:#999;font-size:12px;">الرابط غير متاح الآن</span>
+                                    <span style="color:#999;font-size:12px;">يتاح الرابط قبل 5 دقائق من الموعد</span>
                                 @endif
                             </div>
                         </div>

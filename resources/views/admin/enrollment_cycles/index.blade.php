@@ -19,11 +19,13 @@
             @csrf
             <div class="row">
                 <div class="col-md-3">
-                    <label>الكلية</label>
-                    <select name="college_id" class="form-control" required>
+                    <label>كيان التسجيل</label>
+                    <select name="registrable_entity_id" class="form-control" required>
                         <option value="">اختر</option>
-                        @foreach($colleges as $college)
-                            <option value="{{ $college->id }}">{{ $college->title }}</option>
+                        @foreach($registrableEntities as $entity)
+                            <option value="{{ $entity->id }}">
+                                [{{ $entity->entity_type }}] {{ $entity->display_title }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -50,6 +52,7 @@
                 <thead>
                     <tr>
                         <th>الكلية</th>
+                        <th>النوع</th>
                         <th>الدورة</th>
                         <th>الحالة</th>
                         <th>الفصل</th>
@@ -60,7 +63,8 @@
                 <tbody>
                     @foreach($cycles as $cycle)
                         <tr>
-                            <td>{{ $cycle->college?->title }}</td>
+                            <td>{{ $cycle->registrableEntity?->display_title }}</td>
+                            <td>{{ $cycle->registrableEntity?->entity_type }}</td>
                             <td>{{ $cycle->name }}</td>
                             <td>{{ $cycle->status }}</td>
                             <td>
@@ -89,7 +93,7 @@
                     @endforeach
                     @if($cycles->isEmpty())
                         <tr>
-                            <td colspan="6" class="text-center">لا توجد دورات</td>
+                            <td colspan="7" class="text-center">لا توجد دورات</td>
                         </tr>
                     @endif
                 </tbody>

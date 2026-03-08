@@ -10,6 +10,7 @@ class Registration extends Model
     protected $fillable = [
         'student_id',
         'college_id',
+        'registrable_entity_id',
         'enrollment_cycle_id',
         'semester_id',
         'status',
@@ -30,6 +31,11 @@ class Registration extends Model
         return $this->belongsTo(College::class);
     }
 
+    public function registrableEntity()
+    {
+        return $this->belongsTo(RegistrableEntity::class);
+    }
+
     public function enrollmentCycle()
     {
         return $this->belongsTo(EnrollmentCycle::class);
@@ -44,5 +50,12 @@ class Registration extends Model
     {
         return $this->belongsToMany(Subject::class, 'registration_subject')
             ->withPivot(['credit_hours', 'price_per_hour', 'total_price']);
+    }
+
+    public function registrableSubjects()
+    {
+        return $this->belongsToMany(RegistrableSubject::class, 'registration_registrable_subject')
+            ->withPivot(['credit_hours', 'price_per_hour', 'total_price'])
+            ->withTimestamps();
     }
 }

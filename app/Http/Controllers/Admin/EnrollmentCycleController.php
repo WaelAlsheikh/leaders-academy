@@ -3,38 +3,49 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\College;
 use App\Models\ClassSection;
 use App\Models\EnrollmentCycle;
 use App\Models\Registration;
+use App\Models\RegistrableEntity;
+use App\Models\RegistrableSubject;
 use App\Models\Semester;
-use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class EnrollmentCycleController extends Controller
 {
     public function index()
     {
-        $cycles = EnrollmentCycle::with(['college', 'semester'])->latest()->get();
-        $colleges = College::orderBy('title')->get();
+        RegistrableEntity::syncFromSources();
 
-        return view('admin.enrollment_cycles.index', compact('cycles', 'colleges'));
+        $cycles = EnrollmentCycle::with(['college', 'semester', 'registrableEntity'])->latest()->get();
+        $registrableEntities = RegistrableEntity::query()
+            ->where('is_active', true)
+            ->orderBy('entity_type')
+            ->orderBy('title_snapshot')
+            ->get();
+
+        return view('admin.enrollment_cycles.index', compact('cycles', 'registrableEntities'));
     }
 
     public function store(Request $request)
     {
+        RegistrableEntity::syncFromSources();
+
         $data = $request->validate([
-            'college_id' => 'required|integer|exists:colleges,id',
+            'registrable_entity_id' => 'required|integer|exists:registrable_entities,id',
             'name' => 'required|string|max:255',
             'registration_starts_at' => 'nullable|date',
             'registration_ends_at' => 'nullable|date|after_or_equal:registration_starts_at',
         ]);
 
+        $entity = RegistrableEntity::findOrFail($data['registrable_entity_id']);
+        $collegeId = $entity->entity_type === 'college' ? $entity->entity_id : null;
+
         EnrollmentCycle::create([
-            'college_id' => $data['college_id'],
+            'college_id' => $collegeId,
+            'registrable_entity_id' => $data['registrable_entity_id'],
             'name' => $data['name'],
             'registration_starts_at' => $data['registration_starts_at'] ?? null,
             'registration_ends_at' => $data['registration_ends_at'] ?? null,
@@ -48,20 +59,20 @@ class EnrollmentCycleController extends Controller
 
     public function show(Request $request, EnrollmentCycle $cycle)
     {
-        $cycle->load(['college', 'subjects', 'semester']);
+        $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects']);
 
-        $subjects = Subject::where('college_id', $cycle->college_id)
+        $subjects = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
             ->orderBy('name')
             ->get();
 
         $subjectStats = Registration::query()
             ->where('enrollment_cycle_id', $cycle->id)
-            ->select('registration_subject.subject_id', DB::raw('COUNT(DISTINCT registrations.id) as registrations_count'))
-            ->join('registration_subject', 'registrations.id', '=', 'registration_subject.registration_id')
-            ->groupBy('registration_subject.subject_id')
-            ->pluck('registrations_count', 'subject_id');
+            ->select('registration_registrable_subject.registrable_subject_id', DB::raw('COUNT(DISTINCT registrations.id) as registrations_count'))
+            ->join('registration_registrable_subject', 'registrations.id', '=', 'registration_registrable_subject.registration_id')
+            ->groupBy('registration_registrable_subject.registrable_subject_id')
+            ->pluck('registrations_count', 'registrable_subject_id');
 
-        $registrationsQuery = Registration::with(['student', 'subjects'])
+        $registrationsQuery = Registration::with(['student', 'registrableSubjects'])
             ->where('enrollment_cycle_id', $cycle->id);
 
         $filterStatus = $request->get('status');
@@ -71,8 +82,8 @@ class EnrollmentCycleController extends Controller
 
         $filterSubjectId = $request->get('subject_id');
         if ($filterSubjectId) {
-            $registrationsQuery->whereHas('subjects', function ($q) use ($filterSubjectId) {
-                $q->where('subjects.id', $filterSubjectId);
+            $registrationsQuery->whereHas('registrableSubjects', function ($q) use ($filterSubjectId) {
+                $q->where('registrable_subjects.id', $filterSubjectId);
             });
         }
 
@@ -117,12 +128,12 @@ class EnrollmentCycleController extends Controller
     {
         $data = $request->validate([
             'subjects' => 'array',
-            'subjects.*' => 'integer|exists:subjects,id',
+            'subjects.*' => 'integer|exists:registrable_subjects,id',
         ]);
 
         $subjectIds = $data['subjects'] ?? [];
 
-        $validSubjectIds = Subject::where('college_id', $cycle->college_id)
+        $validSubjectIds = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
             ->whereIn('id', $subjectIds)
             ->pluck('id')
             ->toArray();
@@ -132,23 +143,23 @@ class EnrollmentCycleController extends Controller
             $syncData[$subjectId] = ['is_open' => true];
         }
 
-        $cycle->subjects()->sync($syncData);
+        $cycle->registrableSubjects()->sync($syncData);
 
         return back()->with('success', 'تم تحديث المواد المتاحة للدورة');
     }
 
     public function open(EnrollmentCycle $cycle)
     {
-        $otherOpen = EnrollmentCycle::where('college_id', $cycle->college_id)
+        $otherOpen = EnrollmentCycle::where('registrable_entity_id', $cycle->registrable_entity_id)
             ->where('id', '!=', $cycle->id)
             ->where('status', 'open')
             ->exists();
 
         if ($otherOpen) {
-            return back()->withErrors(['status' => 'يوجد دورة تسجيل مفتوحة لهذه الكلية بالفعل']);
+            return back()->withErrors(['status' => 'يوجد دورة تسجيل مفتوحة لهذا الكيان بالفعل']);
         }
 
-        if ($cycle->subjects()->count() === 0) {
+        if ($cycle->registrableSubjects()->count() === 0) {
             return back()->withErrors(['status' => 'يجب تحديد مواد للدورة قبل فتح التسجيل']);
         }
 
@@ -170,7 +181,7 @@ class EnrollmentCycleController extends Controller
             return back()->withErrors(['status' => 'يجب إغلاق التسجيل قبل الاعتماد']);
         }
 
-        if ($cycle->subjects()->count() === 0) {
+        if ($cycle->registrableSubjects()->count() === 0) {
             return back()->withErrors(['status' => 'لا يمكن اعتماد دورة بدون مواد']);
         }
 
@@ -189,36 +200,40 @@ class EnrollmentCycleController extends Controller
             return back()->withErrors(['status' => 'هذا التسجيل لا ينتمي لهذه الدورة']);
         }
 
-        if ($cycle->semester) {
-            return back()->withErrors(['status' => 'لا يمكن تعديل حالة التسجيل بعد بدء الفصل']);
-        }
-
         $data = $request->validate([
             'status' => 'required|in:under_review,accepted,rejected',
         ]);
 
-        $registration->update([
-            'status' => $data['status'],
-        ]);
+        DB::transaction(function () use ($cycle, $registration, $data) {
+            $registration->update([
+                'status' => $data['status'],
+            ]);
+
+            $this->syncRegistrationWithSemester($cycle, $registration);
+        });
 
         return back()->with('success', 'تم تحديث الحالة');
     }
 
     public function bulkUpdateRegistrationStatus(Request $request, EnrollmentCycle $cycle)
     {
-        if ($cycle->semester) {
-            return back()->withErrors(['status' => 'لا يمكن تعديل حالة التسجيل بعد بدء الفصل']);
-        }
-
         $data = $request->validate([
             'registration_ids' => 'required|array',
             'registration_ids.*' => 'integer',
             'status' => 'required|in:under_review,accepted,rejected',
         ]);
 
-        Registration::where('enrollment_cycle_id', $cycle->id)
+        $registrations = Registration::with('registrableSubjects')
+            ->where('enrollment_cycle_id', $cycle->id)
             ->whereIn('id', $data['registration_ids'])
-            ->update(['status' => $data['status']]);
+            ->get();
+
+        DB::transaction(function () use ($cycle, $registrations, $data) {
+            foreach ($registrations as $registration) {
+                $registration->update(['status' => $data['status']]);
+                $this->syncRegistrationWithSemester($cycle, $registration);
+            }
+        });
 
         return back()->with('success', 'تم تحديث الحالات المحددة');
     }
@@ -253,15 +268,20 @@ class EnrollmentCycleController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                $subjectIds = $cycle->subjects()->wherePivot('is_open', true)->pluck('subjects.id')->toArray();
+                $subjectIds = $cycle->registrableSubjects()->wherePivot('is_open', true)->pluck('registrable_subjects.id')->toArray();
                 if (count($subjectIds) === 0) {
                     throw new \RuntimeException('لا توجد مواد معتمدة لبدء الفصل');
                 }
                 $syncData = [];
                 foreach ($subjectIds as $subjectId) {
-                    $syncData[$subjectId] = ['is_active' => true, 'registered_count' => 0];
+                    $legacySubjectId = RegistrableSubject::where('id', $subjectId)->value('legacy_subject_id');
+                    $syncData[$subjectId] = [
+                        'is_active' => true,
+                        'registered_count' => 0,
+                        'subject_id' => $legacySubjectId,
+                    ];
                 }
-                $semester->subjects()->sync($syncData);
+                $semester->registrableSubjects()->sync($syncData);
 
                 Registration::where('enrollment_cycle_id', $cycle->id)
                     ->where('status', 'accepted')
@@ -269,13 +289,15 @@ class EnrollmentCycleController extends Controller
 
                 $sectionMap = [];
                 foreach ($subjectIds as $subjectId) {
+                    $legacySubjectId = RegistrableSubject::where('id', $subjectId)->value('legacy_subject_id');
                     $section = ClassSection::firstOrCreate(
                         [
                             'semester_id' => $semester->id,
-                            'subject_id' => $subjectId,
+                            'registrable_subject_id' => $subjectId,
                             'name' => 'A',
                         ],
                         [
+                            'subject_id' => $legacySubjectId,
                             'mode' => 'online',
                             'zoom_url' => null,
                         ]
@@ -283,13 +305,13 @@ class EnrollmentCycleController extends Controller
                     $sectionMap[$subjectId] = $section;
                 }
 
-                $registrations = Registration::with('subjects')
+                $registrations = Registration::with('registrableSubjects')
                     ->where('enrollment_cycle_id', $cycle->id)
                     ->where('status', 'accepted')
                     ->get();
 
                 foreach ($registrations as $registration) {
-                    foreach ($registration->subjects as $subject) {
+                    foreach ($registration->registrableSubjects as $subject) {
                         if (!isset($sectionMap[$subject->id])) {
                             continue;
                         }
@@ -306,5 +328,89 @@ class EnrollmentCycleController extends Controller
         }
 
         return back()->with('success', 'تم بدء الفصل بنجاح');
+    }
+
+    private function syncRegistrationWithSemester(EnrollmentCycle $cycle, Registration $registration): void
+    {
+        if (!$cycle->semester) {
+            return;
+        }
+
+        $semester = $cycle->semester;
+        $registration->loadMissing('registrableSubjects');
+
+        if ($registration->status === 'accepted') {
+            $registration->update(['semester_id' => $semester->id]);
+
+            foreach ($registration->registrableSubjects as $subject) {
+                $alreadyAssigned = ClassSection::query()
+                    ->where('semester_id', $semester->id)
+                    ->where('registrable_subject_id', $subject->id)
+                    ->whereHas('students', function ($query) use ($registration) {
+                        $query->where('students.id', $registration->student_id);
+                    })
+                    ->exists();
+
+                if ($alreadyAssigned) {
+                    continue;
+                }
+
+                $targetSection = ClassSection::query()
+                    ->where('semester_id', $semester->id)
+                    ->where('registrable_subject_id', $subject->id)
+                    ->withCount('students')
+                    ->orderBy('students_count')
+                    ->orderBy('id')
+                    ->first();
+
+                if (!$targetSection) {
+                    $legacySubjectId = RegistrableSubject::where('id', $subject->id)->value('legacy_subject_id');
+                    $targetSection = ClassSection::create([
+                        'semester_id' => $semester->id,
+                        'subject_id' => $legacySubjectId,
+                        'registrable_subject_id' => $subject->id,
+                        'name' => 'A',
+                        'mode' => 'online',
+                        'zoom_url' => null,
+                        'notes' => null,
+                    ]);
+                }
+
+                $targetSection->students()->syncWithoutDetaching([
+                    $registration->student_id => ['status' => 'active'],
+                ]);
+            }
+
+            return;
+        }
+
+        if ($registration->semester_id === $semester->id) {
+            $registration->update(['semester_id' => null]);
+        }
+
+        foreach ($registration->registrableSubjects as $subject) {
+            $hasOtherAcceptedRegistration = Registration::query()
+                ->where('id', '!=', $registration->id)
+                ->where('student_id', $registration->student_id)
+                ->where('semester_id', $semester->id)
+                ->where('status', 'accepted')
+                ->whereHas('registrableSubjects', function ($query) use ($subject) {
+                    $query->where('registrable_subjects.id', $subject->id);
+                })
+                ->exists();
+
+            if ($hasOtherAcceptedRegistration) {
+                continue;
+            }
+
+            $sections = ClassSection::query()
+                ->where('semester_id', $semester->id)
+                ->where('registrable_subject_id', $subject->id)
+                ->get();
+
+            foreach ($sections as $section) {
+                $section->students()->detach($registration->student_id);
+            }
+        }
     }
 }

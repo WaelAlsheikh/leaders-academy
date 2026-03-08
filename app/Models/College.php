@@ -26,6 +26,13 @@ class College extends Model
                 $model->slug = Str::slug($model->title);
             }
         });
+
+        static::deleted(function ($model) {
+            RegistrableEntity::query()
+                ->where('entity_type', 'college')
+                ->where('entity_id', $model->id)
+                ->delete();
+        });
     }
 
     public function subjects()

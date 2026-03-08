@@ -12,6 +12,7 @@ class ClassSection extends Model
     protected $fillable = [
         'semester_id',
         'subject_id',
+        'registrable_subject_id',
         'name',
         'mode',
         'zoom_url',
@@ -26,6 +27,11 @@ class ClassSection extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function registrableSubject(): BelongsTo
+    {
+        return $this->belongsTo(RegistrableSubject::class, 'registrable_subject_id');
     }
 
     public function meetings(): HasMany

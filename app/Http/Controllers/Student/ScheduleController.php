@@ -17,23 +17,24 @@ class ScheduleController extends Controller
 
         $sections = $student->sections()
             ->wherePivot('status', 'active')
-            ->with(['subject', 'semester', 'meetings'])
+            ->with(['subject', 'registrableSubject', 'semester', 'meetings'])
             ->get();
 
-        $now = Carbon::now();
+        $timezone = config('app.timezone', 'UTC');
+        $now = Carbon::now($timezone);
         $startOfWeek = $now->copy()->startOfWeek(Carbon::SUNDAY);
 
         $schedule = [];
         foreach ($sections as $section) {
             foreach ($section->meetings as $meeting) {
                 $meetingDate = $startOfWeek->copy()->addDays((int) $meeting->day_of_week);
-                $startDateTime = Carbon::parse($meetingDate->toDateString() . ' ' . $meeting->starts_at);
-                $endDateTime = Carbon::parse($meetingDate->toDateString() . ' ' . $meeting->ends_at);
+                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $meetingDate->toDateString() . ' ' . $meeting->starts_at, $timezone);
+                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $meetingDate->toDateString() . ' ' . $meeting->ends_at, $timezone);
 
-                if ($meeting->start_date && $meetingDate->lt($meeting->start_date)) {
+                if ($meeting->start_date && $meetingDate->lt(Carbon::parse($meeting->start_date, $timezone))) {
                     continue;
                 }
-                if ($meeting->end_date && $meetingDate->gt($meeting->end_date)) {
+                if ($meeting->end_date && $meetingDate->gt(Carbon::parse($meeting->end_date, $timezone))) {
                     continue;
                 }
 

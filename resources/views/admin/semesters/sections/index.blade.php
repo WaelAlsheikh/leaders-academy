@@ -20,7 +20,7 @@
             <div class="row">
                 <div class="col-md-4">
                     <label>المادة</label>
-                    <select name="subject_id" class="form-control" required>
+                    <select name="registrable_subject_id" class="form-control" required>
                         <option value="">اختر</option>
                         @foreach($subjects as $subject)
                             <option value="{{ $subject->id }}">{{ $subject->name }}</option>
@@ -60,13 +60,14 @@
                         <th>الشعبة</th>
                         <th>الطريقة</th>
                         <th>Zoom</th>
+                        <th>عدد الطلاب</th>
                         <th>إجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($semester->classSections as $section)
                         <tr>
-                            <td>{{ $section->subject?->name }}</td>
+                            <td>{{ $section->registrableSubject?->name ?? $section->subject?->name }}</td>
                             <td>{{ $section->name }}</td>
                             <td>{{ $section->mode === 'online' ? 'أونلاين' : 'حضوري' }}</td>
                             <td>
@@ -76,19 +77,14 @@
                                     —
                                 @endif
                             </td>
+                            <td>{{ $section->students->count() }}</td>
                             <td>
                                 <a href="{{ route('admin.sections.meetings.index', $section) }}" class="btn btn-xs btn-primary">
-                                    إدارة الجلسات
+                                    إدارة الجلسات والطلاب
                                 </a>
-                                <form method="POST" action="{{ route('admin.sections.update', $section) }}" style="display:inline-block;">
-                                    @csrf
-                                    @method('PUT')
-                                    <input type="hidden" name="name" value="{{ $section->name }}">
-                                    <input type="hidden" name="mode" value="{{ $section->mode }}">
-                                    <input type="hidden" name="zoom_url" value="{{ $section->zoom_url }}">
-                                    <input type="hidden" name="notes" value="{{ $section->notes }}">
-                                    <button type="submit" class="btn btn-xs btn-default">تحديث سريع</button>
-                                </form>
+                                <button type="button" class="btn btn-xs btn-default" data-toggle="collapse" data-target="#edit-section-{{ $section->id }}">
+                                    تعديل
+                                </button>
                                 <form method="POST" action="{{ route('admin.sections.destroy', $section) }}" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
@@ -96,10 +92,42 @@
                                 </form>
                             </td>
                         </tr>
+                        <tr id="edit-section-{{ $section->id }}" class="collapse">
+                            <td colspan="6" style="background:#f9f9f9;">
+                                <form method="POST" action="{{ route('admin.sections.update', $section) }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <label>اسم الشعبة</label>
+                                            <input type="text" name="name" class="form-control" value="{{ $section->name }}" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label>طريقة الحضور</label>
+                                            <select name="mode" class="form-control" required>
+                                                <option value="online" @selected($section->mode === 'online')>أونلاين</option>
+                                                <option value="in_person" @selected($section->mode === 'in_person')>حضوري</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>رابط Zoom</label>
+                                            <input type="url" name="zoom_url" class="form-control" value="{{ $section->zoom_url }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label>ملاحظات</label>
+                                            <input type="text" name="notes" class="form-control" value="{{ $section->notes }}">
+                                        </div>
+                                        <div class="col-md-1" style="margin-top:24px;">
+                                            <button type="submit" class="btn btn-sm btn-success">حفظ</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
                     @endforeach
                     @if($semester->classSections->isEmpty())
                         <tr>
-                            <td colspan="5" class="text-center">لا توجد شعب</td>
+                            <td colspan="6" class="text-center">لا توجد شعب</td>
                         </tr>
                     @endif
                 </tbody>

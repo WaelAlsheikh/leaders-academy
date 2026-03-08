@@ -136,6 +136,7 @@
 <script>
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
+    const dropdownToggles = document.querySelectorAll('#nav-menu .dropdown-toggle');
 
     if (hamburger) {
         hamburger.addEventListener('click', () => {
@@ -143,6 +144,23 @@
             navMenu.classList.toggle('active');
         });
     }
+
+    dropdownToggles.forEach((toggle) => {
+        toggle.addEventListener('click', (e) => {
+            if (window.innerWidth > 768) return;
+            e.preventDefault();
+            const parent = toggle.closest('.dropdown');
+            if (!parent) return;
+
+            document.querySelectorAll('#nav-menu .dropdown.open').forEach((openDropdown) => {
+                if (openDropdown !== parent) {
+                    openDropdown.classList.remove('open');
+                }
+            });
+
+            parent.classList.toggle('open');
+        });
+    });
 </script>
 
 @stack('scripts')
