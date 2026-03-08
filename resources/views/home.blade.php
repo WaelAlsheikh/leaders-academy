@@ -141,7 +141,7 @@
             @foreach($trainingPrograms as $program)
               <div class="swiper-slide" role="group">
                 <div class="program-card-wrapper">
-                  <div class="card program-card" onclick="location.href='{{ route('programs.show', $program->slug ?? $program->id) }}'">
+                  <div class="card program-card" onclick="location.href='{{ route('training.show', $program->slug ?? $program->id) }}'">
                     <div class="card-media">
                       @php
                         $progImage = !empty($program->image) ? asset('storage/' . $program->image) : asset('assets/images/placeholder.png');
@@ -155,7 +155,7 @@
                         {{ Str::limit(strip_tags($program->short_description ?? $program->long_description ?? ''), 140) }}
                       </p>
                       <div class="program-actions" style="text-align:left;">
-                        <a href="{{ route('programs.show', $program->slug ?? $program->id) }}" class="btn-secondary">
+                        <a href="{{ route('training.show', $program->slug ?? $program->id) }}" class="btn-secondary">
                           {{ __('messages.Read More') }}
                         </a>
                       </div>
