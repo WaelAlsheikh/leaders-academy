@@ -45,6 +45,11 @@
                         </div>
 
                         <div class="student-record-body">
+                            @if($registration->enrollmentCycle?->is_archived)
+                                <div class="student-archived-notice" style="margin-bottom:12px;">
+                                    هذه الدورة أغلقت وتمت أرشفتها، وتبقى بياناتها محفوظة للعرض فقط.
+                                </div>
+                            @endif
                             <div style="margin-bottom:12px;">
                                 <strong>الدورة:</strong>
                                 {{ $registration->enrollmentCycle?->name ?? '—' }}

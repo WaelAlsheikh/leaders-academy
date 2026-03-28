@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-2">
                     <label>الكود</label>
-                    <input type="text" name="code" class="form-control">
+                    <input type="text" name="code" class="form-control" @if($entity->entity_type === 'college') required @endif>
                 </div>
                 <div class="col-md-2">
                     <label>الساعات</label>
@@ -57,11 +57,11 @@
                         <td>{{ $subject->credit_hours }}</td>
                         <td>{{ $subject->is_active ? 'نعم' : 'لا' }}</td>
                         <td>
-                            <form method="POST" action="{{ route('admin.registrable_subjects.update', $subject) }}" style="display:inline-flex;gap:6px;align-items:center;">
+                            <form method="POST" action="{{ route('admin.registrable_subjects.update', $subject) }}" style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;">
                                 @csrf
                                 @method('PUT')
                                 <input type="text" name="name" value="{{ $subject->name }}" class="form-control input-sm" style="width:130px;" required>
-                                <input type="text" name="code" value="{{ $subject->code }}" class="form-control input-sm" style="width:90px;">
+                                <input type="text" name="code" value="{{ $subject->code }}" class="form-control input-sm" style="width:90px;" @if($entity->entity_type === 'college') required @endif>
                                 <input type="number" min="1" name="credit_hours" value="{{ $subject->credit_hours }}" class="form-control input-sm" style="width:80px;" required>
                                 <label style="display:flex;align-items:center;gap:3px;margin:0;">
                                     <input type="checkbox" name="is_active" value="1" @checked($subject->is_active)>
@@ -87,4 +87,3 @@
     </div>
 </div>
 @endsection
-

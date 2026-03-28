@@ -25,6 +25,7 @@ class DashboardController extends Controller
         ];
 
         $latestRegistrations = collect();
+        $hasArchivedCycles = false;
 
         if ($hasRegistrations) {
             $stats = [
@@ -34,8 +35,12 @@ class DashboardController extends Controller
                 'semester_linked_registrations' => (clone $registrationsQuery)->whereNotNull('semester_id')->count(),
             ];
 
+            $hasArchivedCycles = (clone $registrationsQuery)
+                ->whereHas('enrollmentCycle.archiveRecord')
+                ->exists();
+
             $latestRegistrations = (clone $registrationsQuery)
-                ->with(['college', 'registrableEntity'])
+                ->with(['college', 'registrableEntity', 'enrollmentCycle.archiveRecord'])
                 ->latest('created_at')
                 ->limit(3)
                 ->get();
@@ -45,7 +50,8 @@ class DashboardController extends Controller
             'student',
             'hasRegistrations',
             'stats',
-            'latestRegistrations'
+            'latestRegistrations',
+            'hasArchivedCycles'
         ));
     }
 }

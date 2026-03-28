@@ -17,6 +17,7 @@
         <h4>تفاصيل الشعبة</h4>
         <div>الفصل: {{ $section->semester?->name }}</div>
         <div>المادة: {{ $section->registrableSubject?->name ?? $section->subject?->name }}</div>
+        <div>الأستاذ: {{ $section->doctor?->full_name ?? '—' }}</div>
         <div>الشعبة: {{ $section->name }}</div>
         <div>طريقة الحضور: {{ $section->mode === 'online' ? 'أونلاين' : 'حضوري' }}</div>
         <div>

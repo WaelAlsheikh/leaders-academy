@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ArchivedEnrollmentCycle;
 use App\Models\ClassSection;
 use App\Models\EnrollmentCycle;
 use App\Models\Registration;
@@ -19,7 +20,10 @@ class EnrollmentCycleController extends Controller
     {
         RegistrableEntity::syncFromSources();
 
-        $cycles = EnrollmentCycle::with(['college', 'semester', 'registrableEntity'])->latest()->get();
+        $cycles = EnrollmentCycle::activeListing()
+            ->with(['college', 'semester', 'registrableEntity'])
+            ->latest()
+            ->get();
         $registrableEntities = RegistrableEntity::query()
             ->where('is_active', true)
             ->orderBy('entity_type')
@@ -27,6 +31,16 @@ class EnrollmentCycleController extends Controller
             ->get();
 
         return view('admin.enrollment_cycles.index', compact('cycles', 'registrableEntities'));
+    }
+
+    public function archivedIndex()
+    {
+        $cycles = EnrollmentCycle::archivedListing()
+            ->with(['college', 'semester', 'registrableEntity', 'archiveRecord.archivedBy'])
+            ->latest()
+            ->get();
+
+        return view('admin.enrollment_cycles.archived_index', compact('cycles'));
     }
 
     public function store(Request $request)
@@ -59,59 +73,28 @@ class EnrollmentCycleController extends Controller
 
     public function show(Request $request, EnrollmentCycle $cycle)
     {
-        $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects']);
-
-        $subjects = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
-            ->orderBy('name')
-            ->get();
-
-        $subjectStats = Registration::query()
-            ->where('enrollment_cycle_id', $cycle->id)
-            ->select('registration_registrable_subject.registrable_subject_id', DB::raw('COUNT(DISTINCT registrations.id) as registrations_count'))
-            ->join('registration_registrable_subject', 'registrations.id', '=', 'registration_registrable_subject.registration_id')
-            ->groupBy('registration_registrable_subject.registrable_subject_id')
-            ->pluck('registrations_count', 'registrable_subject_id');
-
-        $registrationsQuery = Registration::with(['student', 'registrableSubjects'])
-            ->where('enrollment_cycle_id', $cycle->id);
-
-        $filterStatus = $request->get('status');
-        if ($filterStatus && in_array($filterStatus, ['under_review', 'accepted', 'rejected'], true)) {
-            $registrationsQuery->where('status', $filterStatus);
+        if ($cycle->is_archived) {
+            return redirect()->route('admin.archived_enrollment_cycles.show', $cycle);
         }
 
-        $filterSubjectId = $request->get('subject_id');
-        if ($filterSubjectId) {
-            $registrationsQuery->whereHas('registrableSubjects', function ($q) use ($filterSubjectId) {
-                $q->where('registrable_subjects.id', $filterSubjectId);
-            });
+        return view('admin.enrollment_cycles.show', $this->buildCycleViewData($request, $cycle, false));
+    }
+
+    public function archivedShow(Request $request, EnrollmentCycle $cycle)
+    {
+        if (!$cycle->is_archived) {
+            return redirect()->route('admin.enrollment_cycles.show', $cycle);
         }
 
-        $registrations = $registrationsQuery->latest()->get();
-
-        $statusCounts = Registration::where('enrollment_cycle_id', $cycle->id)
-            ->select('status', DB::raw('COUNT(*) as count'))
-            ->groupBy('status')
-            ->pluck('count', 'status');
-
-        $semesters = Semester::where('enrollment_cycle_id', $cycle->id)
-            ->orderByDesc('start_date')
-            ->get();
-
-        return view('admin.enrollment_cycles.show', compact(
-            'cycle',
-            'subjects',
-            'subjectStats',
-            'registrations',
-            'statusCounts',
-            'filterStatus',
-            'filterSubjectId',
-            'semesters'
-        ));
+        return view('admin.enrollment_cycles.archived_show', $this->buildCycleViewData($request, $cycle, true));
     }
 
     public function update(Request $request, EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'registration_starts_at' => 'nullable|date',
@@ -126,6 +109,10 @@ class EnrollmentCycleController extends Controller
 
     public function updateSubjects(Request $request, EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         $data = $request->validate([
             'subjects' => 'array',
             'subjects.*' => 'integer|exists:registrable_subjects,id',
@@ -150,9 +137,14 @@ class EnrollmentCycleController extends Controller
 
     public function open(EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         $otherOpen = EnrollmentCycle::where('registrable_entity_id', $cycle->registrable_entity_id)
             ->where('id', '!=', $cycle->id)
             ->where('status', 'open')
+            ->doesntHave('archiveRecord')
             ->exists();
 
         if ($otherOpen) {
@@ -170,6 +162,10 @@ class EnrollmentCycleController extends Controller
 
     public function close(EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         $cycle->update(['status' => 'closed']);
 
         return back()->with('success', 'تم إغلاق التسجيل');
@@ -177,6 +173,10 @@ class EnrollmentCycleController extends Controller
 
     public function approve(EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         if ($cycle->status !== 'closed') {
             return back()->withErrors(['status' => 'يجب إغلاق التسجيل قبل الاعتماد']);
         }
@@ -196,6 +196,10 @@ class EnrollmentCycleController extends Controller
 
     public function updateRegistrationStatus(Request $request, EnrollmentCycle $cycle, Registration $registration)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         if ($registration->enrollment_cycle_id !== $cycle->id) {
             return back()->withErrors(['status' => 'هذا التسجيل لا ينتمي لهذه الدورة']);
         }
@@ -217,6 +221,10 @@ class EnrollmentCycleController extends Controller
 
     public function bulkUpdateRegistrationStatus(Request $request, EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         $data = $request->validate([
             'registration_ids' => 'required|array',
             'registration_ids.*' => 'integer',
@@ -240,6 +248,10 @@ class EnrollmentCycleController extends Controller
 
     public function startSemester(Request $request, EnrollmentCycle $cycle)
     {
+        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+            return $guardResponse;
+        }
+
         if ($cycle->status !== 'approved') {
             return back()->withErrors(['status' => 'يجب اعتماد الدورة قبل بدء الفصل']);
         }
@@ -287,23 +299,7 @@ class EnrollmentCycleController extends Controller
                     ->where('status', 'accepted')
                     ->update(['semester_id' => $semester->id]);
 
-                $sectionMap = [];
-                foreach ($subjectIds as $subjectId) {
-                    $legacySubjectId = RegistrableSubject::where('id', $subjectId)->value('legacy_subject_id');
-                    $section = ClassSection::firstOrCreate(
-                        [
-                            'semester_id' => $semester->id,
-                            'registrable_subject_id' => $subjectId,
-                            'name' => 'A',
-                        ],
-                        [
-                            'subject_id' => $legacySubjectId,
-                            'mode' => 'online',
-                            'zoom_url' => null,
-                        ]
-                    );
-                    $sectionMap[$subjectId] = $section;
-                }
+                $this->provisionSemesterSections($cycle, $semester, $subjectIds);
 
                 $registrations = Registration::with('registrableSubjects')
                     ->where('enrollment_cycle_id', $cycle->id)
@@ -312,10 +308,11 @@ class EnrollmentCycleController extends Controller
 
                 foreach ($registrations as $registration) {
                     foreach ($registration->registrableSubjects as $subject) {
-                        if (!isset($sectionMap[$subject->id])) {
+                        $targetSection = $this->resolveTargetSection($semester, $subject->id);
+                        if (!$targetSection) {
                             continue;
                         }
-                        $sectionMap[$subject->id]
+                        $targetSection
                             ->students()
                             ->syncWithoutDetaching([
                                 $registration->student_id => ['status' => 'active'],
@@ -328,6 +325,71 @@ class EnrollmentCycleController extends Controller
         }
 
         return back()->with('success', 'تم بدء الفصل بنجاح');
+    }
+
+    public function archive(EnrollmentCycle $cycle)
+    {
+        if ($cycle->is_archived) {
+            return back()->withErrors(['status' => 'هذه الدورة مؤرشفة بالفعل']);
+        }
+
+        ArchivedEnrollmentCycle::create([
+            'enrollment_cycle_id' => $cycle->id,
+            'archived_by' => Auth::id(),
+            'archived_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('admin.enrollment_cycles.index')
+            ->with('success', 'تمت أرشفة الدورة بنجاح');
+    }
+
+    public function restore(EnrollmentCycle $cycle)
+    {
+        if (!$cycle->is_archived) {
+            return redirect()
+                ->route('admin.enrollment_cycles.show', $cycle)
+                ->withErrors(['status' => 'هذه الدورة غير مؤرشفة']);
+        }
+
+        DB::transaction(function () use ($cycle) {
+            $archiveRecord = $cycle->archiveRecord;
+
+            $hasOpenConflict = $cycle->status === 'open'
+                && EnrollmentCycle::activeListing()
+                    ->where('registrable_entity_id', $cycle->registrable_entity_id)
+                    ->where('id', '!=', $cycle->id)
+                    ->where('status', 'open')
+                    ->exists();
+
+            if ($hasOpenConflict) {
+                $cycle->update(['status' => 'closed']);
+            }
+
+            $archiveRecord?->delete();
+        });
+
+        return redirect()
+            ->route('admin.enrollment_cycles.index')
+            ->with('success', 'تمت استعادة الدورة بنجاح');
+    }
+
+    public function destroyArchived(EnrollmentCycle $cycle)
+    {
+        if (!$cycle->is_archived) {
+            return redirect()
+                ->route('admin.enrollment_cycles.show', $cycle)
+                ->withErrors(['status' => 'لا يمكن حذف دورة غير مؤرشفة من هذه الصفحة']);
+        }
+
+        DB::transaction(function () use ($cycle) {
+            Registration::where('enrollment_cycle_id', $cycle->id)->delete();
+            $cycle->delete();
+        });
+
+        return redirect()
+            ->route('admin.archived_enrollment_cycles.index')
+            ->with('success', 'تم حذف الدورة نهائياً مع جميع توابعها');
     }
 
     private function syncRegistrationWithSemester(EnrollmentCycle $cycle, Registration $registration): void
@@ -355,13 +417,7 @@ class EnrollmentCycleController extends Controller
                     continue;
                 }
 
-                $targetSection = ClassSection::query()
-                    ->where('semester_id', $semester->id)
-                    ->where('registrable_subject_id', $subject->id)
-                    ->withCount('students')
-                    ->orderBy('students_count')
-                    ->orderBy('id')
-                    ->first();
+                $targetSection = $this->resolveTargetSection($semester, $subject->id);
 
                 if (!$targetSection) {
                     $legacySubjectId = RegistrableSubject::where('id', $subject->id)->value('legacy_subject_id');
@@ -369,6 +425,7 @@ class EnrollmentCycleController extends Controller
                         'semester_id' => $semester->id,
                         'subject_id' => $legacySubjectId,
                         'registrable_subject_id' => $subject->id,
+                        'doctor_id' => null,
                         'name' => 'A',
                         'mode' => 'online',
                         'zoom_url' => null,
@@ -412,5 +469,156 @@ class EnrollmentCycleController extends Controller
                 $section->students()->detach($registration->student_id);
             }
         }
+    }
+
+    private function provisionSemesterSections(EnrollmentCycle $cycle, Semester $semester, array $subjectIds): void
+    {
+        $previousSemester = Semester::query()
+            ->where('id', '!=', $semester->id)
+            ->whereHas('enrollmentCycle', function ($query) use ($cycle) {
+                $query->where('registrable_entity_id', $cycle->registrable_entity_id);
+            })
+            ->with(['classSections.meetings'])
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->first();
+
+        foreach ($subjectIds as $subjectId) {
+            $legacySubjectId = RegistrableSubject::where('id', $subjectId)->value('legacy_subject_id');
+
+            $sourceSections = collect();
+            if ($previousSemester) {
+                $sourceSections = $previousSemester->classSections
+                    ->where('registrable_subject_id', $subjectId)
+                    ->values();
+            }
+
+            if ($sourceSections->isEmpty()) {
+                ClassSection::firstOrCreate(
+                    [
+                        'semester_id' => $semester->id,
+                        'registrable_subject_id' => $subjectId,
+                        'name' => 'A',
+                    ],
+                    [
+                        'subject_id' => $legacySubjectId,
+                        'doctor_id' => null,
+                        'mode' => 'online',
+                        'zoom_url' => null,
+                        'notes' => null,
+                    ]
+                );
+
+                continue;
+            }
+
+            foreach ($sourceSections as $sourceSection) {
+                $newSection = ClassSection::firstOrCreate(
+                    [
+                        'semester_id' => $semester->id,
+                        'registrable_subject_id' => $subjectId,
+                        'name' => $sourceSection->name,
+                    ],
+                    [
+                        'subject_id' => $legacySubjectId,
+                        'doctor_id' => $sourceSection->doctor_id,
+                        'mode' => $sourceSection->mode,
+                        'zoom_url' => $sourceSection->zoom_url,
+                        'notes' => $sourceSection->notes,
+                    ]
+                );
+
+                foreach ($sourceSection->meetings as $meeting) {
+                    $newSection->meetings()->updateOrCreate(
+                        [
+                            'day_of_week' => $meeting->day_of_week,
+                            'starts_at' => $meeting->starts_at,
+                        ],
+                        [
+                            'ends_at' => $meeting->ends_at,
+                            'start_date' => $meeting->start_date,
+                            'end_date' => $meeting->end_date,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    private function resolveTargetSection(Semester $semester, int $registrableSubjectId): ?ClassSection
+    {
+        return ClassSection::query()
+            ->where('semester_id', $semester->id)
+            ->where('registrable_subject_id', $registrableSubjectId)
+            ->withCount(['students', 'meetings'])
+            ->orderByDesc('meetings_count')
+            ->orderBy('students_count')
+            ->orderBy('id')
+            ->first();
+    }
+
+    private function buildCycleViewData(Request $request, EnrollmentCycle $cycle, bool $readonly): array
+    {
+        $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects', 'archiveRecord.archivedBy']);
+
+        $subjects = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
+            ->orderBy('name')
+            ->get();
+
+        $subjectStats = Registration::query()
+            ->where('enrollment_cycle_id', $cycle->id)
+            ->select('registration_registrable_subject.registrable_subject_id', DB::raw('COUNT(DISTINCT registrations.id) as registrations_count'))
+            ->join('registration_registrable_subject', 'registrations.id', '=', 'registration_registrable_subject.registration_id')
+            ->groupBy('registration_registrable_subject.registrable_subject_id')
+            ->pluck('registrations_count', 'registrable_subject_id');
+
+        $registrationsQuery = Registration::with(['student', 'registrableSubjects', 'semester', 'enrollmentCycle.archiveRecord'])
+            ->where('enrollment_cycle_id', $cycle->id);
+
+        $filterStatus = $request->get('status');
+        if ($filterStatus && in_array($filterStatus, ['under_review', 'accepted', 'rejected'], true)) {
+            $registrationsQuery->where('status', $filterStatus);
+        }
+
+        $filterSubjectId = $request->get('subject_id');
+        if ($filterSubjectId) {
+            $registrationsQuery->whereHas('registrableSubjects', function ($q) use ($filterSubjectId) {
+                $q->where('registrable_subjects.id', $filterSubjectId);
+            });
+        }
+
+        $registrations = $registrationsQuery->latest()->get();
+
+        $statusCounts = Registration::where('enrollment_cycle_id', $cycle->id)
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $semesters = Semester::where('enrollment_cycle_id', $cycle->id)
+            ->orderByDesc('start_date')
+            ->get();
+
+        return compact(
+            'cycle',
+            'subjects',
+            'subjectStats',
+            'registrations',
+            'statusCounts',
+            'filterStatus',
+            'filterSubjectId',
+            'semesters',
+            'readonly'
+        );
+    }
+
+    private function ensureCycleIsEditable(EnrollmentCycle $cycle)
+    {
+        if (!$cycle->is_archived) {
+            return null;
+        }
+
+        return redirect()
+            ->route('admin.archived_enrollment_cycles.show', $cycle)
+            ->withErrors(['status' => 'هذه الدورة مؤرشفة وتُعرض للقراءة فقط']);
     }
 }

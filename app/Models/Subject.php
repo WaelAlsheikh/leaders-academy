@@ -42,4 +42,9 @@ class Subject extends Model
     {
         return $this->hasMany(RegistrableSubject::class, 'legacy_subject_id');
     }
+
+    public function registrableSubject()
+    {
+        return $this->hasOne(RegistrableSubject::class, 'legacy_subject_id');
+    }
 }

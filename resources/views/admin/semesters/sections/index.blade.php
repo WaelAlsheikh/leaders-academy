@@ -27,18 +27,27 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label>الأستاذ</label>
+                    <select name="doctor_id" class="form-control">
+                        <option value="">اختر الأستاذ</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->id }}">{{ $doctor->full_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-md-2">
                     <label>اسم الشعبة</label>
                     <input type="text" name="name" class="form-control" required>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label>طريقة الحضور</label>
                     <select name="mode" class="form-control" required>
                         <option value="online">أونلاين</option>
                         <option value="in_person">حضوري</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label>رابط Zoom</label>
                     <input type="url" name="zoom_url" class="form-control">
                 </div>
@@ -59,6 +68,7 @@
                         <th>المادة</th>
                         <th>الشعبة</th>
                         <th>الطريقة</th>
+                        <th>الأستاذ</th>
                         <th>Zoom</th>
                         <th>عدد الطلاب</th>
                         <th>إجراءات</th>
@@ -70,6 +80,7 @@
                             <td>{{ $section->registrableSubject?->name ?? $section->subject?->name }}</td>
                             <td>{{ $section->name }}</td>
                             <td>{{ $section->mode === 'online' ? 'أونلاين' : 'حضوري' }}</td>
+                            <td>{{ $section->doctor?->full_name ?? '—' }}</td>
                             <td>
                                 @if($section->zoom_url)
                                     <a href="{{ $section->zoom_url }}" target="_blank">فتح</a>
@@ -93,7 +104,7 @@
                             </td>
                         </tr>
                         <tr id="edit-section-{{ $section->id }}" class="collapse">
-                            <td colspan="6" style="background:#f9f9f9;">
+                            <td colspan="7" style="background:#f9f9f9;">
                                 <form method="POST" action="{{ route('admin.sections.update', $section) }}">
                                     @csrf
                                     @method('PUT')
@@ -102,6 +113,15 @@
                                             <label>اسم الشعبة</label>
                                             <input type="text" name="name" class="form-control" value="{{ $section->name }}" required>
                                         </div>
+                                        <div class="col-md-3">
+                                            <label>الأستاذ</label>
+                                            <select name="doctor_id" class="form-control">
+                                                <option value="">اختر الأستاذ</option>
+                                                @foreach($doctors as $doctor)
+                                                    <option value="{{ $doctor->id }}" @selected($section->doctor_id === $doctor->id)>{{ $doctor->full_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         <div class="col-md-2">
                                             <label>طريقة الحضور</label>
                                             <select name="mode" class="form-control" required>
@@ -109,11 +129,11 @@
                                                 <option value="in_person" @selected($section->mode === 'in_person')>حضوري</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-2">
                                             <label>رابط Zoom</label>
                                             <input type="url" name="zoom_url" class="form-control" value="{{ $section->zoom_url }}">
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <label>ملاحظات</label>
                                             <input type="text" name="notes" class="form-control" value="{{ $section->notes }}">
                                         </div>
@@ -127,7 +147,7 @@
                     @endforeach
                     @if($semester->classSections->isEmpty())
                         <tr>
-                            <td colspan="6" class="text-center">لا توجد شعب</td>
+                            <td colspan="7" class="text-center">لا توجد شعب</td>
                         </tr>
                     @endif
                 </tbody>

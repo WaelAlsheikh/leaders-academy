@@ -10,6 +10,12 @@
         <div class="card" style="padding:30px;max-width:1000px;margin:auto;">
             <h3 style="margin-bottom:20px;">📅 جدول الطالب</h3>
 
+            @if(!empty($hasArchivedCycles))
+                <div class="student-archived-notice" style="margin-bottom:16px;">
+                    هذه الدورة أغلقت وتمت أرشفتها، وتبقى بياناتها محفوظة للعرض فقط.
+                </div>
+            @endif
+
             @if(empty($schedule))
                 <div style="padding:20px;border:1px dashed #ccc;border-radius:6px;text-align:center;">
                     لا يوجد جدول حاليا
@@ -21,12 +27,17 @@
                         $subjectName = $section->registrableSubject?->name ?? $section->subject?->name ?? '—';
                         $semesterName = $section->semester?->name ?? '—';
                         $dayName = $dayNames[$item['day_of_week']] ?? '';
+                        $doctorName = $section->doctor?->full_name ?? 'لم يُحدَّد المدرّس بعد';
                     @endphp
                     <div class="student-schedule-item">
                         <div class="student-schedule-head">
                             <div>
                                 <strong>{{ $subjectName }}</strong>
                                 <div style="font-size:12px;color:#666;">{{ $semesterName }}</div>
+                                <div style="font-size:12px;color:#666;">المدرّس: {{ $doctorName }}</div>
+                                @if($section->semester?->enrollmentCycle?->is_archived)
+                                    <div class="student-schedule-archived-label">الدورة مؤرشفة</div>
+                                @endif
                             </div>
                             <div style="font-size:12px;">
                                 {{ $dayName }} — {{ $item['starts_at'] }} إلى {{ $item['ends_at'] }}

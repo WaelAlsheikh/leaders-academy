@@ -46,6 +46,12 @@
                 <p class="student-dashboard-subtitle">ملخص أكاديمي سريع لحسابك</p>
             </section>
 
+            @if($hasArchivedCycles)
+                <section class="student-archived-notice">
+                    هذه الدورة أغلقت وتمت أرشفتها، وتبقى بياناتها محفوظة للعرض فقط.
+                </section>
+            @endif
+
             <section class="student-dashboard-kpis">
                 <div class="student-dashboard-kpi-card">
                     <span class="student-dashboard-kpi-label">إجمالي التسجيلات</span>
@@ -98,6 +104,9 @@
                                         <span class="student-dashboard-status {{ $statusInfo['class'] }}">
                                             {{ $statusInfo['label'] }}
                                         </span>
+                                        @if($registration->enrollmentCycle?->is_archived)
+                                            <div class="student-dashboard-archived-label">الدورة مؤرشفة</div>
+                                        @endif
                                     </td>
                                     <td>{{ optional($registration->created_at)->format('Y-m-d') }}</td>
                                 </tr>

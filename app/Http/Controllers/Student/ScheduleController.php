@@ -17,7 +17,7 @@ class ScheduleController extends Controller
 
         $sections = $student->sections()
             ->wherePivot('status', 'active')
-            ->with(['subject', 'registrableSubject', 'semester', 'meetings'])
+            ->with(['subject', 'registrableSubject', 'doctor', 'semester.enrollmentCycle.archiveRecord', 'meetings'])
             ->get();
 
         $timezone = config('app.timezone', 'UTC');
@@ -25,7 +25,12 @@ class ScheduleController extends Controller
         $startOfWeek = $now->copy()->startOfWeek(Carbon::SUNDAY);
 
         $schedule = [];
+        $hasArchivedCycles = false;
         foreach ($sections as $section) {
+            if ($section->semester?->enrollmentCycle?->is_archived) {
+                $hasArchivedCycles = true;
+            }
+
             foreach ($section->meetings as $meeting) {
                 $meetingDate = $startOfWeek->copy()->addDays((int) $meeting->day_of_week);
                 $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $meetingDate->toDateString() . ' ' . $meeting->starts_at, $timezone);
@@ -70,6 +75,6 @@ class ScheduleController extends Controller
             6 => 'السبت',
         ];
 
-        return view('student.schedule.index', compact('schedule', 'dayNames'));
+        return view('student.schedule.index', compact('schedule', 'dayNames', 'hasArchivedCycles'));
     }
 }

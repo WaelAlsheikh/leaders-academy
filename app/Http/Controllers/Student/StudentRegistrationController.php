@@ -20,6 +20,7 @@ class StudentRegistrationController extends Controller
         $openCycles = EnrollmentCycle::with(['registrableEntity', 'registrableSubjects' => function ($q) {
             $q->wherePivot('is_open', true);
         }])
+            ->activeListing()
             ->where('status', 'open')
             ->get()
             ->filter(fn ($cycle) => $cycle->isOpenNow())
@@ -83,6 +84,7 @@ class StudentRegistrationController extends Controller
         $collegeId = $entity->entity_type === 'college' ? $entity->entity_id : null;
 
         $cycle = EnrollmentCycle::where('registrable_entity_id', $entity->id)
+            ->activeListing()
             ->where('status', 'open')
             ->orderByDesc('id')
             ->get()
@@ -161,7 +163,7 @@ class StudentRegistrationController extends Controller
             abort(403);
         }
 
-        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'enrollmentCycle', 'semester'])
+        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'enrollmentCycle.archiveRecord', 'semester'])
             ->where('student_id', $student->id)
             ->latest()
             ->get();

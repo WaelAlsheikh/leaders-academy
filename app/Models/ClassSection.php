@@ -13,6 +13,7 @@ class ClassSection extends Model
         'semester_id',
         'subject_id',
         'registrable_subject_id',
+        'doctor_id',
         'name',
         'mode',
         'zoom_url',
@@ -32,6 +33,11 @@ class ClassSection extends Model
     public function registrableSubject(): BelongsTo
     {
         return $this->belongsTo(RegistrableSubject::class, 'registrable_subject_id');
+    }
+
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctor::class);
     }
 
     public function meetings(): HasMany

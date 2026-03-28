@@ -5,10 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\College;
 use App\Models\Subject;
+use App\Services\CollegeSubjectSyncService;
 use Illuminate\Http\Request;
 
 class CollegeSubjectController extends Controller
 {
+    public function __construct(
+        private readonly CollegeSubjectSyncService $collegeSubjectSyncService
+    ) {
+    }
+
     // عرض جميع الكليات
     public function colleges()
     {
@@ -19,7 +25,16 @@ class CollegeSubjectController extends Controller
     // عرض مواد كلية محددة
     public function subjects(College $college)
     {
-        $subjects = $college->subjects()->orderBy('name')->get();
+        $this->collegeSubjectSyncService->ensureCollegeEntity($college);
+        $college->subjects()->get()->each(function (Subject $subject) {
+            $this->collegeSubjectSyncService->syncLegacySubject($subject);
+        });
+
+        $subjects = $college->subjects()
+            ->with('registrableSubject')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.subjects.index', compact('college', 'subjects'));
     }
 
@@ -30,12 +45,14 @@ class CollegeSubjectController extends Controller
             'name' => 'required|string',
             'code' => 'required|string|unique:subjects,code',
             'credit_hours' => 'required|integer|min:1',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        $college->subjects()->create([
+        $this->collegeSubjectSyncService->createLegacyAndSync($college, [
             'name' => $request->name,
             'code' => $request->code,
             'credit_hours' => $request->credit_hours,
+            'is_active' => $request->boolean('is_active', true),
         ]);
 
         return back()->with('success', 'تمت إضافة المادة بنجاح');
@@ -46,10 +63,17 @@ class CollegeSubjectController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
+            'code' => 'required|string|unique:subjects,code,' . $subject->id,
             'credit_hours' => 'required|integer|min:1',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        $subject->update($request->only('name', 'credit_hours'));
+        $this->collegeSubjectSyncService->updateLegacyAndSync($subject, [
+            'name' => $request->name,
+            'code' => $request->code,
+            'credit_hours' => $request->credit_hours,
+            'is_active' => $request->boolean('is_active'),
+        ]);
 
         return back()->with('success', 'تم تحديث المادة');
     }
@@ -57,7 +81,22 @@ class CollegeSubjectController extends Controller
     // حذف مادة
     public function destroy(Subject $subject)
     {
-        $subject->delete();
+        $registrableSubject = $subject->registrableSubject;
+
+        if (
+            $registrableSubject
+            && (
+                $registrableSubject->enrollmentCycles()->exists()
+                || $registrableSubject->registrations()->exists()
+                || $registrableSubject->classSections()->exists()
+                || $registrableSubject->semesters()->exists()
+            )
+        ) {
+            return back()->withErrors(['status' => 'لا يمكن حذف مادة مرتبطة بتسجيلات أو دورات أو شعب']);
+        }
+
+        $this->collegeSubjectSyncService->deleteLegacyAndSyncedSubject($subject);
+
         return back()->with('success', 'تم حذف المادة');
     }
 }

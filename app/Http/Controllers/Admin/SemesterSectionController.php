@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassSection;
+use App\Models\Doctor;
 use App\Models\Registration;
 use App\Models\RegistrableSubject;
 use App\Models\Student;
@@ -15,16 +16,29 @@ class SemesterSectionController extends Controller
 {
     public function index(Semester $semester)
     {
-        $semester->load(['college', 'registrableSubjects', 'classSections.registrableSubject', 'classSections.students']);
-        $subjects = $semester->registrableSubjects()->orderBy('name')->get();
+        $semester->load([
+            'college',
+            'registrableSubjects',
+            'classSections.registrableSubject',
+            'classSections.doctor',
+            'classSections.students',
+        ]);
+        $subjects = $semester->registrableSubjects()
+            ->orderBy('name')
+            ->get();
+        $doctors = Doctor::query()
+            ->where('is_active', true)
+            ->orderBy('full_name')
+            ->get();
 
-        return view('admin.semesters.sections.index', compact('semester', 'subjects'));
+        return view('admin.semesters.sections.index', compact('semester', 'subjects', 'doctors'));
     }
 
     public function store(Request $request, Semester $semester)
     {
         $data = $request->validate([
             'registrable_subject_id' => 'required|integer',
+            'doctor_id' => 'nullable|integer|exists:doctors,id',
             'name' => 'required|string|max:50',
             'mode' => 'required|in:online,in_person',
             'zoom_url' => 'nullable|url',
@@ -55,6 +69,7 @@ class SemesterSectionController extends Controller
     public function update(Request $request, ClassSection $section)
     {
         $data = $request->validate([
+            'doctor_id' => 'nullable|integer|exists:doctors,id',
             'name' => 'required|string|max:50',
             'mode' => 'required|in:online,in_person',
             'zoom_url' => 'nullable|url',
@@ -83,7 +98,7 @@ class SemesterSectionController extends Controller
 
     public function meetings(ClassSection $section)
     {
-        $section->load(['semester', 'registrableSubject', 'meetings', 'students']);
+        $section->load(['semester', 'registrableSubject', 'doctor', 'meetings', 'students']);
 
         $eligibleStudents = Student::query()
             ->whereIn('id', function ($query) use ($section) {
@@ -180,7 +195,7 @@ class SemesterSectionController extends Controller
 
     private function attachAcceptedStudentsForSection(ClassSection $section): void
     {
-        $studentIds = Registration::query()
+        $eligibleStudentIds = Registration::query()
             ->where('semester_id', $section->semester_id)
             ->where('status', 'accepted')
             ->whereHas('registrableSubjects', function ($query) use ($section) {
@@ -191,6 +206,25 @@ class SemesterSectionController extends Controller
             ->values()
             ->all();
 
+        if (empty($eligibleStudentIds)) {
+            return;
+        }
+
+        $alreadyAssignedStudentIds = ClassSection::query()
+            ->where('semester_id', $section->semester_id)
+            ->where('registrable_subject_id', $section->registrable_subject_id)
+            ->where('id', '!=', $section->id)
+            ->whereHas('students')
+            ->with('students:id')
+            ->get()
+            ->flatMap(function (ClassSection $otherSection) {
+                return $otherSection->students->pluck('id');
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        $studentIds = array_values(array_diff($eligibleStudentIds, $alreadyAssignedStudentIds));
         if (empty($studentIds)) {
             return;
         }

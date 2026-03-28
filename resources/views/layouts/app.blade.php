@@ -26,8 +26,10 @@
     </style>
 </head>
 
-<body>
+<body class="@yield('body-class')">
 
+@hasSection('hide-navbar')
+@else
 <header class="navbar">
     <div class="container">
         <div class="logo">
@@ -113,8 +115,9 @@
         </nav>
     </div>
 </header>
+@endif
 
-<main class="site-content">
+<main class="site-content @yield('site-content-class')">
     @yield('content')
 </main>
 

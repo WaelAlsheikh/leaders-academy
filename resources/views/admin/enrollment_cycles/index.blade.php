@@ -13,6 +13,12 @@
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
+    <div style="margin-bottom:15px;">
+        <a href="{{ route('admin.archived_enrollment_cycles.index') }}" class="btn btn-default">
+            الدورات المؤرشفة
+        </a>
+    </div>
+
     <div class="panel panel-bordered" style="padding:15px;">
         <h4>إنشاء دورة تسجيل جديدة</h4>
         <form method="POST" action="{{ route('admin.enrollment_cycles.store') }}">
@@ -88,6 +94,12 @@
                                         إدارة الشعب
                                     </a>
                                 @endif
+                                <form method="POST" action="{{ route('admin.enrollment_cycles.archive', $cycle) }}" style="display:inline-block;" onsubmit="return confirm('هل أنت متأكد من أرشفة هذه الدورة؟ ستنتقل إلى صفحة الدورات المؤرشفة مع الاحتفاظ بكل بياناتها.');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        أرشفة
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

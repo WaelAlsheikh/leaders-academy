@@ -7,11 +7,18 @@ use App\Models\College;
 use App\Models\ProgramBranch;
 use App\Models\RegistrableEntity;
 use App\Models\RegistrableSubject;
+use App\Models\Subject;
 use App\Models\TrainingProgramBranch;
+use App\Services\CollegeSubjectSyncService;
 use Illuminate\Http\Request;
 
 class RegistrableController extends Controller
 {
+    public function __construct(
+        private readonly CollegeSubjectSyncService $collegeSubjectSyncService
+    ) {
+    }
+
     public function index()
     {
         RegistrableEntity::syncFromSources();
@@ -52,19 +59,46 @@ class RegistrableController extends Controller
 
     public function subjects(RegistrableEntity $entity)
     {
-        $subjects = $entity->subjects()->orderBy('name')->get();
+        if ($entity->entity_type === 'college') {
+            $college = College::find($entity->entity_id);
+            $college?->subjects()->get()->each(function (Subject $legacySubject) {
+                $this->collegeSubjectSyncService->syncLegacySubject($legacySubject);
+            });
+        }
+
+        $subjects = $entity->subjects()
+            ->orderBy('name')
+            ->get();
 
         return view('admin.registrables.subjects', compact('entity', 'subjects'));
     }
 
     public function storeSubject(Request $request, RegistrableEntity $entity)
     {
-        $data = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
             'credit_hours' => 'required|integer|min:1',
             'is_active' => 'nullable|boolean',
-        ]);
+        ];
+
+        if ($entity->entity_type === 'college') {
+            $rules['code'] = 'required|string|max:255|unique:subjects,code';
+        }
+
+        $data = $request->validate($rules);
+
+        if ($entity->entity_type === 'college') {
+            $college = College::findOrFail($entity->entity_id);
+            $this->collegeSubjectSyncService->createLegacyAndSync($college, [
+                'name' => $data['name'],
+                'code' => $data['code'],
+                'credit_hours' => $data['credit_hours'],
+                'is_active' => $request->boolean('is_active', true),
+            ]);
+
+            return back()->with('success', 'تمت إضافة المادة');
+        }
 
         RegistrableSubject::create([
             'registrable_entity_id' => $entity->id,
@@ -79,12 +113,30 @@ class RegistrableController extends Controller
 
     public function updateSubject(Request $request, RegistrableSubject $subject)
     {
-        $data = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
             'credit_hours' => 'required|integer|min:1',
             'is_active' => 'nullable|boolean',
-        ]);
+        ];
+
+        if ($subject->registrableEntity?->entity_type === 'college') {
+            $rules['code'] = 'required|string|max:255|unique:subjects,code,' . ($subject->legacy_subject_id ?? 'NULL');
+        }
+
+        $data = $request->validate($rules);
+
+        if ($subject->registrableEntity?->entity_type === 'college' && $subject->legacy_subject_id) {
+            $legacySubject = Subject::findOrFail($subject->legacy_subject_id);
+            $this->collegeSubjectSyncService->updateLegacyAndSync($legacySubject, [
+                'name' => $data['name'],
+                'code' => $data['code'],
+                'credit_hours' => $data['credit_hours'],
+                'is_active' => $request->boolean('is_active'),
+            ]);
+
+            return back()->with('success', 'تم تحديث المادة');
+        }
 
         $subject->update([
             'name' => $data['name'],
@@ -98,8 +150,21 @@ class RegistrableController extends Controller
 
     public function destroySubject(RegistrableSubject $subject)
     {
-        if ($subject->enrollmentCycles()->exists() || $subject->registrations()->exists()) {
-            return back()->withErrors(['status' => 'لا يمكن حذف مادة مرتبطة بتسجيلات أو دورات']);
+        if (
+            $subject->enrollmentCycles()->exists()
+            || $subject->registrations()->exists()
+            || $subject->classSections()->exists()
+            || $subject->semesters()->exists()
+        ) {
+            return back()->withErrors(['status' => 'لا يمكن حذف مادة مرتبطة بتسجيلات أو دورات أو شعب']);
+        }
+
+        if ($subject->registrableEntity?->entity_type === 'college' && $subject->legacy_subject_id) {
+            $legacySubject = Subject::find($subject->legacy_subject_id);
+            if ($legacySubject) {
+                $this->collegeSubjectSyncService->deleteLegacyAndSyncedSubject($legacySubject);
+                return back()->with('success', 'تم حذف المادة');
+            }
         }
 
         $subject->delete();

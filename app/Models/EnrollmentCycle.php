@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class EnrollmentCycle extends Model
 {
@@ -63,8 +64,36 @@ class EnrollmentCycle extends Model
         return $this->hasOne(Semester::class);
     }
 
+    public function archiveRecord(): HasOne
+    {
+        return $this->hasOne(ArchivedEnrollmentCycle::class);
+    }
+
+    public function scopeActiveListing(Builder $query): Builder
+    {
+        return $query->doesntHave('archiveRecord');
+    }
+
+    public function scopeArchivedListing(Builder $query): Builder
+    {
+        return $query->has('archiveRecord');
+    }
+
+    public function getIsArchivedAttribute(): bool
+    {
+        if ($this->relationLoaded('archiveRecord')) {
+            return $this->archiveRecord !== null;
+        }
+
+        return $this->archiveRecord()->exists();
+    }
+
     public function isOpenNow(): bool
     {
+        if ($this->is_archived) {
+            return false;
+        }
+
         if ($this->status !== 'open') {
             return false;
         }

@@ -27,6 +27,9 @@ use App\Http\Controllers\Admin\CollegeSubjectController;
 use App\Http\Controllers\Admin\EnrollmentCycleController;
 use App\Http\Controllers\Admin\RegistrableController;
 use App\Http\Controllers\Admin\SemesterSectionController;
+use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
+use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
+use App\Http\Controllers\Doctor\SectionController as DoctorSectionController;
 
 // Student
 use App\Http\Controllers\Student\AuthController as StudentAuthController;
@@ -151,10 +154,14 @@ Route::prefix('admin')
         // Enrollment Cycles
         Route::get('/enrollment-cycles', [EnrollmentCycleController::class, 'index'])
             ->name('admin.enrollment_cycles.index');
+        Route::get('/archived-enrollment-cycles', [EnrollmentCycleController::class, 'archivedIndex'])
+            ->name('admin.archived_enrollment_cycles.index');
         Route::post('/enrollment-cycles', [EnrollmentCycleController::class, 'store'])
             ->name('admin.enrollment_cycles.store');
         Route::get('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'show'])
             ->name('admin.enrollment_cycles.show');
+        Route::post('/enrollment-cycles/{cycle}/archive', [EnrollmentCycleController::class, 'archive'])
+            ->name('admin.enrollment_cycles.archive');
         Route::put('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'update'])
             ->name('admin.enrollment_cycles.update');
         Route::post('/enrollment-cycles/{cycle}/subjects', [EnrollmentCycleController::class, 'updateSubjects'])
@@ -173,6 +180,12 @@ Route::prefix('admin')
         Route::post('/enrollment-cycles/{cycle}/registrations/bulk-status',
             [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus']
         )->name('admin.enrollment_cycles.registrations.bulk_status');
+        Route::get('/archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'archivedShow'])
+            ->name('admin.archived_enrollment_cycles.show');
+        Route::post('/archived-enrollment-cycles/{cycle}/restore', [EnrollmentCycleController::class, 'restore'])
+            ->name('admin.archived_enrollment_cycles.restore');
+        Route::delete('/archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'destroyArchived'])
+            ->name('admin.archived_enrollment_cycles.destroy');
 
         Route::get('/semesters/{semester}/sections', [SemesterSectionController::class, 'index'])
             ->name('admin.semesters.sections.index');
@@ -211,8 +224,14 @@ Route::prefix('admin')
         Route::post('/doctors', [DoctorAdminController::class, 'store'])
             ->name('admin.doctors.store');
 
+        Route::put('/doctors/{doctor}', [DoctorAdminController::class, 'update'])
+            ->name('admin.doctors.update');
+
         Route::post('/doctors/{doctor}/toggle', [DoctorAdminController::class, 'toggle'])
             ->name('admin.doctors.toggle');
+
+        Route::post('/doctors/{doctor}/reset-password', [DoctorAdminController::class, 'resetPassword'])
+            ->name('admin.doctors.reset_password');
     });
 
 /*
@@ -298,6 +317,25 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::get('schedule', [ScheduleController::class, 'index'])
             ->name('schedule.index');
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Doctor Auth + Portal
+|--------------------------------------------------------------------------
+*/
+Route::prefix('doctor')->name('doctor.')->group(function () {
+    Route::middleware('guest:doctor')->group(function () {
+        Route::get('login', [DoctorAuthController::class, 'showLogin'])->name('login');
+        Route::post('login', [DoctorAuthController::class, 'login'])->name('login.submit');
+    });
+
+    Route::middleware('auth:doctor')->group(function () {
+        Route::post('logout', [DoctorAuthController::class, 'logout'])->name('logout');
+        Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('sections/{section}', [DoctorSectionController::class, 'show'])->name('sections.show');
+        Route::put('sections/{section}/next-link', [DoctorSectionController::class, 'updateNextLink'])->name('sections.next_link');
     });
 });
 

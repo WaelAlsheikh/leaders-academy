@@ -12,6 +12,7 @@ class RegistrableSubject extends Model
     protected $fillable = [
         'registrable_entity_id',
         'legacy_subject_id',
+        'doctor_id',
         'name',
         'code',
         'credit_hours',
@@ -30,6 +31,11 @@ class RegistrableSubject extends Model
     public function legacySubject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'legacy_subject_id');
+    }
+
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(Doctor::class);
     }
 
     public function enrollmentCycles(): BelongsToMany
@@ -58,4 +64,3 @@ class RegistrableSubject extends Model
         return $this->hasMany(ClassSection::class, 'registrable_subject_id');
     }
 }
-
