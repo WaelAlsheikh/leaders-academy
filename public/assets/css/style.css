@@ -1567,7 +1567,59 @@ body.doctor-shell .student-layout{
   .employee-management-panel,
   .employee-management-card{
     border-radius:16px;
+    border:1px solid rgba(13,92,134,.10);
+    background:linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
     box-shadow:0 10px 24px rgba(0,0,0,.05);
+  }
+
+  .employee-management-form-panel{
+    padding:20px;
+  }
+
+  .employee-management-form-title{
+    margin:0 0 18px;
+    color:var(--secondary-dark);
+    font-size:1.7rem;
+    font-weight:800;
+  }
+
+  .employee-form-grid > div{
+    margin-bottom:14px;
+  }
+
+  .employee-form-grid label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--secondary-dark);
+    font-weight:700;
+  }
+
+  .employee-form-grid .form-control{
+    min-height:46px;
+    border-radius:14px;
+    border:1px solid rgba(13,92,134,.16);
+    box-shadow:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .employee-form-grid textarea.form-control{
+    min-height:120px;
+    resize:vertical;
+  }
+
+  .employee-form-grid .form-control:focus{
+    border-color:rgba(13,92,134,.42);
+    box-shadow:0 0 0 4px rgba(13,92,134,.08);
+  }
+
+  .employee-form-field-wide{
+    margin-top:4px;
+  }
+
+  .employee-form-actions{
+    margin-top:8px;
+    display:flex;
+    justify-content:flex-start;
   }
 
   .employee-college-card-head{
@@ -1582,6 +1634,7 @@ body.doctor-shell .student-layout{
     flex-wrap:wrap;
     gap:8px;
     justify-content:flex-end;
+    align-items:center;
   }
 
   .employee-collapse-form{
@@ -1592,6 +1645,128 @@ body.doctor-shell .student-layout{
 
   .employee-subject-table{
     background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 24px rgba(13,92,134,.08);
+  }
+
+  .employee-subject-table thead th{
+    background:linear-gradient(135deg, rgba(13,92,134,.08) 0%, rgba(244,194,29,.18) 100%);
+    color:var(--secondary-dark);
+    border-bottom:1px solid rgba(13,92,134,.12);
+    font-weight:800;
+    padding:16px 14px;
+  }
+
+  .employee-subject-table tbody td{
+    vertical-align:middle;
+    padding:16px 14px;
+    border-color:rgba(13,92,134,.08);
+  }
+
+  .employee-table-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+
+  .employee-inline-form{
+    margin:0;
+  }
+
+  .employee-table-editor-cell{
+    background:linear-gradient(180deg, #f9fbfd 0%, #f5f8fc 100%);
+  }
+
+  .employee-action-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:42px;
+    padding:10px 18px;
+    border:none;
+    border-radius:14px;
+    font-weight:800;
+    text-decoration:none;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+    box-shadow:0 10px 22px rgba(13,92,134,.10);
+  }
+
+  .employee-action-btn:hover,
+  .employee-action-btn:focus{
+    text-decoration:none;
+    transform:translateY(-1px);
+  }
+
+  .employee-action-btn--submit{
+    margin-top:8px;
+  }
+
+  .employee-action-btn--sm{
+    min-height:38px;
+    padding:8px 14px;
+    font-size:.95rem;
+  }
+
+  .employee-action-btn--primary{
+    background:linear-gradient(135deg, #ffd84d 0%, var(--primary) 55%, var(--primary-strong) 100%);
+    color:var(--secondary-dark);
+  }
+
+  .employee-action-btn--primary:hover,
+  .employee-action-btn--primary:focus{
+    color:var(--secondary-dark);
+    box-shadow:0 14px 28px rgba(244,194,29,.24);
+  }
+
+  .employee-action-btn--edit{
+    background:linear-gradient(135deg, #e8f4fb 0%, #cfe8f7 100%);
+    color:var(--secondary-dark);
+    border:1px solid rgba(13,92,134,.12);
+  }
+
+  .employee-action-btn--edit:hover,
+  .employee-action-btn--edit:focus{
+    color:var(--secondary-dark);
+    box-shadow:0 12px 24px rgba(13,92,134,.16);
+  }
+
+  .employee-action-btn--success{
+    background:linear-gradient(135deg, #dff7ea 0%, #c3efd9 100%);
+    color:#0f6a45;
+    border:1px solid rgba(15,106,69,.10);
+  }
+
+  .employee-action-btn--success:hover,
+  .employee-action-btn--success:focus{
+    color:#0f6a45;
+    box-shadow:0 12px 24px rgba(15,106,69,.16);
+  }
+
+  .employee-action-btn--danger{
+    background:linear-gradient(135deg, #ffebe8 0%, #ffd9d3 100%);
+    color:#b23b30;
+    border:1px solid rgba(178,59,48,.16);
+  }
+
+  .employee-action-btn--danger:hover,
+  .employee-action-btn--danger:focus{
+    color:#932f26;
+    box-shadow:0 12px 24px rgba(178,59,48,.16);
+  }
+
+  .employee-action-btn--neutral{
+    background:#fff;
+    color:var(--secondary-dark);
+    border:1px solid rgba(13,92,134,.14);
+  }
+
+  .employee-action-btn--neutral:hover,
+  .employee-action-btn--neutral:focus{
+    color:var(--secondary-dark);
+    box-shadow:0 12px 24px rgba(13,92,134,.12);
   }
 
   @media (max-width:992px){
@@ -1608,6 +1783,10 @@ body.doctor-shell .student-layout{
     }
 
     .employee-college-card-actions{
+      justify-content:flex-start;
+    }
+
+    .employee-table-actions{
       justify-content:flex-start;
     }
   }

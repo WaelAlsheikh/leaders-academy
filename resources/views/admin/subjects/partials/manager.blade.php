@@ -6,7 +6,7 @@
             </h1>
             <p class="doctor-portal-meta">إدارة المواد التابعة لهذه الكلية من حيث الإضافة والتعديل والحذف.</p>
         </div>
-        <a href="{{ route($routeBase . '.colleges.index') }}" class="btn btn-default">العودة إلى الكليات</a>
+        <a href="{{ route($routeBase . '.colleges.index') }}" class="btn employee-action-btn employee-action-btn--neutral">العودة إلى الكليات</a>
     </div>
 
     @if(session('success'))
@@ -17,11 +17,11 @@
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ route($routeBase . '.subjects.store', $college) }}" class="panel panel-bordered employee-management-panel">
+    <form method="POST" action="{{ route($routeBase . '.subjects.store', $college) }}" class="panel panel-bordered employee-management-panel employee-management-form-panel">
         @csrf
         <div class="panel-body">
-            <h4>إضافة مادة جديدة</h4>
-            <div class="row">
+            <h4 class="employee-management-form-title">إضافة مادة جديدة</h4>
+            <div class="row employee-form-grid">
                 <div class="col-md-3">
                     <label>اسم المادة</label>
                     <input name="name" class="form-control" required>
@@ -41,7 +41,7 @@
                     </label>
                 </div>
             </div>
-            <button class="btn btn-success" style="margin-top:12px;">إضافة مادة</button>
+            <button class="btn employee-action-btn employee-action-btn--success employee-action-btn--submit">إضافة مادة</button>
         </div>
     </form>
 
@@ -62,23 +62,23 @@
                 <td>{{ $subject->code }}</td>
                 <td>{{ $subject->credit_hours }}</td>
                 <td>{{ $subject->is_active ? 'نعم' : 'لا' }}</td>
-                <td>
-                    <button type="button" class="btn btn-primary btn-sm" data-toggle="collapse" data-target="#edit-subject-{{ $subject->id }}">
+                <td class="employee-table-actions">
+                    <button type="button" class="btn employee-action-btn employee-action-btn--edit employee-action-btn--sm" data-toggle="collapse" data-target="#edit-subject-{{ $subject->id }}">
                         تعديل
                     </button>
-                    <form method="POST" action="{{ route($routeBase . '.subjects.destroy', $subject) }}" style="display:inline-block;" onsubmit="return confirm('هل تريد حذف هذه المادة؟');">
+                    <form method="POST" action="{{ route($routeBase . '.subjects.destroy', $subject) }}" class="employee-inline-form" onsubmit="return confirm('هل تريد حذف هذه المادة؟');">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-danger btn-sm">حذف</button>
+                        <button class="btn employee-action-btn employee-action-btn--danger employee-action-btn--sm">حذف</button>
                     </form>
                 </td>
             </tr>
             <tr id="edit-subject-{{ $subject->id }}" class="collapse">
-                <td colspan="5" style="background:#f9f9f9;">
+                <td colspan="5" class="employee-table-editor-cell">
                     <form method="POST" action="{{ route($routeBase . '.subjects.update', $subject) }}">
                         @csrf
                         @method('PUT')
-                        <div class="row">
+                        <div class="row employee-form-grid">
                             <div class="col-md-3">
                                 <label>اسم المادة</label>
                                 <input name="name" class="form-control" value="{{ $subject->name }}" required>
@@ -97,8 +97,8 @@
                                     <input type="checkbox" name="is_active" value="1" @checked($subject->is_active)>
                                 </div>
                             </div>
-                            <div class="col-md-2" style="margin-top:24px;">
-                                <button class="btn btn-success btn-sm">حفظ</button>
+                            <div class="col-md-12 employee-form-actions">
+                                <button class="btn employee-action-btn employee-action-btn--success employee-action-btn--sm">حفظ</button>
                             </div>
                         </div>
                     </form>

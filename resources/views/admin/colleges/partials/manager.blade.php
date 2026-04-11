@@ -16,11 +16,11 @@
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
-    <div class="panel panel-bordered employee-management-panel" style="padding:15px;">
-        <h4>إضافة كلية جديدة</h4>
+    <div class="panel panel-bordered employee-management-panel employee-management-form-panel">
+        <h4 class="employee-management-form-title">إضافة كلية جديدة</h4>
         <form method="POST" action="{{ route($routeBase . '.colleges.store') }}">
             @csrf
-            <div class="row">
+            <div class="row employee-form-grid">
                 <div class="col-md-4">
                     <label>اسم الكلية</label>
                     <input name="title" class="form-control" required>
@@ -33,12 +33,12 @@
                     <label>سعر الساعة المعتمدة</label>
                     <input name="price_per_credit_hour" type="number" min="0" step="0.01" class="form-control" value="0">
                 </div>
-                <div class="col-md-12" style="margin-top:12px;">
+                <div class="col-md-12 employee-form-field-wide">
                     <label>وصف تفصيلي</label>
-                    <textarea name="long_description" rows="3" class="form-control"></textarea>
+                    <textarea name="long_description" rows="3" class="form-control employee-rich-text"></textarea>
                 </div>
             </div>
-            <button class="btn btn-primary" style="margin-top:12px;">إضافة الكلية</button>
+            <button class="btn employee-action-btn employee-action-btn--primary employee-action-btn--submit">إضافة الكلية</button>
         </form>
     </div>
 
@@ -59,16 +59,16 @@
                                 @endif
                             </div>
                             <div class="employee-college-card-actions">
-                                <a href="{{ route($routeBase . '.colleges.subjects', $college) }}" class="btn btn-primary">
+                                <a href="{{ route($routeBase . '.colleges.subjects', $college) }}" class="btn employee-action-btn employee-action-btn--primary">
                                     إدارة المواد
                                 </a>
-                                <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#edit-college-{{ $college->id }}">
+                                <button type="button" class="btn employee-action-btn employee-action-btn--edit" data-toggle="collapse" data-target="#edit-college-{{ $college->id }}">
                                     تعديل
                                 </button>
-                                <form method="POST" action="{{ route($routeBase . '.colleges.destroy', $college) }}" onsubmit="return confirm('هل تريد حذف هذه الكلية؟');">
+                                <form method="POST" action="{{ route($routeBase . '.colleges.destroy', $college) }}" class="employee-inline-form" onsubmit="return confirm('هل تريد حذف هذه الكلية؟');">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-danger">حذف</button>
+                                    <button class="btn employee-action-btn employee-action-btn--danger">حذف</button>
                                 </form>
                             </div>
                         </div>
@@ -77,7 +77,7 @@
                             <form method="POST" action="{{ route($routeBase . '.colleges.update', $college) }}">
                                 @csrf
                                 @method('PUT')
-                                <div class="row">
+                                <div class="row employee-form-grid">
                                     <div class="col-md-4">
                                         <label>اسم الكلية</label>
                                         <input name="title" class="form-control" value="{{ $college->title }}" required>
@@ -90,12 +90,12 @@
                                         <label>سعر الساعة المعتمدة</label>
                                         <input name="price_per_credit_hour" type="number" min="0" step="0.01" class="form-control" value="{{ $college->price_per_credit_hour }}">
                                     </div>
-                                    <div class="col-md-12" style="margin-top:12px;">
+                                    <div class="col-md-12 employee-form-field-wide">
                                         <label>وصف تفصيلي</label>
-                                        <textarea name="long_description" rows="3" class="form-control">{{ $college->long_description }}</textarea>
+                                        <textarea name="long_description" rows="3" class="form-control employee-rich-text">{{ $college->long_description }}</textarea>
                                     </div>
-                                    <div class="col-md-2" style="margin-top:20px;">
-                                        <button class="btn btn-success">حفظ التعديلات</button>
+                                    <div class="col-md-12 employee-form-actions">
+                                        <button class="btn employee-action-btn employee-action-btn--success">حفظ التعديلات</button>
                                     </div>
                                 </div>
                             </form>
@@ -110,3 +110,79 @@
         @endforelse
     </div>
 </div>
+
+@if($portalContext === 'employee')
+    @once
+        @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.6/tinymce.min.js" referrerpolicy="origin"></script>
+            <script>
+                (function () {
+                    const selector = 'textarea.employee-rich-text';
+                    let editorCounter = 0;
+
+                    function ensureEditorId(element) {
+                        if (!element.id) {
+                            editorCounter += 1;
+                            element.id = `employee-rich-text-${editorCounter}`;
+                        }
+
+                        return element.id;
+                    }
+
+                    function initEditorFor(element) {
+                        if (typeof tinymce === 'undefined') {
+                            return;
+                        }
+
+                        const editorId = ensureEditorId(element);
+
+                        if (tinymce.get(editorId)) {
+                            return;
+                        }
+
+                        tinymce.init({
+                            selector: `#${editorId}`,
+                            menubar: false,
+                            branding: false,
+                            promotion: false,
+                            directionality: 'rtl',
+                            height: 260,
+                            plugins: 'lists link table code autoresize',
+                            toolbar: 'undo redo | blocks | bold italic underline | forecolor backcolor | alignright aligncenter alignleft | bullist numlist | link table | removeformat code',
+                            content_style: "body { font-family: Tajawal, sans-serif; font-size: 16px; line-height: 1.9; direction: rtl; text-align: right; } p { margin: 0 0 12px; }",
+                            setup: function (editor) {
+                                editor.on('change keyup undo redo', function () {
+                                    editor.save();
+                                });
+                            }
+                        });
+                    }
+
+                    function initVisibleEditors() {
+                        document.querySelectorAll(selector).forEach(function (textarea) {
+                            if (textarea.offsetParent !== null) {
+                                initEditorFor(textarea);
+                            }
+                        });
+                    }
+
+                    function initEmployeeRichText() {
+                        initVisibleEditors();
+                    }
+
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', initEmployeeRichText);
+                    } else {
+                        initEmployeeRichText();
+                    }
+
+                    document.addEventListener('shown.bs.collapse', function (event) {
+                        event.target.querySelectorAll(selector).forEach(function (textarea) {
+                            initEditorFor(textarea);
+                        });
+                    });
+                })();
+            </script>
+        @endpush
+    @endonce
+@endif
