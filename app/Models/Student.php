@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 
 class Student extends Authenticatable
@@ -61,6 +62,11 @@ public function scopeInactive($query)
         return $this->belongsToMany(ClassSection::class, 'student_sections', 'student_id', 'section_id')
             ->withPivot(['status'])
             ->withTimestamps();
+    }
+
+    public function liveSessionAttendances(): HasMany
+    {
+        return $this->hasMany(LiveSessionAttendance::class);
     }
 
 }

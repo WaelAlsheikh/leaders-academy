@@ -45,6 +45,11 @@ class ClassSection extends Model
         return $this->hasMany(SectionMeeting::class, 'section_id');
     }
 
+    public function liveSessions(): HasMany
+    {
+        return $this->hasMany(LiveSession::class, 'section_id');
+    }
+
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Student::class, 'student_sections', 'section_id', 'student_id')

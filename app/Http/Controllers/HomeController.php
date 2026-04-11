@@ -26,7 +26,10 @@ class HomeController extends Controller
     // الصفحة الرئيسية
     public function index()
     {
-        $about = About::first();
+        $about = About::query()
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->first();
 
         // جلب البرامج التدريبية — الآن من الأقدم إلى الأحدث (asc)
         $trainingPrograms = TrainingProgram::orderBy('id', 'asc')->get();

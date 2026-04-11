@@ -6,6 +6,11 @@
         الرئيسية
     </a>
 
+    <a href="{{ route('doctor.dashboard') }}#doctor-live-sessions"
+       class="sidebar-link {{ request()->routeIs('doctor.live_sessions.*') ? 'active' : '' }}">
+        المحاضرات الحية
+    </a>
+
     <a href="{{ route('doctor.dashboard') }}#doctor-subjects"
        class="sidebar-link {{ request()->routeIs('doctor.sections.*') ? 'active' : '' }}">
         موادي / شعبي

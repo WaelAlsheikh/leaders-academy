@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SectionMeeting extends Model
 {
@@ -24,5 +25,10 @@ class SectionMeeting extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(ClassSection::class, 'section_id');
+    }
+
+    public function liveSessions(): HasMany
+    {
+        return $this->hasMany(LiveSession::class, 'section_meeting_id');
     }
 }

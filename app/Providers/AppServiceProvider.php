@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use App\Models\About;
 use App\Models\Program;
 use App\Models\College;
 use App\Models\StudentPlatform;
@@ -38,6 +39,15 @@ class AppServiceProvider extends ServiceProvider
 
             // ✅ جميع البرامج التدريبية — Training Programs
             $view->with('allTrainingPrograms', TrainingProgram::select('id','title','slug','category')->orderBy('title')->get());
+
+            // بيانات الهوية الرئيسية من جدول abouts
+            $view->with(
+                'siteAbout',
+                About::query()
+                    ->orderByDesc('updated_at')
+                    ->orderByDesc('id')
+                    ->first()
+            );
         });
     }
 }

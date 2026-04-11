@@ -3,7 +3,6 @@
 @section('content')
 <div class="student-layout">
 
-    {{-- Sidebar --}}
     @include('student.partials.sidebar')
 
     <main class="student-content">
@@ -24,10 +23,13 @@
                 @foreach($schedule as $item)
                     @php
                         $section = $item['section'];
+                        $liveSession = $item['live_session'];
                         $subjectName = $section->registrableSubject?->name ?? $section->subject?->name ?? '—';
                         $semesterName = $section->semester?->name ?? '—';
                         $dayName = $dayNames[$item['day_of_week']] ?? '';
                         $doctorName = $section->doctor?->full_name ?? 'لم يُحدَّد المدرّس بعد';
+                        $statusCode = $item['status']['code'] ?? 'not_started';
+                        $statusLabel = $item['status']['label'] ?? 'لم تبدأ الجلسة';
                     @endphp
                     <div class="student-schedule-item">
                         <div class="student-schedule-head">
@@ -40,7 +42,7 @@
                                 @endif
                             </div>
                             <div style="font-size:12px;">
-                                {{ $dayName }} — {{ $item['starts_at'] }} إلى {{ $item['ends_at'] }}
+                                {{ $dayName }} — {{ substr($item['starts_at'], 0, 5) }} إلى {{ substr($item['ends_at'], 0, 5) }}
                             </div>
                         </div>
                         <div class="student-schedule-body">
@@ -49,15 +51,13 @@
                                     <span style="background:#10b981;color:#fff;padding:3px 8px;border-radius:10px;font-size:12px;">الآن</span>
                                 @endif
                             </div>
-                            <div>
+                            <div class="student-schedule-action-wrap">
                                 @if($section->mode !== 'online')
                                     <span style="color:#999;font-size:12px;">المحاضرة حضورية</span>
-                                @elseif(!$section->zoom_url)
-                                    <span style="color:#999;font-size:12px;">لا يوجد رابط للمحاضرة بعد</span>
-                                @elseif($item['can_join'])
-                                    <a href="{{ $section->zoom_url }}" target="_blank" class="btn btn-primary">دخول المحاضرة</a>
+                                @elseif($item['can_join'] && $liveSession)
+                                    <a href="{{ route('student.live_sessions.show', $liveSession) }}" class="btn btn-primary">بدأت الجلسة — انقر للدخول</a>
                                 @else
-                                    <span style="color:#999;font-size:12px;">يتاح الرابط قبل 5 دقائق من الموعد</span>
+                                    <span class="student-live-status student-live-status-{{ $statusCode }}">{{ $statusLabel }}</span>
                                 @endif
                             </div>
                         </div>

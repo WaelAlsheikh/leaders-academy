@@ -22,7 +22,7 @@
     </a>
 
     <a href="{{ route('student.schedule.index') }}"
-       class="sidebar-link {{ request()->routeIs('student.schedule.index') ? 'active' : '' }}">
+       class="sidebar-link {{ request()->routeIs('student.schedule.index') || request()->routeIs('student.live_sessions.*') ? 'active' : '' }}">
         📅 الجدول
     </a>
 

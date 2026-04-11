@@ -3,11 +3,20 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\LiveSession;
+use App\Services\Meetings\LiveSessionManager;
+use App\Services\Meetings\MeetingOccurrenceService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class ScheduleController extends Controller
 {
+    public function __construct(
+        private readonly MeetingOccurrenceService $occurrenceService,
+        private readonly LiveSessionManager $liveSessionManager,
+    ) {
+    }
+
     public function index()
     {
         $student = Auth::guard('student')->user();
@@ -23,6 +32,17 @@ class ScheduleController extends Controller
         $timezone = config('app.timezone', 'UTC');
         $now = Carbon::now($timezone);
         $startOfWeek = $now->copy()->startOfWeek(Carbon::SUNDAY);
+        $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SATURDAY);
+        $allMeetings = $sections->flatMap->meetings;
+        $occurrences = $this->occurrenceService->occurrencesForRange($allMeetings, $startOfWeek, $endOfWeek, $timezone);
+        $meetingIds = $occurrences->map(fn (array $item) => $item['section_meeting']->id)->unique()->values()->all();
+        $occurrenceDates = $occurrences->pluck('occurrence_date')->unique()->values()->all();
+
+        $liveSessions = LiveSession::query()
+            ->whereIn('section_meeting_id', $meetingIds)
+            ->whereIn('occurrence_date', $occurrenceDates)
+            ->get()
+            ->keyBy(fn (LiveSession $session) => $session->section_meeting_id . '|' . $session->occurrence_date->toDateString());
 
         $schedule = [];
         $hasArchivedCycles = false;
@@ -30,32 +50,35 @@ class ScheduleController extends Controller
             if ($section->semester?->enrollmentCycle?->is_archived) {
                 $hasArchivedCycles = true;
             }
+        }
 
-            foreach ($section->meetings as $meeting) {
-                $meetingDate = $startOfWeek->copy()->addDays((int) $meeting->day_of_week);
-                $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $meetingDate->toDateString() . ' ' . $meeting->starts_at, $timezone);
-                $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $meetingDate->toDateString() . ' ' . $meeting->ends_at, $timezone);
+        foreach ($occurrences as $occurrence) {
+            $section = $occurrence['section'];
+            $meeting = $occurrence['section_meeting'];
+            $liveSession = $liveSessions->get($meeting->id . '|' . $occurrence['occurrence_date']);
+            $status = $this->liveSessionManager->scheduleStatusData(
+                $liveSession,
+                $occurrence['scheduled_starts_at']->copy()->startOfDay(),
+                $occurrence['scheduled_starts_at'],
+                $occurrence['scheduled_ends_at'],
+                $now
+            );
+            $canJoin = $liveSession
+                && $status['code'] === 'started'
+                && $liveSession->canStudentEnter();
 
-                if ($meeting->start_date && $meetingDate->lt(Carbon::parse($meeting->start_date, $timezone))) {
-                    continue;
-                }
-                if ($meeting->end_date && $meetingDate->gt(Carbon::parse($meeting->end_date, $timezone))) {
-                    continue;
-                }
-
-                $isNow = $now->between($startDateTime, $endDateTime);
-                $canJoin = $now->between($startDateTime->copy()->subMinutes(5), $endDateTime);
-
-                $schedule[] = [
-                    'day_of_week' => (int) $meeting->day_of_week,
-                    'date' => $meetingDate->toDateString(),
-                    'starts_at' => $meeting->starts_at,
-                    'ends_at' => $meeting->ends_at,
-                    'is_now' => $isNow,
-                    'can_join' => $canJoin,
-                    'section' => $section,
-                ];
-            }
+            $schedule[] = [
+                'day_of_week' => (int) $meeting->day_of_week,
+                'date' => $occurrence['occurrence_date'],
+                'starts_at' => $occurrence['scheduled_starts_at']->format('H:i:s'),
+                'ends_at' => $occurrence['scheduled_ends_at']->format('H:i:s'),
+                'is_now' => $now->between($occurrence['scheduled_starts_at'], $occurrence['scheduled_ends_at']),
+                'can_join' => $canJoin,
+                'section' => $section,
+                'section_meeting' => $meeting,
+                'live_session' => $liveSession,
+                'status' => $status,
+            ];
         }
 
         usort($schedule, function ($a, $b) {

@@ -23,19 +23,24 @@ use App\Http\Controllers\ApplicationController;
 // Admin
 use App\Http\Controllers\Admin\StudentAdminController;
 use App\Http\Controllers\Admin\DoctorAdminController;
+use App\Http\Controllers\Admin\EmployeeAdminController;
 use App\Http\Controllers\Admin\CollegeSubjectController;
 use App\Http\Controllers\Admin\EnrollmentCycleController;
 use App\Http\Controllers\Admin\RegistrableController;
 use App\Http\Controllers\Admin\SemesterSectionController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
+use App\Http\Controllers\Doctor\LiveSessionController as DoctorLiveSessionController;
 use App\Http\Controllers\Doctor\SectionController as DoctorSectionController;
+use App\Http\Controllers\Employee\AuthController as EmployeeAuthController;
+use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardController;
 
 // Student
 use App\Http\Controllers\Student\AuthController as StudentAuthController;
 use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\StudentRegistrationController;
 use App\Http\Controllers\Student\InvoiceController;
+use App\Http\Controllers\Student\LiveSessionController as StudentLiveSessionController;
 use App\Http\Controllers\Student\ScheduleController;
 
 // Breeze
@@ -121,6 +126,18 @@ Route::prefix('admin')
         Route::get('/colleges-management',
             [CollegeSubjectController::class, 'colleges']
         )->name('admin.colleges.index');
+
+        Route::post('/colleges-management',
+            [CollegeSubjectController::class, 'storeCollege']
+        )->name('admin.colleges.store');
+
+        Route::put('/colleges-management/{college}',
+            [CollegeSubjectController::class, 'updateCollege']
+        )->name('admin.colleges.update');
+
+        Route::delete('/colleges-management/{college}',
+            [CollegeSubjectController::class, 'destroyCollege']
+        )->name('admin.colleges.destroy');
 
         Route::get('/colleges/{college}/subjects',
             [CollegeSubjectController::class, 'subjects']
@@ -232,6 +249,21 @@ Route::prefix('admin')
 
         Route::post('/doctors/{doctor}/reset-password', [DoctorAdminController::class, 'resetPassword'])
             ->name('admin.doctors.reset_password');
+
+        Route::get('/employees', [EmployeeAdminController::class, 'index'])
+            ->name('admin.employees.index');
+
+        Route::post('/employees', [EmployeeAdminController::class, 'store'])
+            ->name('admin.employees.store');
+
+        Route::put('/employees/{employee}', [EmployeeAdminController::class, 'update'])
+            ->name('admin.employees.update');
+
+        Route::post('/employees/{employee}/toggle', [EmployeeAdminController::class, 'toggle'])
+            ->name('admin.employees.toggle');
+
+        Route::post('/employees/{employee}/reset-password', [EmployeeAdminController::class, 'resetPassword'])
+            ->name('admin.employees.reset_password');
     });
 
 /*
@@ -317,6 +349,15 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::get('schedule', [ScheduleController::class, 'index'])
             ->name('schedule.index');
+
+        Route::get('live-sessions/{liveSession}', [StudentLiveSessionController::class, 'show'])
+            ->name('live_sessions.show');
+        Route::post('live-sessions/{liveSession}/heartbeat', [StudentLiveSessionController::class, 'heartbeat'])
+            ->name('live_sessions.heartbeat');
+        Route::get('live-sessions/{liveSession}/comments', [StudentLiveSessionController::class, 'comments'])
+            ->name('live_sessions.comments');
+        Route::post('live-sessions/{liveSession}/comments', [StudentLiveSessionController::class, 'storeComment'])
+            ->name('live_sessions.comments.store');
     });
 });
 
@@ -336,6 +377,52 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
         Route::get('sections/{section}', [DoctorSectionController::class, 'show'])->name('sections.show');
         Route::put('sections/{section}/next-link', [DoctorSectionController::class, 'updateNextLink'])->name('sections.next_link');
+        Route::post('meetings/{meeting}/start', [DoctorLiveSessionController::class, 'start'])->name('meetings.start');
+        Route::get('live-sessions/{liveSession}', [DoctorLiveSessionController::class, 'show'])->name('live_sessions.show');
+        Route::post('live-sessions/{liveSession}/close-entry', [DoctorLiveSessionController::class, 'closeEntry'])->name('live_sessions.close_entry');
+        Route::post('live-sessions/{liveSession}/reopen-entry', [DoctorLiveSessionController::class, 'reopenEntry'])->name('live_sessions.reopen_entry');
+        Route::post('live-sessions/{liveSession}/end', [DoctorLiveSessionController::class, 'end'])->name('live_sessions.end');
+        Route::get('live-sessions/{liveSession}/attendance', [DoctorLiveSessionController::class, 'attendance'])->name('live_sessions.attendance');
+        Route::get('live-sessions/{liveSession}/comments', [DoctorLiveSessionController::class, 'comments'])->name('live_sessions.comments');
+        Route::post('live-sessions/{liveSession}/comments', [DoctorLiveSessionController::class, 'storeComment'])->name('live_sessions.comments.store');
+        Route::post('live-sessions/{liveSession}/comments/{comment}/hide', [DoctorLiveSessionController::class, 'hideComment'])->name('live_sessions.comments.hide');
+        Route::post('live-sessions/{liveSession}/comment-blocks', [DoctorLiveSessionController::class, 'updateCommentBlocks'])->name('live_sessions.comment_blocks');
+        Route::post('live-sessions/{liveSession}/host-presence', [DoctorLiveSessionController::class, 'updateHostPresence'])->name('live_sessions.host_presence');
+        Route::post('live-sessions/{liveSession}/moderation', [DoctorLiveSessionController::class, 'updateModeration'])->name('live_sessions.moderation');
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Employee Auth + Portal
+|--------------------------------------------------------------------------
+*/
+Route::prefix('employee')->name('employee.')->group(function () {
+    Route::middleware('guest:employee')->group(function () {
+        Route::get('login', [EmployeeAuthController::class, 'showLogin'])->name('login');
+        Route::post('login', [EmployeeAuthController::class, 'login'])->name('login.submit');
+    });
+
+    Route::middleware('auth:employee')->group(function () {
+        Route::post('logout', [EmployeeAuthController::class, 'logout'])->name('logout');
+        Route::get('dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('colleges', [CollegeSubjectController::class, 'colleges'])
+            ->name('colleges.index');
+        Route::post('colleges', [CollegeSubjectController::class, 'storeCollege'])
+            ->name('colleges.store');
+        Route::put('colleges/{college}', [CollegeSubjectController::class, 'updateCollege'])
+            ->name('colleges.update');
+        Route::delete('colleges/{college}', [CollegeSubjectController::class, 'destroyCollege'])
+            ->name('colleges.destroy');
+        Route::get('colleges/{college}/subjects', [CollegeSubjectController::class, 'subjects'])
+            ->name('colleges.subjects');
+        Route::post('colleges/{college}/subjects', [CollegeSubjectController::class, 'store'])
+            ->name('subjects.store');
+        Route::put('subjects/{subject}', [CollegeSubjectController::class, 'update'])
+            ->name('subjects.update');
+        Route::delete('subjects/{subject}', [CollegeSubjectController::class, 'destroy'])
+            ->name('subjects.destroy');
     });
 });
 

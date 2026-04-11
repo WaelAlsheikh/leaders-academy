@@ -32,4 +32,9 @@ class Doctor extends Authenticatable
     {
         return $this->hasMany(RegistrableSubject::class);
     }
+
+    public function sections(): HasMany
+    {
+        return $this->hasMany(ClassSection::class);
+    }
 }

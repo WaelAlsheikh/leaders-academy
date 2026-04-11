@@ -20,6 +20,14 @@ class Authenticate extends Middleware
             return route('student.login');
         }
 
+        if ($request->is('doctor') || $request->is('doctor/*')) {
+            return route('doctor.login');
+        }
+
+        if ($request->is('employee') || $request->is('employee/*')) {
+            return route('employee.login');
+        }
+
         return route('login');
     }
 }

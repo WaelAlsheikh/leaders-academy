@@ -8,8 +8,17 @@
 <section class="hero" style="background-image: url('{{ asset('assets/images/hero-bg.jpg') }}');">
     <div class="overlay"></div>
     <div class="hero-content">
+        @if(!empty($about?->image))
+            <div class="hero-brand-mark">
+                <img
+                    src="{{ \Illuminate\Support\Str::startsWith($about->image, ['http://', 'https://', '/']) ? $about->image : asset('storage/' . ltrim($about->image, '/')) }}"
+                    alt="{{ $about->title ?? 'Leaders' }}"
+                >
+            </div>
+        @endif
+
         <h1>{{ $about->title ?? 'أكاديمية ليدرز' }}</h1>
-        <p>{!! Str::limit(strip_tags($about->content ?? ''), 200) !!}</p>
+        <p>{!! \Illuminate\Support\Str::limit(strip_tags($about->content ?? ''), 200) !!}</p>
         <a href="{{ route('contact') }}" class="btn-primary">
             {{ __('messages.Contact Us') }}
         </a>

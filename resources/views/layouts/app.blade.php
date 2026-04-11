@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? __('messages.Leaders Institute') }}</title>
+    <title>{{ $title ?? ($siteAbout->title ?? __('messages.Leaders Institute')) }}</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
@@ -28,15 +28,28 @@
 
 <body class="@yield('body-class')">
 
+@php
+    $brandingTitle = $siteAbout->title ?? __('messages.Leaders Institute');
+    $brandingImage = null;
+
+    if (!empty($siteAbout?->image)) {
+        $brandingImage = \Illuminate\Support\Str::startsWith($siteAbout->image, ['http://', 'https://', '/'])
+            ? $siteAbout->image
+            : asset('storage/' . ltrim($siteAbout->image, '/'));
+    }
+
+    $brandingImage = $brandingImage ?: asset('assets/images/logo.png');
+@endphp
+
 @hasSection('hide-navbar')
 @else
 <header class="navbar">
     <div class="container">
         <div class="logo">
             <a href="{{ route('home') }}">
-                <img src="{{ asset('assets/images/logo.png') }}" alt="Leaders Logo">
+                <img src="{{ $brandingImage }}" alt="{{ $brandingTitle }}">
             </a>
-            <span>{{ __('messages.Leaders Institute') }}</span>
+            <span>{{ $brandingTitle }}</span>
         </div>
 
         <div class="hamburger" id="hamburger">
