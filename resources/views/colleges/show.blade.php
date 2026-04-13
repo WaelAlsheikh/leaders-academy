@@ -3,11 +3,16 @@
 @section('content')
 @php
     $collegeImage = null;
+    $collegeImageVersion = optional($college->updated_at)->timestamp;
 
     if (!empty($college->image)) {
         $collegeImage = \Illuminate\Support\Str::startsWith($college->image, ['http://', 'https://', '/'])
             ? $college->image
             : asset('storage/' . ltrim($college->image, '/'));
+
+        if ($collegeImageVersion) {
+            $collegeImage .= (str_contains($collegeImage, '?') ? '&' : '?') . 'v=' . $collegeImageVersion;
+        }
     }
 @endphp
 

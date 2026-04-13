@@ -17,16 +17,19 @@
     @endif
 
     @php
-        $resolveCollegeImage = function (?string $path) {
+        $resolveCollegeImage = function ($college) {
+            $path = $college->image;
+            $version = optional($college->updated_at)->timestamp;
+
             if (blank($path)) {
                 return asset('assets/images/placeholder.png');
             }
 
             if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])) {
-                return $path;
+                return $path . ($version ? (str_contains($path, '?') ? '&' : '?') . 'v=' . $version : '');
             }
 
-            return asset('storage/' . ltrim($path, '/'));
+            return asset('storage/' . ltrim($path, '/')) . ($version ? '?v=' . $version : '');
         };
     @endphp
 
@@ -69,7 +72,7 @@
                         <div class="employee-college-card-head">
                             <div class="employee-college-card-summary">
                                 <div class="employee-college-thumb">
-                                    <img src="{{ $resolveCollegeImage($college->image) }}" alt="{{ $college->title }}">
+                                    <img src="{{ $resolveCollegeImage($college) }}" alt="{{ $college->title }}">
                                 </div>
                                 <h4>{{ $college->title }}</h4>
                                 <div style="margin:8px 0;color:#555;">
@@ -115,7 +118,7 @@
                                     <div class="col-md-4">
                                         <label>صورة الكلية الحالية</label>
                                         <div class="employee-current-image">
-                                            <img src="{{ $resolveCollegeImage($college->image) }}" alt="{{ $college->title }}">
+                                            <img src="{{ $resolveCollegeImage($college) }}" alt="{{ $college->title }}">
                                         </div>
                                         <input name="image" type="file" accept="image/*" class="form-control employee-file-input">
                                         <p class="employee-file-help">اترك الحقل فارغًا إذا كنت لا تريد تغيير الصورة الحالية.</p>

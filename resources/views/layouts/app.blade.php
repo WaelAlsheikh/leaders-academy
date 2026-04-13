@@ -14,7 +14,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Site CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+    @php
+        $siteCssPath = public_path('assets/css/style.css');
+        $siteCssVersion = file_exists($siteCssPath) ? filemtime($siteCssPath) : null;
+    @endphp
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}{{ $siteCssVersion ? '?v=' . $siteCssVersion : '' }}">
 
     <!-- Breeze / Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
