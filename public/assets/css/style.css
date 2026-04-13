@@ -1607,6 +1607,17 @@ body.doctor-shell .student-layout{
     resize:vertical;
   }
 
+  .employee-file-input{
+    padding:10px 14px;
+    background:#fff;
+  }
+
+  .employee-file-help{
+    margin:8px 0 0;
+    color:#5d7180;
+    font-size:.92rem;
+  }
+
   .employee-form-grid .form-control:focus{
     border-color:rgba(13,92,134,.42);
     box-shadow:0 0 0 4px rgba(13,92,134,.08);
@@ -1627,6 +1638,32 @@ body.doctor-shell .student-layout{
     justify-content:space-between;
     gap:18px;
     align-items:flex-start;
+  }
+
+  .employee-college-card-summary{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+
+  .employee-college-thumb,
+  .employee-current-image{
+    width:100%;
+    max-width:210px;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(13,92,134,.12);
+    background:linear-gradient(180deg, #f7fbfd 0%, #eef5f9 100%);
+    box-shadow:0 8px 20px rgba(13,92,134,.08);
+  }
+
+  .employee-college-thumb img,
+  .employee-current-image img{
+    display:block;
+    width:100%;
+    aspect-ratio:16 / 10;
+    object-fit:cover;
   }
 
   .employee-college-card-actions{
@@ -1677,6 +1714,80 @@ body.doctor-shell .student-layout{
 
   .employee-table-editor-cell{
     background:linear-gradient(180deg, #f9fbfd 0%, #f5f8fc 100%);
+  }
+
+  .employee-rich-text-source{
+    display:none !important;
+  }
+
+  .employee-rich-editor{
+    border:1px solid rgba(13,92,134,.14);
+    border-radius:18px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 10px 24px rgba(13,92,134,.08);
+  }
+
+  .employee-rich-editor-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    padding:12px;
+    background:linear-gradient(135deg, rgba(13,92,134,.06) 0%, rgba(244,194,29,.12) 100%);
+    border-bottom:1px solid rgba(13,92,134,.10);
+  }
+
+  .employee-rich-editor-btn,
+  .employee-rich-editor-select{
+    min-height:38px;
+    padding:8px 12px;
+    border-radius:12px;
+    border:1px solid rgba(13,92,134,.12);
+    background:#fff;
+    color:var(--secondary-dark);
+    font-weight:700;
+    transition:all .18s ease;
+  }
+
+  .employee-rich-editor-btn:hover,
+  .employee-rich-editor-select:hover,
+  .employee-rich-editor-btn:focus,
+  .employee-rich-editor-select:focus{
+    border-color:rgba(13,92,134,.28);
+    box-shadow:0 8px 18px rgba(13,92,134,.10);
+    outline:none;
+  }
+
+  .employee-rich-editor-surface{
+    min-height:220px;
+    padding:18px;
+    line-height:1.95;
+    color:var(--ink);
+    direction:rtl;
+    text-align:right;
+  }
+
+  .employee-rich-editor-surface:focus{
+    outline:none;
+    box-shadow:inset 0 0 0 2px rgba(13,92,134,.10);
+  }
+
+  .employee-rich-editor-surface p{
+    margin:0 0 14px;
+  }
+
+  .employee-rich-editor-surface h2,
+  .employee-rich-editor-surface h3{
+    color:var(--secondary-dark);
+    margin:0 0 14px;
+    font-weight:800;
+  }
+
+  .employee-rich-editor-surface ul,
+  .employee-rich-editor-surface ol{
+    padding-right:22px;
+    margin:0 0 14px;
   }
 
   .employee-action-btn{
@@ -1782,12 +1893,21 @@ body.doctor-shell .student-layout{
       align-items:flex-start;
     }
 
+    .employee-college-thumb,
+    .employee-current-image{
+      max-width:100%;
+    }
+
     .employee-college-card-actions{
       justify-content:flex-start;
     }
 
     .employee-table-actions{
       justify-content:flex-start;
+    }
+
+    .employee-rich-editor-toolbar{
+      gap:6px;
     }
   }
 
@@ -2175,4 +2295,187 @@ body.doctor-shell .student-layout{
   transform:translateY(-3px);
   border-color:rgba(244,194,29,.32);
   box-shadow:0 14px 28px rgba(8,59,89,.10);
+}
+
+/* ===========================
+   College Details
+   =========================== */
+.college-hero{
+  display:grid;
+  grid-template-columns:minmax(280px, 420px) minmax(0, 1fr);
+  gap:32px;
+  align-items:center;
+  margin:8px 0 34px;
+  padding:28px;
+  border-radius:28px;
+  background:
+    linear-gradient(135deg, rgba(13,92,134,.06) 0%, rgba(244,194,29,.10) 100%),
+    #fff;
+  border:1px solid rgba(13,92,134,.08);
+  box-shadow:0 16px 36px rgba(8,59,89,.08);
+}
+
+.college-hero-image-shell{
+  display:flex;
+  justify-content:center;
+}
+
+.college-hero-image{
+  width:100%;
+  aspect-ratio:4 / 3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border-radius:24px;
+  padding:20px;
+  background:
+    radial-gradient(circle at top, rgba(244,194,29,.18) 0%, rgba(13,92,134,.06) 45%, rgba(8,59,89,.10) 100%),
+    #fff;
+  border:1px solid rgba(13,92,134,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 12px 28px rgba(8,59,89,.10);
+}
+
+.college-hero-image img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  display:block;
+}
+
+.college-hero-text{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:14px;
+}
+
+.college-title{
+  margin:0;
+  font-size:clamp(2rem, 4vw, 3.1rem);
+  line-height:1.2;
+  color:var(--secondary-dark);
+}
+
+.college-short{
+  margin:0;
+  color:#4f6371;
+  line-height:1.9;
+  font-size:1.05rem;
+  max-width:760px;
+}
+
+.college-contact-btn{
+  margin-top:4px;
+}
+
+.college-content{
+  display:grid;
+  grid-template-columns:minmax(0, 2fr) minmax(280px, 1fr);
+  gap:28px;
+  align-items:start;
+}
+
+.college-desc,
+.college-features{
+  border-radius:24px;
+  background:#fff;
+  border:1px solid rgba(13,92,134,.08);
+  box-shadow:0 14px 30px rgba(8,59,89,.06);
+  padding:26px;
+}
+
+.college-desc h3,
+.college-features h3{
+  margin:0 0 14px;
+  color:var(--secondary-dark);
+  font-size:1.35rem;
+}
+
+.college-long{
+  color:#444;
+  line-height:2;
+}
+
+.college-long p:last-child{
+  margin-bottom:0;
+}
+
+.college-long img{
+  max-width:100%;
+  height:auto;
+  border-radius:18px;
+}
+
+.college-features-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.college-features-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  line-height:1.85;
+  color:#4f6371;
+  padding:12px 14px;
+  border-radius:16px;
+  background:linear-gradient(135deg, rgba(13,92,134,.04) 0%, rgba(244,194,29,.10) 100%);
+}
+
+.college-features-list .dot{
+  color:var(--primary);
+  font-size:1.35rem;
+  line-height:1;
+  margin-top:4px;
+}
+
+@media (max-width:992px){
+  .college-hero,
+  .college-content{
+    grid-template-columns:1fr;
+  }
+
+  .college-hero{
+    padding:22px;
+  }
+
+  .college-hero-image{
+    max-width:540px;
+  }
+}
+
+@media (max-width:768px){
+  .college-hero{
+    gap:22px;
+    padding:18px;
+    border-radius:22px;
+  }
+
+  .college-hero-image{
+    aspect-ratio:16 / 11;
+    padding:14px;
+    border-radius:20px;
+  }
+
+  .college-title{
+    font-size:1.8rem;
+  }
+
+  .college-short,
+  .college-long,
+  .college-features-list li{
+    font-size:.98rem;
+  }
+
+  .college-desc,
+  .college-features{
+    padding:20px;
+    border-radius:20px;
+  }
 }

@@ -16,9 +16,23 @@
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
+    @php
+        $resolveCollegeImage = function (?string $path) {
+            if (blank($path)) {
+                return asset('assets/images/placeholder.png');
+            }
+
+            if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])) {
+                return $path;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        };
+    @endphp
+
     <div class="panel panel-bordered employee-management-panel employee-management-form-panel">
         <h4 class="employee-management-form-title">إضافة كلية جديدة</h4>
-        <form method="POST" action="{{ route($routeBase . '.colleges.store') }}">
+        <form method="POST" action="{{ route($routeBase . '.colleges.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="row employee-form-grid">
                 <div class="col-md-4">
@@ -33,9 +47,14 @@
                     <label>سعر الساعة المعتمدة</label>
                     <input name="price_per_credit_hour" type="number" min="0" step="0.01" class="form-control" value="0">
                 </div>
+                <div class="col-md-4">
+                    <label>صورة الكلية</label>
+                    <input name="image" type="file" accept="image/*" class="form-control employee-file-input">
+                    <p class="employee-file-help">يمكن رفع صورة جديدة بصيغ `jpg`, `png`, `webp`, `gif`.</p>
+                </div>
                 <div class="col-md-12 employee-form-field-wide">
                     <label>وصف تفصيلي</label>
-                    <textarea name="long_description" rows="3" class="form-control employee-rich-text"></textarea>
+                    <textarea name="long_description" rows="3" class="form-control employee-rich-text-source"></textarea>
                 </div>
             </div>
             <button class="btn employee-action-btn employee-action-btn--primary employee-action-btn--submit">إضافة الكلية</button>
@@ -48,7 +67,10 @@
                 <div class="panel panel-bordered employee-management-card">
                     <div class="panel-body">
                         <div class="employee-college-card-head">
-                            <div>
+                            <div class="employee-college-card-summary">
+                                <div class="employee-college-thumb">
+                                    <img src="{{ $resolveCollegeImage($college->image) }}" alt="{{ $college->title }}">
+                                </div>
                                 <h4>{{ $college->title }}</h4>
                                 <div style="margin:8px 0;color:#555;">
                                     المواد: <strong>{{ $college->subjects_count }}</strong>
@@ -74,7 +96,7 @@
                         </div>
 
                         <div id="edit-college-{{ $college->id }}" class="collapse employee-collapse-form">
-                            <form method="POST" action="{{ route($routeBase . '.colleges.update', $college) }}">
+                            <form method="POST" action="{{ route($routeBase . '.colleges.update', $college) }}" enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
                                 <div class="row employee-form-grid">
@@ -90,9 +112,17 @@
                                         <label>سعر الساعة المعتمدة</label>
                                         <input name="price_per_credit_hour" type="number" min="0" step="0.01" class="form-control" value="{{ $college->price_per_credit_hour }}">
                                     </div>
+                                    <div class="col-md-4">
+                                        <label>صورة الكلية الحالية</label>
+                                        <div class="employee-current-image">
+                                            <img src="{{ $resolveCollegeImage($college->image) }}" alt="{{ $college->title }}">
+                                        </div>
+                                        <input name="image" type="file" accept="image/*" class="form-control employee-file-input">
+                                        <p class="employee-file-help">اترك الحقل فارغًا إذا كنت لا تريد تغيير الصورة الحالية.</p>
+                                    </div>
                                     <div class="col-md-12 employee-form-field-wide">
                                         <label>وصف تفصيلي</label>
-                                        <textarea name="long_description" rows="3" class="form-control employee-rich-text">{{ $college->long_description }}</textarea>
+                                        <textarea name="long_description" rows="3" class="form-control employee-rich-text-source">{{ $college->long_description }}</textarea>
                                     </div>
                                     <div class="col-md-12 employee-form-actions">
                                         <button class="btn employee-action-btn employee-action-btn--success">حفظ التعديلات</button>
@@ -110,79 +140,146 @@
         @endforelse
     </div>
 </div>
+@once
+    @push('scripts')
+        <script>
+            (function () {
+                const textareaSelector = 'textarea.employee-rich-text-source';
+                const toolbarButtons = [
+                    { command: 'bold', label: 'ع', title: 'عريض' },
+                    { command: 'italic', label: 'م', title: 'مائل' },
+                    { command: 'underline', label: 'ت', title: 'تحته خط' },
+                    { command: 'insertUnorderedList', label: '• قائمة', title: 'قائمة نقطية' },
+                    { command: 'insertOrderedList', label: '1. قائمة', title: 'قائمة رقمية' },
+                    { command: 'removeFormat', label: 'مسح', title: 'إزالة التنسيق' }
+                ];
 
-@if($portalContext === 'employee')
-    @once
-        @push('scripts')
-            <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.6/tinymce.min.js" referrerpolicy="origin"></script>
-            <script>
-                (function () {
-                    const selector = 'textarea.employee-rich-text';
-                    let editorCounter = 0;
+                function syncEditor(wrapper) {
+                    const editor = wrapper.querySelector('.employee-rich-editor-surface');
+                    const textarea = wrapper.querySelector('textarea.employee-rich-text-source');
 
-                    function ensureEditorId(element) {
-                        if (!element.id) {
-                            editorCounter += 1;
-                            element.id = `employee-rich-text-${editorCounter}`;
-                        }
-
-                        return element.id;
+                    if (!editor || !textarea) {
+                        return;
                     }
 
-                    function initEditorFor(element) {
-                        if (typeof tinymce === 'undefined') {
-                            return;
-                        }
+                    textarea.value = editor.innerHTML.trim();
+                }
 
-                        const editorId = ensureEditorId(element);
+                function execCommand(wrapper, command, value = null) {
+                    const editor = wrapper.querySelector('.employee-rich-editor-surface');
 
-                        if (tinymce.get(editorId)) {
-                            return;
-                        }
-
-                        tinymce.init({
-                            selector: `#${editorId}`,
-                            menubar: false,
-                            branding: false,
-                            promotion: false,
-                            directionality: 'rtl',
-                            height: 260,
-                            plugins: 'lists link table code autoresize',
-                            toolbar: 'undo redo | blocks | bold italic underline | forecolor backcolor | alignright aligncenter alignleft | bullist numlist | link table | removeformat code',
-                            content_style: "body { font-family: Tajawal, sans-serif; font-size: 16px; line-height: 1.9; direction: rtl; text-align: right; } p { margin: 0 0 12px; }",
-                            setup: function (editor) {
-                                editor.on('change keyup undo redo', function () {
-                                    editor.save();
-                                });
-                            }
-                        });
+                    if (!editor) {
+                        return;
                     }
 
-                    function initVisibleEditors() {
-                        document.querySelectorAll(selector).forEach(function (textarea) {
-                            if (textarea.offsetParent !== null) {
-                                initEditorFor(textarea);
-                            }
-                        });
-                    }
+                    editor.focus();
+                    document.execCommand(command, false, value);
+                    syncEditor(wrapper);
+                }
 
-                    function initEmployeeRichText() {
-                        initVisibleEditors();
-                    }
+                function buildToolbar(wrapper) {
+                    const toolbar = document.createElement('div');
+                    toolbar.className = 'employee-rich-editor-toolbar';
 
-                    if (document.readyState === 'loading') {
-                        document.addEventListener('DOMContentLoaded', initEmployeeRichText);
-                    } else {
-                        initEmployeeRichText();
-                    }
-
-                    document.addEventListener('shown.bs.collapse', function (event) {
-                        event.target.querySelectorAll(selector).forEach(function (textarea) {
-                            initEditorFor(textarea);
-                        });
+                    const blockSelect = document.createElement('select');
+                    blockSelect.className = 'employee-rich-editor-select';
+                    [
+                        { value: 'P', label: 'فقرة' },
+                        { value: 'H2', label: 'عنوان كبير' },
+                        { value: 'H3', label: 'عنوان متوسط' }
+                    ].forEach(function (optionData) {
+                        const option = document.createElement('option');
+                        option.value = optionData.value;
+                        option.textContent = optionData.label;
+                        blockSelect.appendChild(option);
                     });
-                })();
-            </script>
-        @endpush
-    @endonce
-@endif
+
+                    blockSelect.addEventListener('change', function () {
+                        execCommand(wrapper, 'formatBlock', blockSelect.value);
+                    });
+
+                    toolbar.appendChild(blockSelect);
+
+                    toolbarButtons.forEach(function (buttonData) {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'employee-rich-editor-btn';
+                        button.textContent = buttonData.label;
+                        button.title = buttonData.title;
+                        button.addEventListener('click', function () {
+                            execCommand(wrapper, buttonData.command);
+                        });
+                        toolbar.appendChild(button);
+                    });
+
+                    const linkButton = document.createElement('button');
+                    linkButton.type = 'button';
+                    linkButton.className = 'employee-rich-editor-btn';
+                    linkButton.textContent = 'رابط';
+                    linkButton.title = 'إضافة رابط';
+                    linkButton.addEventListener('click', function () {
+                        const url = window.prompt('أدخل رابط الصفحة:');
+                        if (url) {
+                            execCommand(wrapper, 'createLink', url);
+                        }
+                    });
+                    toolbar.appendChild(linkButton);
+
+                    return toolbar;
+                }
+
+                function initEditor(textarea) {
+                    if (textarea.dataset.richEditorReady === '1') {
+                        return;
+                    }
+
+                    textarea.dataset.richEditorReady = '1';
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'employee-rich-editor';
+
+                    const toolbar = buildToolbar(wrapper);
+                    const surface = document.createElement('div');
+                    surface.className = 'employee-rich-editor-surface';
+                    surface.contentEditable = 'true';
+                    surface.innerHTML = textarea.value || '<p></p>';
+
+                    surface.addEventListener('input', function () {
+                        syncEditor(wrapper);
+                    });
+
+                    surface.addEventListener('blur', function () {
+                        syncEditor(wrapper);
+                    });
+
+                    textarea.parentNode.insertBefore(wrapper, textarea);
+                    wrapper.appendChild(toolbar);
+                    wrapper.appendChild(surface);
+                    wrapper.appendChild(textarea);
+                }
+
+                function initEditors() {
+                    document.querySelectorAll(textareaSelector).forEach(function (textarea) {
+                        initEditor(textarea);
+                    });
+                }
+
+                function syncAllEditors() {
+                    document.querySelectorAll('.employee-rich-editor').forEach(syncEditor);
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initEditors);
+                } else {
+                    initEditors();
+                }
+
+                document.addEventListener('submit', function (event) {
+                    if (event.target.closest('.employee-management-panel, .employee-management-card')) {
+                        syncAllEditors();
+                    }
+                });
+            })();
+        </script>
+    @endpush
+@endonce

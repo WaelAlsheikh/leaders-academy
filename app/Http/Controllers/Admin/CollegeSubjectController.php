@@ -9,6 +9,7 @@ use App\Models\Subject;
 use App\Services\CollegeSubjectSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CollegeSubjectController extends Controller
@@ -58,13 +59,19 @@ class CollegeSubjectController extends Controller
             'short_description' => 'nullable|string|max:255',
             'long_description' => 'nullable|string',
             'price_per_credit_hour' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
         ]);
+
+        $imagePath = $request->hasFile('image')
+            ? $request->file('image')->store('colleges', 'public')
+            : null;
 
         $college = College::create([
             'title' => $data['title'],
             'slug' => $this->uniqueCollegeSlug($data['title']),
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
+            'image' => $imagePath,
             'price_per_credit_hour' => $data['price_per_credit_hour'],
         ]);
 
@@ -80,13 +87,22 @@ class CollegeSubjectController extends Controller
             'short_description' => 'nullable|string|max:255',
             'long_description' => 'nullable|string',
             'price_per_credit_hour' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:4096',
         ]);
+
+        $imagePath = $college->image;
+
+        if ($request->hasFile('image')) {
+            $this->deleteCollegeImage($college->image);
+            $imagePath = $request->file('image')->store('colleges', 'public');
+        }
 
         $college->update([
             'title' => $data['title'],
             'slug' => $this->uniqueCollegeSlug($data['title'], $college),
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
+            'image' => $imagePath,
             'price_per_credit_hour' => $data['price_per_credit_hour'],
         ]);
 
@@ -140,6 +156,7 @@ class CollegeSubjectController extends Controller
                 $this->collegeSubjectSyncService->deleteLegacyAndSyncedSubject($subject);
             });
 
+            $this->deleteCollegeImage($college->image);
             $college->delete();
         });
 
@@ -241,5 +258,14 @@ class CollegeSubjectController extends Controller
         }
 
         return $slug;
+    }
+
+    private function deleteCollegeImage(?string $path): void
+    {
+        if (blank($path) || Str::startsWith($path, ['http://', 'https://', '/'])) {
+            return;
+        }
+
+        Storage::disk('public')->delete(ltrim($path, '/'));
     }
 }
