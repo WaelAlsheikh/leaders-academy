@@ -326,6 +326,10 @@ Route::prefix('student')->name('student.')->group(function () {
 
     Route::get('register', [StudentAuthController::class, 'showRegister'])->name('register');
     Route::post('register', [StudentAuthController::class, 'register'])->name('register.submit');
+    Route::get('register/verify-email', [StudentAuthController::class, 'showVerifyRegistration'])->name('register.verify');
+    Route::post('register/verify-email', [StudentAuthController::class, 'verifyRegistration'])->name('register.verify.submit');
+    Route::post('register/resend-code', [StudentAuthController::class, 'resendRegistrationCode'])->name('register.resend_code');
+    Route::post('register/cancel', [StudentAuthController::class, 'cancelRegistration'])->name('register.cancel');
 
     Route::post('logout', [StudentAuthController::class, 'logout'])->name('logout');
 
@@ -406,6 +410,60 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::middleware('auth:employee')->group(function () {
         Route::post('logout', [EmployeeAuthController::class, 'logout'])->name('logout');
         Route::get('dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('enrollment-cycles', [EnrollmentCycleController::class, 'index'])
+            ->name('enrollment_cycles.index');
+        Route::get('archived-enrollment-cycles', [EnrollmentCycleController::class, 'archivedIndex'])
+            ->name('archived_enrollment_cycles.index');
+        Route::post('enrollment-cycles', [EnrollmentCycleController::class, 'store'])
+            ->name('enrollment_cycles.store');
+        Route::get('enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'show'])
+            ->name('enrollment_cycles.show');
+        Route::post('enrollment-cycles/{cycle}/archive', [EnrollmentCycleController::class, 'archive'])
+            ->name('enrollment_cycles.archive');
+        Route::put('enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'update'])
+            ->name('enrollment_cycles.update');
+        Route::post('enrollment-cycles/{cycle}/subjects', [EnrollmentCycleController::class, 'updateSubjects'])
+            ->name('enrollment_cycles.subjects');
+        Route::post('enrollment-cycles/{cycle}/open', [EnrollmentCycleController::class, 'open'])
+            ->name('enrollment_cycles.open');
+        Route::post('enrollment-cycles/{cycle}/close', [EnrollmentCycleController::class, 'close'])
+            ->name('enrollment_cycles.close');
+        Route::post('enrollment-cycles/{cycle}/approve', [EnrollmentCycleController::class, 'approve'])
+            ->name('enrollment_cycles.approve');
+        Route::post('enrollment-cycles/{cycle}/start-semester', [EnrollmentCycleController::class, 'startSemester'])
+            ->name('enrollment_cycles.start_semester');
+        Route::post('enrollment-cycles/{cycle}/registrations/{registration}/status', [EnrollmentCycleController::class, 'updateRegistrationStatus'])
+            ->name('enrollment_cycles.registrations.status');
+        Route::post('enrollment-cycles/{cycle}/registrations/bulk-status', [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus'])
+            ->name('enrollment_cycles.registrations.bulk_status');
+        Route::get('archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'archivedShow'])
+            ->name('archived_enrollment_cycles.show');
+        Route::post('archived-enrollment-cycles/{cycle}/restore', [EnrollmentCycleController::class, 'restore'])
+            ->name('archived_enrollment_cycles.restore');
+        Route::delete('archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'destroyArchived'])
+            ->name('archived_enrollment_cycles.destroy');
+
+        Route::get('semesters/{semester}/sections', [SemesterSectionController::class, 'index'])
+            ->name('semesters.sections.index');
+        Route::post('semesters/{semester}/sections', [SemesterSectionController::class, 'store'])
+            ->name('semesters.sections.store');
+        Route::put('sections/{section}', [SemesterSectionController::class, 'update'])
+            ->name('sections.update');
+        Route::delete('sections/{section}', [SemesterSectionController::class, 'destroy'])
+            ->name('sections.destroy');
+        Route::get('sections/{section}/meetings', [SemesterSectionController::class, 'meetings'])
+            ->name('sections.meetings.index');
+        Route::post('sections/{section}/meetings', [SemesterSectionController::class, 'storeMeeting'])
+            ->name('sections.meetings.store');
+        Route::post('sections/{section}/students', [SemesterSectionController::class, 'attachStudent'])
+            ->name('sections.students.attach');
+        Route::delete('sections/{section}/students/{student}', [SemesterSectionController::class, 'detachStudent'])
+            ->name('sections.students.detach');
+        Route::put('meetings/{meeting}', [SemesterSectionController::class, 'updateMeeting'])
+            ->name('meetings.update');
+        Route::delete('meetings/{meeting}', [SemesterSectionController::class, 'destroyMeeting'])
+            ->name('meetings.destroy');
 
         Route::get('colleges', [CollegeSubjectController::class, 'colleges'])
             ->name('colleges.index');

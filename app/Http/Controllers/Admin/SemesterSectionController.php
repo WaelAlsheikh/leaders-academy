@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 class SemesterSectionController extends Controller
 {
-    public function index(Semester $semester)
+    public function index(Request $request, Semester $semester)
     {
         $semester->load([
             'college',
@@ -31,7 +31,10 @@ class SemesterSectionController extends Controller
             ->orderBy('full_name')
             ->get();
 
-        return view('admin.semesters.sections.index', compact('semester', 'subjects', 'doctors'));
+        return view('admin.semesters.sections.index', array_merge(
+            compact('semester', 'subjects', 'doctors'),
+            $this->portalViewData($request)
+        ));
     }
 
     public function store(Request $request, Semester $semester)
@@ -96,7 +99,7 @@ class SemesterSectionController extends Controller
         return back()->with('success', 'تم حذف الشعبة');
     }
 
-    public function meetings(ClassSection $section)
+    public function meetings(Request $request, ClassSection $section)
     {
         $section->load(['semester', 'registrableSubject', 'doctor', 'meetings', 'students']);
 
@@ -113,7 +116,10 @@ class SemesterSectionController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        return view('admin.sections.meetings.index', compact('section', 'eligibleStudents'));
+        return view('admin.sections.meetings.index', array_merge(
+            compact('section', 'eligibleStudents'),
+            $this->portalViewData($request)
+        ));
     }
 
     public function storeMeeting(Request $request, ClassSection $section)
@@ -235,5 +241,20 @@ class SemesterSectionController extends Controller
         }
 
         $section->students()->syncWithoutDetaching($syncData);
+    }
+
+    private function portalViewData(Request $request): array
+    {
+        $portalContext = str_starts_with((string) $request->route()?->getName(), 'employee.')
+            ? 'employee'
+            : 'admin';
+
+        return [
+            'portalContext' => $portalContext,
+            'routeBase' => $portalContext,
+            'layout' => $portalContext === 'employee' ? 'layouts.app' : 'voyager::master',
+            'hideNavbar' => $portalContext === 'employee',
+            'bodyClass' => $portalContext === 'employee' ? 'employee-shell' : '',
+        ];
     }
 }

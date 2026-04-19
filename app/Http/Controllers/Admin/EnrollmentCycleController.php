@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 
 class EnrollmentCycleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         RegistrableEntity::syncFromSources();
 
@@ -30,17 +30,23 @@ class EnrollmentCycleController extends Controller
             ->orderBy('title_snapshot')
             ->get();
 
-        return view('admin.enrollment_cycles.index', compact('cycles', 'registrableEntities'));
+        return view('admin.enrollment_cycles.index', array_merge(
+            compact('cycles', 'registrableEntities'),
+            $this->portalViewData($request)
+        ));
     }
 
-    public function archivedIndex()
+    public function archivedIndex(Request $request)
     {
         $cycles = EnrollmentCycle::archivedListing()
             ->with(['college', 'semester', 'registrableEntity', 'archiveRecord.archivedBy'])
             ->latest()
             ->get();
 
-        return view('admin.enrollment_cycles.archived_index', compact('cycles'));
+        return view('admin.enrollment_cycles.archived_index', array_merge(
+            compact('cycles'),
+            $this->portalViewData($request)
+        ));
     }
 
     public function store(Request $request)
@@ -67,14 +73,14 @@ class EnrollmentCycleController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('admin.enrollment_cycles.index')
+        return redirect()->route($this->routeName($request, 'enrollment_cycles.index'))
             ->with('success', 'تم إنشاء دورة التسجيل بنجاح');
     }
 
     public function show(Request $request, EnrollmentCycle $cycle)
     {
         if ($cycle->is_archived) {
-            return redirect()->route('admin.archived_enrollment_cycles.show', $cycle);
+            return redirect()->route($this->routeName($request, 'archived_enrollment_cycles.show'), $cycle);
         }
 
         return view('admin.enrollment_cycles.show', $this->buildCycleViewData($request, $cycle, false));
@@ -83,7 +89,7 @@ class EnrollmentCycleController extends Controller
     public function archivedShow(Request $request, EnrollmentCycle $cycle)
     {
         if (!$cycle->is_archived) {
-            return redirect()->route('admin.enrollment_cycles.show', $cycle);
+            return redirect()->route($this->routeName($request, 'enrollment_cycles.show'), $cycle);
         }
 
         return view('admin.enrollment_cycles.archived_show', $this->buildCycleViewData($request, $cycle, true));
@@ -91,7 +97,7 @@ class EnrollmentCycleController extends Controller
 
     public function update(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -109,7 +115,7 @@ class EnrollmentCycleController extends Controller
 
     public function updateSubjects(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -135,9 +141,9 @@ class EnrollmentCycleController extends Controller
         return back()->with('success', 'تم تحديث المواد المتاحة للدورة');
     }
 
-    public function open(EnrollmentCycle $cycle)
+    public function open(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -160,9 +166,9 @@ class EnrollmentCycleController extends Controller
         return back()->with('success', 'تم فتح التسجيل');
     }
 
-    public function close(EnrollmentCycle $cycle)
+    public function close(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -171,9 +177,9 @@ class EnrollmentCycleController extends Controller
         return back()->with('success', 'تم إغلاق التسجيل');
     }
 
-    public function approve(EnrollmentCycle $cycle)
+    public function approve(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -196,7 +202,7 @@ class EnrollmentCycleController extends Controller
 
     public function updateRegistrationStatus(Request $request, EnrollmentCycle $cycle, Registration $registration)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -221,7 +227,7 @@ class EnrollmentCycleController extends Controller
 
     public function bulkUpdateRegistrationStatus(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -248,7 +254,7 @@ class EnrollmentCycleController extends Controller
 
     public function startSemester(Request $request, EnrollmentCycle $cycle)
     {
-        if ($guardResponse = $this->ensureCycleIsEditable($cycle)) {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
             return $guardResponse;
         }
 
@@ -327,7 +333,7 @@ class EnrollmentCycleController extends Controller
         return back()->with('success', 'تم بدء الفصل بنجاح');
     }
 
-    public function archive(EnrollmentCycle $cycle)
+    public function archive(Request $request, EnrollmentCycle $cycle)
     {
         if ($cycle->is_archived) {
             return back()->withErrors(['status' => 'هذه الدورة مؤرشفة بالفعل']);
@@ -340,15 +346,15 @@ class EnrollmentCycleController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.enrollment_cycles.index')
+            ->route($this->routeName($request, 'enrollment_cycles.index'))
             ->with('success', 'تمت أرشفة الدورة بنجاح');
     }
 
-    public function restore(EnrollmentCycle $cycle)
+    public function restore(Request $request, EnrollmentCycle $cycle)
     {
         if (!$cycle->is_archived) {
             return redirect()
-                ->route('admin.enrollment_cycles.show', $cycle)
+                ->route($this->routeName($request, 'enrollment_cycles.show'), $cycle)
                 ->withErrors(['status' => 'هذه الدورة غير مؤرشفة']);
         }
 
@@ -370,15 +376,15 @@ class EnrollmentCycleController extends Controller
         });
 
         return redirect()
-            ->route('admin.enrollment_cycles.index')
+            ->route($this->routeName($request, 'enrollment_cycles.index'))
             ->with('success', 'تمت استعادة الدورة بنجاح');
     }
 
-    public function destroyArchived(EnrollmentCycle $cycle)
+    public function destroyArchived(Request $request, EnrollmentCycle $cycle)
     {
         if (!$cycle->is_archived) {
             return redirect()
-                ->route('admin.enrollment_cycles.show', $cycle)
+                ->route($this->routeName($request, 'enrollment_cycles.show'), $cycle)
                 ->withErrors(['status' => 'لا يمكن حذف دورة غير مؤرشفة من هذه الصفحة']);
         }
 
@@ -388,7 +394,7 @@ class EnrollmentCycleController extends Controller
         });
 
         return redirect()
-            ->route('admin.archived_enrollment_cycles.index')
+            ->route($this->routeName($request, 'archived_enrollment_cycles.index'))
             ->with('success', 'تم حذف الدورة نهائياً مع جميع توابعها');
     }
 
@@ -598,7 +604,7 @@ class EnrollmentCycleController extends Controller
             ->orderByDesc('start_date')
             ->get();
 
-        return compact(
+        return array_merge(compact(
             'cycle',
             'subjects',
             'subjectStats',
@@ -608,17 +614,37 @@ class EnrollmentCycleController extends Controller
             'filterSubjectId',
             'semesters',
             'readonly'
-        );
+        ), $this->portalViewData($request));
     }
 
-    private function ensureCycleIsEditable(EnrollmentCycle $cycle)
+    private function ensureCycleIsEditable(Request $request, EnrollmentCycle $cycle)
     {
         if (!$cycle->is_archived) {
             return null;
         }
 
         return redirect()
-            ->route('admin.archived_enrollment_cycles.show', $cycle)
+            ->route($this->routeName($request, 'archived_enrollment_cycles.show'), $cycle)
             ->withErrors(['status' => 'هذه الدورة مؤرشفة وتُعرض للقراءة فقط']);
+    }
+
+    private function portalViewData(Request $request): array
+    {
+        $portalContext = str_starts_with((string) $request->route()?->getName(), 'employee.')
+            ? 'employee'
+            : 'admin';
+
+        return [
+            'portalContext' => $portalContext,
+            'routeBase' => $portalContext,
+            'layout' => $portalContext === 'employee' ? 'layouts.app' : 'voyager::master',
+            'hideNavbar' => $portalContext === 'employee',
+            'bodyClass' => $portalContext === 'employee' ? 'employee-shell' : '',
+        ];
+    }
+
+    private function routeName(Request $request, string $suffix): string
+    {
+        return $this->portalViewData($request)['routeBase'].'.'.$suffix;
     }
 }

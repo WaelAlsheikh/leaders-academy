@@ -6,13 +6,23 @@
         الرئيسية
     </a>
 
+    <a href="{{ route('employee.enrollment_cycles.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.enrollment_cycles.*', 'employee.semesters.sections.*', 'employee.sections.*', 'employee.meetings.*') ? 'active' : '' }}">
+        إدارة الدورات
+    </a>
+
+    <a href="{{ route('employee.archived_enrollment_cycles.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.archived_enrollment_cycles.*') ? 'active' : '' }}">
+        الدورات المؤرشفة
+    </a>
+
     <a href="{{ route('employee.colleges.index') }}"
-       class="sidebar-link {{ request()->routeIs('employee.colleges.*') ? 'active' : '' }}">
+       class="sidebar-link {{ request()->routeIs('employee.colleges.index', 'employee.colleges.store', 'employee.colleges.update', 'employee.colleges.destroy') ? 'active' : '' }}">
         إدارة الكليات
     </a>
 
     <a href="{{ route('employee.colleges.index') }}#employee-subjects-anchor"
-       class="sidebar-link {{ request()->routeIs('employee.subjects.*') ? 'active' : '' }}">
+       class="sidebar-link {{ request()->routeIs('employee.colleges.subjects', 'employee.subjects.*') ? 'active' : '' }}">
         إدارة مواد الكليات
     </a>
 

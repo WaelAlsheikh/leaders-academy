@@ -1862,31 +1862,161 @@ body.doctor-shell .student-layout{
     border:1px solid rgba(178,59,48,.16);
   }
 
-  .employee-action-btn--danger:hover,
-  .employee-action-btn--danger:focus{
-    color:#932f26;
-    box-shadow:0 12px 24px rgba(178,59,48,.16);
+.employee-action-btn--danger:hover,
+.employee-action-btn--danger:focus{
+  color:#932f26;
+  box-shadow:0 12px 24px rgba(178,59,48,.16);
+}
+
+.employee-action-btn--warning{
+  background:linear-gradient(135deg, #fff2c8 0%, #ffd86a 100%);
+  color:#8a5a00;
+  border:1px solid rgba(154,108,0,.14);
+}
+
+.employee-action-btn--warning:hover,
+.employee-action-btn--warning:focus{
+  color:#704900;
+  box-shadow:0 12px 24px rgba(244,194,29,.20);
+}
+
+.employee-action-btn--neutral{
+  background:#fff;
+  color:var(--secondary-dark);
+  border:1px solid rgba(13,92,134,.14);
   }
 
-  .employee-action-btn--neutral{
-    background:#fff;
-    color:var(--secondary-dark);
-    border:1px solid rgba(13,92,134,.14);
-  }
+.employee-action-btn--neutral:hover,
+.employee-action-btn--neutral:focus{
+  color:var(--secondary-dark);
+  box-shadow:0 12px 24px rgba(13,92,134,.12);
+}
 
-  .employee-action-btn--neutral:hover,
-  .employee-action-btn--neutral:focus{
-    color:var(--secondary-dark);
-    box-shadow:0 12px 24px rgba(13,92,134,.12);
-  }
+.employee-cycle-page{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
 
-  @media (max-width:992px){
-    .employee-quick-links{
-      grid-template-columns:1fr;
-    }
+.employee-cycle-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+}
+
+.employee-cycle-title{
+  margin-bottom:6px;
+}
+
+.employee-cycle-subtitle{
+  margin:0;
+  color:#5a7080;
+  line-height:1.85;
+}
+
+.employee-cycle-header-link{
+  white-space:nowrap;
+}
+
+.employee-cycle-create-panel{
+  overflow:hidden;
+}
+
+.employee-cycle-section-title{
+  margin:0 0 18px;
+  color:var(--secondary-dark);
+  font-size:1.35rem;
+  font-weight:800;
+}
+
+.employee-cycle-table-panel{
+  overflow:hidden;
+}
+
+.employee-cycle-table-wrap{
+  overflow-x:auto;
+}
+
+.employee-cycle-table{
+  margin:0;
+  background:#fff;
+  border-radius:18px;
+  overflow:hidden;
+}
+
+.employee-cycle-table thead th{
+  background:linear-gradient(135deg, rgba(13,92,134,.08) 0%, rgba(244,194,29,.16) 100%);
+  color:var(--secondary-dark);
+  border-bottom:1px solid rgba(13,92,134,.12);
+  font-weight:800;
+  padding:16px 14px;
+  vertical-align:middle;
+}
+
+.employee-cycle-table tbody td{
+  padding:16px 14px;
+  vertical-align:middle;
+  border-color:rgba(13,92,134,.08);
+  color:#344955;
+}
+
+.employee-cycle-table tbody tr:hover{
+  background:rgba(13,92,134,.02);
+}
+
+.employee-cycle-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:.88rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.employee-cycle-status--draft{
+  background:#eef4f7;
+  color:#4c6475;
+}
+
+.employee-cycle-status--open,
+.employee-cycle-status--approved{
+  background:#e7f7ef;
+  color:#0f6a45;
+}
+
+.employee-cycle-status--closed{
+  background:#fff4df;
+  color:#8f6200;
+}
+
+.employee-cycle-status--cancelled{
+  background:#ffebe8;
+  color:#b23b30;
+}
+
+.employee-cycle-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+
+.employee-cycle-actions .employee-inline-form{
+  margin:0;
+}
+
+@media (max-width:992px){
+  .employee-quick-links{
+    grid-template-columns:1fr;
+  }
   }
 
   @media (max-width:768px){
+    .employee-cycle-header,
     .employee-management-header,
     .employee-college-card-head{
       flex-direction:column;
@@ -1904,6 +2034,21 @@ body.doctor-shell .student-layout{
 
     .employee-table-actions{
       justify-content:flex-start;
+    }
+
+    .employee-cycle-actions{
+      gap:8px;
+    }
+
+    .employee-cycle-actions .employee-action-btn,
+    .employee-cycle-header-link{
+      width:100%;
+      justify-content:center;
+    }
+
+    .employee-cycle-table thead th,
+    .employee-cycle-table tbody td{
+      padding:13px 10px;
     }
 
     .employee-rich-editor-toolbar{

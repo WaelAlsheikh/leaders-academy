@@ -31,6 +31,20 @@
                     </div>
                 @endif
 
+                @if (session('status'))
+                    <div style="
+                        background:#edf7ff;
+                        border:1px solid #b7d8ef;
+                        color:#0d5c86;
+                        padding:10px 12px;
+                        border-radius:8px;
+                        margin-bottom:15px;
+                        font-size:0.92rem;
+                        text-align:right;">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
                 {{-- Register Form --}}
                 <form method="POST" action="{{ route('student.register.submit') }}">
                     @csrf
@@ -119,7 +133,7 @@
                             cursor:pointer;
                             transition:0.3s;
                         ">
-                        إنشاء الحساب
+                        إرسال رمز التحقق
                     </button>
                 </form>
 

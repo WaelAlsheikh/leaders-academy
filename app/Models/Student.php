@@ -22,6 +22,7 @@ class Student extends Authenticatable
         'is_active',
         'password',
         'acceptance_number',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class Student extends Authenticatable
 
     protected $casts = [
         'is_active' => 'boolean',
+        'email_verified_at' => 'datetime',
     ];
 
 /**

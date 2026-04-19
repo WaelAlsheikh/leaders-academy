@@ -20,6 +20,22 @@
 
         <section class="doctor-portal-summary">
             <div class="doctor-portal-stat">
+                <span>الدورات النشطة</span>
+                <strong>{{ $cycleCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
+                <span>الدورات المؤرشفة</span>
+                <strong>{{ $archivedCycleCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
+                <span>إجمالي الفصول</span>
+                <strong>{{ $semesterCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
+                <span>الشعب والجلسات</span>
+                <strong>{{ $sectionCount }} / {{ $meetingCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
                 <span>إجمالي الكليات</span>
                 <strong>{{ $collegeCount }}</strong>
             </div>
@@ -37,11 +53,21 @@
             <div class="doctor-portal-panel-head">
                 <div>
                     <h3>الوصول السريع</h3>
-                    <p class="doctor-portal-meta">يمكنك من هنا متابعة إدارة الكليات والمواد التابعة لها.</p>
+                    <p class="doctor-portal-meta">يمكنك من هنا متابعة إدارة الدورات والكليات والمواد المرتبطة بها من نفس بوابة الموظف.</p>
                 </div>
             </div>
 
             <div class="employee-quick-links">
+                <a href="{{ route('employee.enrollment_cycles.index') }}" class="employee-quick-link">
+                    <strong>إدارة الدورات</strong>
+                    <span>إنشاء دورات التسجيل ومتابعة الفصول والشعب والجلسات والطلاب المرتبطين بها.</span>
+                </a>
+
+                <a href="{{ route('employee.archived_enrollment_cycles.index') }}" class="employee-quick-link">
+                    <strong>الدورات المؤرشفة</strong>
+                    <span>عرض الدورات المؤرشفة واستعادتها أو حذفها النهائي عند الحاجة.</span>
+                </a>
+
                 <a href="{{ route('employee.colleges.index') }}" class="employee-quick-link">
                     <strong>إدارة الكليات</strong>
                     <span>إضافة الكليات وتعديلها وحذفها ضمن الصلاحيات المتاحة.</span>
