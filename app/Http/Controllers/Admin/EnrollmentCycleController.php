@@ -13,6 +13,7 @@ use App\Models\Semester;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class EnrollmentCycleController extends Controller
 {
@@ -56,6 +57,7 @@ class EnrollmentCycleController extends Controller
         $data = $request->validate([
             'registrable_entity_id' => 'required|integer|exists:registrable_entities,id',
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'registration_starts_at' => 'nullable|date',
             'registration_ends_at' => 'nullable|date|after_or_equal:registration_starts_at',
         ]);
@@ -67,6 +69,7 @@ class EnrollmentCycleController extends Controller
             'college_id' => $collegeId,
             'registrable_entity_id' => $data['registrable_entity_id'],
             'name' => $data['name'],
+            'code' => $data['code'] ?: null,
             'registration_starts_at' => $data['registration_starts_at'] ?? null,
             'registration_ends_at' => $data['registration_ends_at'] ?? null,
             'status' => 'draft',
@@ -103,10 +106,13 @@ class EnrollmentCycleController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'registration_starts_at' => 'nullable|date',
             'registration_ends_at' => 'nullable|date|after_or_equal:registration_starts_at',
             'status' => 'required|in:draft,open,closed,approved,cancelled',
         ]);
+
+        $data['code'] = $data['code'] ?: null;
 
         $cycle->update($data);
 
@@ -250,6 +256,38 @@ class EnrollmentCycleController extends Controller
         });
 
         return back()->with('success', 'تم تحديث الحالات المحددة');
+    }
+
+    public function updateResultStatuses(Request $request, EnrollmentCycle $cycle, Registration $registration)
+    {
+        if ($guardResponse = $this->ensureCycleIsEditable($request, $cycle)) {
+            return $guardResponse;
+        }
+
+        if ($registration->enrollment_cycle_id !== $cycle->id) {
+            return back()->withErrors(['status' => 'هذا التسجيل لا ينتمي لهذه الدورة']);
+        }
+
+        $data = $request->validate([
+            'result_statuses' => 'required|array',
+            'result_statuses.*' => 'required|in:undefined,passed,failed',
+        ]);
+
+        $allowedSubjectIds = $registration->registrableSubjects()->pluck('registrable_subjects.id')->all();
+
+        DB::transaction(function () use ($registration, $data, $allowedSubjectIds) {
+            foreach ($data['result_statuses'] as $subjectId => $resultStatus) {
+                if (!in_array((int) $subjectId, $allowedSubjectIds, true)) {
+                    continue;
+                }
+
+                $registration->registrableSubjects()->updateExistingPivot((int) $subjectId, [
+                    'result_status' => $resultStatus,
+                ]);
+            }
+        });
+
+        return back()->with('success', 'تم تحديث حالات المواد للطالب.');
     }
 
     public function startSemester(Request $request, EnrollmentCycle $cycle)
@@ -568,8 +606,11 @@ class EnrollmentCycleController extends Controller
         $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects', 'archiveRecord.archivedBy']);
 
         $subjects = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
+            ->with('studyTerm.studyYear')
             ->orderBy('name')
             ->get();
+
+        $groupedSubjects = $this->groupSubjectsByPlan($subjects);
 
         $subjectStats = Registration::query()
             ->where('enrollment_cycle_id', $cycle->id)
@@ -578,7 +619,7 @@ class EnrollmentCycleController extends Controller
             ->groupBy('registration_registrable_subject.registrable_subject_id')
             ->pluck('registrations_count', 'registrable_subject_id');
 
-        $registrationsQuery = Registration::with(['student', 'registrableSubjects', 'semester', 'enrollmentCycle.archiveRecord'])
+        $registrationsQuery = Registration::with(['student', 'registrableSubjects.studyTerm.studyYear', 'semester', 'enrollmentCycle.archiveRecord'])
             ->where('enrollment_cycle_id', $cycle->id);
 
         $filterStatus = $request->get('status');
@@ -607,6 +648,7 @@ class EnrollmentCycleController extends Controller
         return array_merge(compact(
             'cycle',
             'subjects',
+            'groupedSubjects',
             'subjectStats',
             'registrations',
             'statusCounts',
@@ -646,5 +688,30 @@ class EnrollmentCycleController extends Controller
     private function routeName(Request $request, string $suffix): string
     {
         return $this->portalViewData($request)['routeBase'].'.'.$suffix;
+    }
+
+    private function groupSubjectsByPlan(Collection $subjects): Collection
+    {
+        return $subjects
+            ->groupBy(fn ($subject) => $subject->studyTerm?->studyYear?->id ?? 'ungrouped')
+            ->map(function ($yearSubjects) {
+                $studyYear = $yearSubjects->first()?->studyTerm?->studyYear;
+
+                return [
+                    'study_year' => $studyYear,
+                    'terms' => $yearSubjects
+                        ->groupBy(fn ($subject) => $subject->studyTerm?->id ?? 'ungrouped')
+                        ->map(function ($termSubjects) {
+                            $studyTerm = $termSubjects->first()?->studyTerm;
+
+                            return [
+                                'study_term' => $studyTerm,
+                                'subjects' => $termSubjects->sortBy('name')->values(),
+                            ];
+                        })
+                        ->values(),
+                ];
+            })
+            ->values();
     }
 }

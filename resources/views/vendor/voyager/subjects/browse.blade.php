@@ -387,6 +387,7 @@
 @stop
 
 @section('css')
+    @include('admin.partials.voyager_custom_styles')
     @if (!$dataType->server_side && config('dashboard.data_tables.responsive'))
         <link rel="stylesheet" href="{{ voyager_asset('lib/css/responsive.dataTables.min.css') }}">
     @endif

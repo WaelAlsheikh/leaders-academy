@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\CollegeSubjectController;
 use App\Http\Controllers\Admin\EnrollmentCycleController;
 use App\Http\Controllers\Admin\RegistrableController;
 use App\Http\Controllers\Admin\SemesterSectionController;
+use App\Http\Controllers\Admin\StudyStructureController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\LiveSessionController as DoctorLiveSessionController;
@@ -142,6 +143,27 @@ Route::prefix('admin')
         Route::get('/colleges/{college}/subjects',
             [CollegeSubjectController::class, 'subjects']
         )->name('admin.colleges.subjects');
+        Route::get('/colleges/{college}/years', [StudyStructureController::class, 'collegeYears'])
+            ->name('admin.colleges.years');
+
+        Route::post('/registrables/{entity}/years', [StudyStructureController::class, 'storeYear'])
+            ->name('admin.study_years.store');
+        Route::put('/study-years/{studyYear}', [StudyStructureController::class, 'updateYear'])
+            ->name('admin.study_years.update');
+        Route::delete('/study-years/{studyYear}', [StudyStructureController::class, 'destroyYear'])
+            ->name('admin.study_years.destroy');
+        Route::get('/registrables/{entity}/years', [StudyStructureController::class, 'registrableYears'])
+            ->name('admin.registrables.years');
+        Route::get('/study-years/{studyYear}/terms', [StudyStructureController::class, 'terms'])
+            ->name('admin.study_years.terms');
+        Route::post('/study-years/{studyYear}/terms', [StudyStructureController::class, 'storeTerm'])
+            ->name('admin.study_terms.store');
+        Route::put('/study-terms/{studyTerm}', [StudyStructureController::class, 'updateTerm'])
+            ->name('admin.study_terms.update');
+        Route::delete('/study-terms/{studyTerm}', [StudyStructureController::class, 'destroyTerm'])
+            ->name('admin.study_terms.destroy');
+        Route::get('/study-terms/{studyTerm}/subjects', [StudyStructureController::class, 'subjects'])
+            ->name('admin.study_terms.subjects');
 
         Route::post('/colleges/{college}/subjects',
             [CollegeSubjectController::class, 'store']
@@ -157,6 +179,10 @@ Route::prefix('admin')
 
         Route::get('/registrables', [RegistrableController::class, 'index'])
             ->name('admin.registrables.index');
+        Route::get('/program-branches-management', [RegistrableController::class, 'programBranches'])
+            ->name('admin.program_branches.index');
+        Route::get('/training-program-branches-management', [RegistrableController::class, 'trainingProgramBranches'])
+            ->name('admin.training_program_branches.index');
         Route::put('/registrables/{entity}', [RegistrableController::class, 'updatePrice'])
             ->name('admin.registrables.update');
         Route::get('/registrables/{entity}/subjects', [RegistrableController::class, 'subjects'])
@@ -194,6 +220,9 @@ Route::prefix('admin')
         Route::post('/enrollment-cycles/{cycle}/registrations/{registration}/status',
             [EnrollmentCycleController::class, 'updateRegistrationStatus']
         )->name('admin.enrollment_cycles.registrations.status');
+        Route::post('/enrollment-cycles/{cycle}/registrations/{registration}/results',
+            [EnrollmentCycleController::class, 'updateResultStatuses']
+        )->name('admin.enrollment_cycles.registrations.results');
         Route::post('/enrollment-cycles/{cycle}/registrations/bulk-status',
             [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus']
         )->name('admin.enrollment_cycles.registrations.bulk_status');
@@ -435,6 +464,8 @@ Route::prefix('employee')->name('employee.')->group(function () {
             ->name('enrollment_cycles.start_semester');
         Route::post('enrollment-cycles/{cycle}/registrations/{registration}/status', [EnrollmentCycleController::class, 'updateRegistrationStatus'])
             ->name('enrollment_cycles.registrations.status');
+        Route::post('enrollment-cycles/{cycle}/registrations/{registration}/results', [EnrollmentCycleController::class, 'updateResultStatuses'])
+            ->name('enrollment_cycles.registrations.results');
         Route::post('enrollment-cycles/{cycle}/registrations/bulk-status', [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus'])
             ->name('enrollment_cycles.registrations.bulk_status');
         Route::get('archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'archivedShow'])
@@ -475,12 +506,44 @@ Route::prefix('employee')->name('employee.')->group(function () {
             ->name('colleges.destroy');
         Route::get('colleges/{college}/subjects', [CollegeSubjectController::class, 'subjects'])
             ->name('colleges.subjects');
+        Route::get('colleges/{college}/years', [StudyStructureController::class, 'collegeYears'])
+            ->name('colleges.years');
+        Route::post('registrables/{entity}/years', [StudyStructureController::class, 'storeYear'])
+            ->name('study_years.store');
+        Route::put('study-years/{studyYear}', [StudyStructureController::class, 'updateYear'])
+            ->name('study_years.update');
+        Route::delete('study-years/{studyYear}', [StudyStructureController::class, 'destroyYear'])
+            ->name('study_years.destroy');
+        Route::get('registrables/{entity}/years', [StudyStructureController::class, 'registrableYears'])
+            ->name('registrables.years');
+        Route::get('study-years/{studyYear}/terms', [StudyStructureController::class, 'terms'])
+            ->name('study_years.terms');
+        Route::post('study-years/{studyYear}/terms', [StudyStructureController::class, 'storeTerm'])
+            ->name('study_terms.store');
+        Route::put('study-terms/{studyTerm}', [StudyStructureController::class, 'updateTerm'])
+            ->name('study_terms.update');
+        Route::delete('study-terms/{studyTerm}', [StudyStructureController::class, 'destroyTerm'])
+            ->name('study_terms.destroy');
+        Route::get('study-terms/{studyTerm}/subjects', [StudyStructureController::class, 'subjects'])
+            ->name('study_terms.subjects');
         Route::post('colleges/{college}/subjects', [CollegeSubjectController::class, 'store'])
             ->name('subjects.store');
         Route::put('subjects/{subject}', [CollegeSubjectController::class, 'update'])
             ->name('subjects.update');
         Route::delete('subjects/{subject}', [CollegeSubjectController::class, 'destroy'])
             ->name('subjects.destroy');
+        Route::get('program-branches', [RegistrableController::class, 'programBranches'])
+            ->name('program_branches.index');
+        Route::get('training-program-branches', [RegistrableController::class, 'trainingProgramBranches'])
+            ->name('training_program_branches.index');
+        Route::put('registrables/{entity}', [RegistrableController::class, 'updatePrice'])
+            ->name('registrables.update');
+        Route::post('registrables/{entity}/subjects', [RegistrableController::class, 'storeSubject'])
+            ->name('registrables.subjects.store');
+        Route::put('registrable-subjects/{subject}', [RegistrableController::class, 'updateSubject'])
+            ->name('registrable_subjects.update');
+        Route::delete('registrable-subjects/{subject}', [RegistrableController::class, 'destroySubject'])
+            ->name('registrable_subjects.destroy');
     });
 });
 

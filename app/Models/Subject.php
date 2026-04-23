@@ -8,6 +8,7 @@ class Subject extends Model
 {
     protected $fillable = [
         'college_id',
+        'study_term_id',
         'name',
         'code',
         'credit_hours',
@@ -17,6 +18,11 @@ class Subject extends Model
     public function college()
     {
         return $this->belongsTo(College::class);
+    }
+
+    public function studyTerm()
+    {
+        return $this->belongsTo(StudyTerm::class);
     }
 
     public function enrollmentCycles()

@@ -45,6 +45,10 @@
                 <input type="text" class="form-control" value="{{ $cycle->name }}" disabled>
             </div>
             <div class="col-md-3">
+                <label>رمز الدورة</label>
+                <input type="text" class="form-control" value="{{ $cycle->code ?: '—' }}" disabled>
+            </div>
+            <div class="col-md-3">
                 <label>الحالة</label>
                 <input type="text" class="form-control" value="{{ $cycle->status }}" disabled>
             </div>
@@ -69,20 +73,41 @@
 
     <div class="panel panel-bordered" style="margin-top:20px;padding:15px;">
         <h4>مواد الدورة</h4>
-        <div class="row">
-            @foreach($subjects as $subject)
-                <div class="col-md-4" style="margin-bottom:10px;">
-                    <label>
-                        <input type="checkbox" disabled
-                               @checked($cycle->registrableSubjects->contains($subject->id))>
-                        {{ $subject->name }}
-                        <small class="text-muted">
-                            ({{ $subjectStats[$subject->id] ?? 0 }} تسجيل)
-                        </small>
-                    </label>
-                </div>
-            @endforeach
-        </div>
+        @foreach($groupedSubjects as $yearGroup)
+            <div style="margin-bottom:18px;">
+                <h5 style="margin:0 0 12px;color:#0d5c86;">
+                    {{ $yearGroup['study_year']?->name ?? 'سنة غير محددة' }}
+                </h5>
+
+                @foreach($yearGroup['terms'] as $termGroup)
+                    <div style="border:1px solid #e5edf2;border-radius:12px;padding:14px;margin-bottom:12px;">
+                        <div style="font-weight:700;color:#083b59;margin-bottom:12px;">
+                            {{ $termGroup['study_term']?->name ?? 'فصل غير محدد' }}
+                            @if($termGroup['study_term']?->code)
+                                <small class="text-muted">({{ $termGroup['study_term']->code }})</small>
+                            @endif
+                        </div>
+                        <div class="row">
+                            @foreach($termGroup['subjects'] as $subject)
+                                <div class="col-md-4" style="margin-bottom:10px;">
+                                    <label>
+                                        <input type="checkbox" disabled
+                                               @checked($cycle->registrableSubjects->contains($subject->id))>
+                                        {{ $subject->name }}
+                                        <small class="text-muted">
+                                            ({{ $subjectStats[$subject->id] ?? 0 }} تسجيل)
+                                        </small>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endforeach
+        @if($groupedSubjects->isEmpty())
+            <div class="text-muted">لا توجد مواد مرتبطة بخطة هذا الكيان بعد.</div>
+        @endif
     </div>
 
     <div class="panel panel-bordered" style="margin-top:20px;padding:15px;">

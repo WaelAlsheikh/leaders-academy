@@ -29,6 +29,10 @@
                     <input type="text" name="name" class="form-control" value="{{ $cycle->name }}" required>
                 </div>
                 <div class="col-md-2">
+                    <label>رمز الدورة</label>
+                    <input type="text" name="code" class="form-control" value="{{ $cycle->code }}">
+                </div>
+                <div class="col-md-2">
                     <label>بداية التسجيل</label>
                     <input type="datetime-local" name="registration_starts_at" class="form-control"
                            value="{{ $cycle->registration_starts_at?->format('Y-m-d\\TH:i') }}">
@@ -57,20 +61,41 @@
         <h4>مواد الدورة</h4>
         <form method="POST" action="{{ route($routeBase . '.enrollment_cycles.subjects', $cycle) }}">
             @csrf
-            <div class="row">
-                @foreach($subjects as $subject)
-                    <div class="col-md-4" style="margin-bottom:10px;">
-                        <label>
-                            <input type="checkbox" name="subjects[]" value="{{ $subject->id }}"
-                                   @checked($cycle->registrableSubjects->contains($subject->id))>
-                            {{ $subject->name }}
-                            <small class="text-muted">
-                                ({{ $subjectStats[$subject->id] ?? 0 }} تسجيل)
-                            </small>
-                        </label>
-                    </div>
-                @endforeach
-            </div>
+            @foreach($groupedSubjects as $yearGroup)
+                <div style="margin-bottom:18px;">
+                    <h5 style="margin:0 0 12px;color:#0d5c86;">
+                        {{ $yearGroup['study_year']?->name ?? 'سنة غير محددة' }}
+                    </h5>
+
+                    @foreach($yearGroup['terms'] as $termGroup)
+                        <div style="border:1px solid #e5edf2;border-radius:12px;padding:14px;margin-bottom:12px;">
+                            <div style="font-weight:700;color:#083b59;margin-bottom:12px;">
+                                {{ $termGroup['study_term']?->name ?? 'فصل غير محدد' }}
+                                @if($termGroup['study_term']?->code)
+                                    <small class="text-muted">({{ $termGroup['study_term']->code }})</small>
+                                @endif
+                            </div>
+                            <div class="row">
+                                @foreach($termGroup['subjects'] as $subject)
+                                    <div class="col-md-4" style="margin-bottom:10px;">
+                                        <label>
+                                            <input type="checkbox" name="subjects[]" value="{{ $subject->id }}"
+                                                   @checked($cycle->registrableSubjects->contains($subject->id))>
+                                            {{ $subject->name }}
+                                            <small class="text-muted">
+                                                ({{ $subjectStats[$subject->id] ?? 0 }} تسجيل)
+                                            </small>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endforeach
+            @if($groupedSubjects->isEmpty())
+                <div class="text-muted">لا توجد مواد مرتبطة بخطة هذا الكيان بعد.</div>
+            @endif
             <button type="submit" class="btn btn-primary">تحديث المواد</button>
         </form>
     </div>
@@ -226,6 +251,7 @@
                         <th>الطالب</th>
                         <th>المواد</th>
                         <th>الحالة</th>
+                        <th>نتائج المواد</th>
                         <th>إجراءات</th>
                     </tr>
                 </thead>
@@ -255,10 +281,31 @@
                             </td>
                             <td>
                                 @foreach($registration->registrableSubjects as $subject)
-                                    <div>{{ $subject->name }}</div>
+                                    <div>
+                                        {{ $subject->name }}
+                                        <small class="text-muted">
+                                            — {{ $subject->studyTerm?->studyYear?->name ?? '—' }} / {{ $subject->studyTerm?->name ?? '—' }}
+                                        </small>
+                                    </div>
                                 @endforeach
                             </td>
                             <td>{{ $statusLabel }}</td>
+                            <td>
+                                <form method="POST" action="{{ route($routeBase . '.enrollment_cycles.registrations.results', [$cycle, $registration]) }}">
+                                    @csrf
+                                    @foreach($registration->registrableSubjects as $subject)
+                                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                                            <span style="min-width:140px;">{{ $subject->name }}</span>
+                                            <select name="result_statuses[{{ $subject->id }}]" class="form-control input-sm" style="min-width:140px;">
+                                                <option value="undefined" @selected(($subject->pivot->result_status ?? 'undefined') === 'undefined')>غير محدد</option>
+                                                <option value="passed" @selected(($subject->pivot->result_status ?? 'undefined') === 'passed')>نجاح</option>
+                                                <option value="failed" @selected(($subject->pivot->result_status ?? 'undefined') === 'failed')>رسوب</option>
+                                            </select>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="btn btn-xs btn-default">حفظ النتائج</button>
+                                </form>
+                            </td>
                             <td>
                                 <form method="POST" action="{{ route($routeBase . '.enrollment_cycles.registrations.status', [$cycle, $registration]) }}" style="display:flex;gap:6px;align-items:center;">
                                     @csrf
@@ -274,7 +321,7 @@
                     @endforeach
                     @if($registrations->isEmpty())
                         <tr>
-                            <td colspan="5" class="text-center">لا توجد تسجيلات لهذه الدورة</td>
+                            <td colspan="6" class="text-center">لا توجد تسجيلات لهذه الدورة</td>
                         </tr>
                     @endif
                 </tbody>

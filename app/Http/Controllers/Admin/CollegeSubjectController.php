@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CollegeSubjectController extends Controller
 {
@@ -36,26 +37,15 @@ class CollegeSubjectController extends Controller
     // عرض مواد كلية محددة
     public function subjects(Request $request, College $college)
     {
-        $this->collegeSubjectSyncService->ensureCollegeEntity($college);
-        $college->subjects()->get()->each(function (Subject $subject) {
-            $this->collegeSubjectSyncService->syncLegacySubject($subject);
-        });
-
-        $subjects = $college->subjects()
-            ->with('registrableSubject')
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.subjects.index', array_merge(
-            compact('college', 'subjects'),
-            $this->portalViewData($request)
-        ));
+        return redirect()
+            ->route($this->portalViewData($request)['routeBase'].'.colleges.years', $college);
     }
 
     public function storeCollege(Request $request)
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'short_description' => 'nullable|string|max:255',
             'long_description' => 'nullable|string',
             'price_per_credit_hour' => 'required|numeric|min:0',
@@ -68,6 +58,7 @@ class CollegeSubjectController extends Controller
 
         $college = College::create([
             'title' => $data['title'],
+            'code' => $data['code'] ?? null,
             'slug' => $this->uniqueCollegeSlug($data['title']),
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
@@ -84,6 +75,7 @@ class CollegeSubjectController extends Controller
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'short_description' => 'nullable|string|max:255',
             'long_description' => 'nullable|string',
             'price_per_credit_hour' => 'required|numeric|min:0',
@@ -99,6 +91,7 @@ class CollegeSubjectController extends Controller
 
         $college->update([
             'title' => $data['title'],
+            'code' => $data['code'] ?? null,
             'slug' => $this->uniqueCollegeSlug($data['title'], $college),
             'short_description' => $data['short_description'] ?? null,
             'long_description' => $data['long_description'] ?? null,
@@ -169,13 +162,17 @@ class CollegeSubjectController extends Controller
         $request->validate([
             'name' => 'required|string',
             'code' => 'required|string|unique:subjects,code',
+            'study_term_id' => 'nullable|integer|exists:study_terms,id',
             'credit_hours' => 'required|integer|min:1',
             'is_active' => 'nullable|boolean',
         ]);
 
+        $studyTermId = $this->resolveStudyTermIdForCollege($college, $request->integer('study_term_id'));
+
         $this->collegeSubjectSyncService->createLegacyAndSync($college, [
             'name' => $request->name,
             'code' => $request->code,
+            'study_term_id' => $studyTermId,
             'credit_hours' => $request->credit_hours,
             'is_active' => $request->boolean('is_active', true),
         ]);
@@ -189,13 +186,17 @@ class CollegeSubjectController extends Controller
         $request->validate([
             'name' => 'required|string',
             'code' => 'required|string|unique:subjects,code,' . $subject->id,
+            'study_term_id' => 'nullable|integer|exists:study_terms,id',
             'credit_hours' => 'required|integer|min:1',
             'is_active' => 'nullable|boolean',
         ]);
 
+        $studyTermId = $this->resolveStudyTermIdForCollege($subject->college, $request->integer('study_term_id'));
+
         $this->collegeSubjectSyncService->updateLegacyAndSync($subject, [
             'name' => $request->name,
             'code' => $request->code,
+            'study_term_id' => $studyTermId,
             'credit_hours' => $request->credit_hours,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -267,5 +268,19 @@ class CollegeSubjectController extends Controller
         }
 
         Storage::disk('public')->delete(ltrim($path, '/'));
+    }
+
+    private function resolveStudyTermIdForCollege(College $college, ?int $studyTermId): ?int
+    {
+        $entity = $this->collegeSubjectSyncService->ensureCollegeEntity($college);
+        $allowedStudyTermIds = $entity->studyTerms()->pluck('study_terms.id')->map(fn ($id) => (int) $id)->all();
+
+        if ($studyTermId !== null && !in_array($studyTermId, $allowedStudyTermIds, true)) {
+            throw ValidationException::withMessages([
+                'study_term_id' => 'الفصل المحدد لا يتبع لهذه الكلية.',
+            ]);
+        }
+
+        return $studyTermId ?: ($allowedStudyTermIds[0] ?? null);
     }
 }

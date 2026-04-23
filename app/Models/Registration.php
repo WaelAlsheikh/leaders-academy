@@ -55,7 +55,7 @@ class Registration extends Model
     public function registrableSubjects()
     {
         return $this->belongsToMany(RegistrableSubject::class, 'registration_registrable_subject')
-            ->withPivot(['credit_hours', 'price_per_hour', 'total_price'])
+            ->withPivot(['credit_hours', 'price_per_hour', 'total_price', 'result_status'])
             ->withTimestamps();
     }
 }

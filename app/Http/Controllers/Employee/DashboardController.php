@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassSection;
 use App\Models\College;
 use App\Models\EnrollmentCycle;
+use App\Models\ProgramBranch;
 use App\Models\SectionMeeting;
 use App\Models\Semester;
 use App\Models\Subject;
+use App\Models\TrainingProgramBranch;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -21,6 +23,8 @@ class DashboardController extends Controller
         $activeCollegeCount = College::whereHas('subjects', function ($query) {
             $query->where('is_active', true);
         })->count();
+        $programBranchCount = ProgramBranch::count();
+        $trainingProgramBranchCount = TrainingProgramBranch::count();
         $cycleCount = EnrollmentCycle::activeListing()->count();
         $archivedCycleCount = EnrollmentCycle::archivedListing()->count();
         $semesterCount = Semester::count();
@@ -32,6 +36,8 @@ class DashboardController extends Controller
             'collegeCount',
             'subjectCount',
             'activeCollegeCount',
+            'programBranchCount',
+            'trainingProgramBranchCount',
             'cycleCount',
             'archivedCycleCount',
             'semesterCount',

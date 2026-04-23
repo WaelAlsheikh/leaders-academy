@@ -7,12 +7,18 @@ use App\Models\PricingSetting;
 use App\Models\Registration;
 use App\Models\RegistrableEntity;
 use App\Models\RegistrableSubject;
+use App\Services\StudentRegistrationEligibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StudentRegistrationController extends Controller
 {
+    public function __construct(
+        private readonly StudentRegistrationEligibilityService $eligibilityService
+    ) {
+    }
+
     public function create()
     {
         RegistrableEntity::syncFromSources();
@@ -30,12 +36,23 @@ class StudentRegistrationController extends Controller
             return $cycle->registrableEntity;
         })->filter()->unique('id')->values();
 
-        $entitySubjects = $openCycles
+        $student = Auth::guard('student')->user();
+        if (!$student) {
+            abort(403);
+        }
+
+        $latestCyclesByEntity = $openCycles
             ->sortByDesc('id')
             ->groupBy('registrable_entity_id')
-            ->map(function ($cyclesForEntity) {
-                return $cyclesForEntity->first()->registrableSubjects ?? collect();
-            });
+            ->map(fn ($cyclesForEntity) => $cyclesForEntity->first());
+
+        $entitySubjects = $latestCyclesByEntity->map(function ($cycle) use ($student) {
+            return $this->eligibilityService->eligibleSubjectsForCycle($student, $cycle);
+        });
+
+        $entitySubjectGroups = $entitySubjects->map(function ($subjects) {
+            return $this->eligibilityService->groupSubjectsByPlan($subjects);
+        });
 
         $entitiesByType = [
             'college' => $registrableEntities->where('entity_type', 'college')->values(),
@@ -51,6 +68,7 @@ class StudentRegistrationController extends Controller
             'entitiesByType',
             'openCycles',
             'entitySubjects',
+            'entitySubjectGroups',
             'minSubjects',
             'registrationFee'
         ));
@@ -101,10 +119,12 @@ class StudentRegistrationController extends Controller
             ->pluck('registrable_subjects.id')
             ->toArray();
 
-        $subjects = RegistrableSubject::whereIn('id', $subjectIds)
+        $eligibleSubjects = $this->eligibilityService
+            ->eligibleSubjectsForCycle($student, $cycle)
             ->whereIn('id', $allowedSubjectIds)
-            ->where('is_active', true)
-            ->get();
+            ->values();
+
+        $subjects = $eligibleSubjects->whereIn('id', $subjectIds)->values();
 
         if ($subjects->count() !== count($subjectIds)) {
             return back()
@@ -147,6 +167,7 @@ class StudentRegistrationController extends Controller
                     'credit_hours' => $subject->credit_hours,
                     'price_per_hour' => $pricePerHour,
                     'total_price' => $subject->credit_hours * $pricePerHour,
+                    'result_status' => 'undefined',
                 ]);
             }
         });

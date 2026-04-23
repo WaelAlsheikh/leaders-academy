@@ -7,6 +7,7 @@
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('admin.partials.voyager_custom_styles')
 @stop
 
 @section('page_title',

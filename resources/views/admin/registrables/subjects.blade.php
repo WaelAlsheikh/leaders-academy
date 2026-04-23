@@ -1,5 +1,9 @@
 @extends('voyager::master')
 
+@section('css')
+    @include('admin.partials.voyager_custom_styles')
+@endsection
+
 @section('content')
 <div class="container-fluid">
     <h1 class="page-title"><i class="voyager-study"></i> مواد الكيان: {{ $entity->display_title }}</h1>

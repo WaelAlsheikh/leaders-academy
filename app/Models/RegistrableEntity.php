@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Schema;
+use App\Services\StudyStructureService;
 
 class RegistrableEntity extends Model
 {
@@ -21,9 +23,33 @@ class RegistrableEntity extends Model
         'price_per_credit_hour' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (self $entity): void {
+            if (Schema::hasTable('study_years') && Schema::hasTable('study_terms')) {
+                app(StudyStructureService::class)->ensureDefaultStructureForEntity($entity);
+            }
+        });
+    }
+
     public function subjects(): HasMany
     {
         return $this->hasMany(RegistrableSubject::class);
+    }
+
+    public function studyYears(): HasMany
+    {
+        return $this->hasMany(StudyYear::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function studyTerms(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            StudyTerm::class,
+            StudyYear::class,
+            'registrable_entity_id',
+            'study_year_id'
+        )->orderBy('study_years.sort_order')->orderBy('study_terms.sort_order')->orderBy('study_terms.id');
     }
 
     public function enrollmentCycles(): HasMany
@@ -56,7 +82,7 @@ class RegistrableEntity extends Model
         if (Schema::hasTable('colleges')) {
             College::query()->select('id', 'title', 'price_per_credit_hour')->chunk(200, function ($items): void {
                 foreach ($items as $item) {
-                    self::updateOrCreate(
+                    $entity = self::updateOrCreate(
                         ['entity_type' => 'college', 'entity_id' => $item->id],
                         [
                             'title_snapshot' => $item->title,
@@ -64,6 +90,10 @@ class RegistrableEntity extends Model
                             'is_active' => true,
                         ]
                     );
+
+                    if (Schema::hasTable('study_years') && Schema::hasTable('study_terms')) {
+                        app(StudyStructureService::class)->ensureDefaultStructureForEntity($entity);
+                    }
                 }
             });
         }
@@ -71,7 +101,7 @@ class RegistrableEntity extends Model
         if (Schema::hasTable('program_branches')) {
             ProgramBranch::query()->select('id', 'title', 'is_active', 'price_per_credit_hour')->chunk(200, function ($items): void {
                 foreach ($items as $item) {
-                    self::updateOrCreate(
+                    $entity = self::updateOrCreate(
                         ['entity_type' => 'program_branch', 'entity_id' => $item->id],
                         [
                             'title_snapshot' => $item->title,
@@ -79,6 +109,10 @@ class RegistrableEntity extends Model
                             'is_active' => (bool) ($item->is_active ?? true),
                         ]
                     );
+
+                    if (Schema::hasTable('study_years') && Schema::hasTable('study_terms')) {
+                        app(StudyStructureService::class)->ensureDefaultStructureForEntity($entity);
+                    }
                 }
             });
         }
@@ -86,7 +120,7 @@ class RegistrableEntity extends Model
         if (Schema::hasTable('training_program_branches')) {
             TrainingProgramBranch::query()->select('id', 'title', 'is_active', 'price_per_credit_hour')->chunk(200, function ($items): void {
                 foreach ($items as $item) {
-                    self::updateOrCreate(
+                    $entity = self::updateOrCreate(
                         ['entity_type' => 'training_program_branch', 'entity_id' => $item->id],
                         [
                             'title_snapshot' => $item->title,
@@ -94,6 +128,10 @@ class RegistrableEntity extends Model
                             'is_active' => (bool) ($item->is_active ?? true),
                         ]
                     );
+
+                    if (Schema::hasTable('study_years') && Schema::hasTable('study_terms')) {
+                        app(StudyStructureService::class)->ensureDefaultStructureForEntity($entity);
+                    }
                 }
             });
         }

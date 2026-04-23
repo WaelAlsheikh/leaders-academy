@@ -10,9 +10,14 @@ use Illuminate\Support\Facades\DB;
 
 class CollegeSubjectSyncService
 {
+    public function __construct(
+        private readonly StudyStructureService $studyStructureService
+    ) {
+    }
+
     public function ensureCollegeEntity(College $college): RegistrableEntity
     {
-        return RegistrableEntity::updateOrCreate(
+        $entity = RegistrableEntity::updateOrCreate(
             ['entity_type' => 'college', 'entity_id' => $college->id],
             [
                 'title_snapshot' => $college->title,
@@ -20,6 +25,10 @@ class CollegeSubjectSyncService
                 'is_active' => true,
             ]
         );
+
+        $this->studyStructureService->ensureDefaultStructureForEntity($entity);
+
+        return $entity;
     }
 
     public function syncLegacySubject(Subject $subject, ?int $doctorId = null): RegistrableSubject
@@ -32,6 +41,7 @@ class CollegeSubjectSyncService
         ]);
 
         $registrableSubject->registrable_entity_id = $entity->id;
+        $registrableSubject->study_term_id = $subject->study_term_id ?: $this->studyStructureService->getDefaultTermForEntity($entity)->id;
         $registrableSubject->name = $subject->name;
         $registrableSubject->code = $subject->code;
         $registrableSubject->credit_hours = $subject->credit_hours;
@@ -50,6 +60,7 @@ class CollegeSubjectSyncService
     {
         return DB::transaction(function () use ($college, $attributes) {
             $subject = $college->subjects()->create([
+                'study_term_id' => $attributes['study_term_id'] ?? $this->studyStructureService->getDefaultTermForEntity($this->ensureCollegeEntity($college))->id,
                 'name' => $attributes['name'],
                 'code' => $attributes['code'],
                 'credit_hours' => $attributes['credit_hours'],
@@ -64,6 +75,7 @@ class CollegeSubjectSyncService
     {
         return DB::transaction(function () use ($subject, $attributes) {
             $subject->update([
+                'study_term_id' => $attributes['study_term_id'] ?? $subject->study_term_id,
                 'name' => $attributes['name'],
                 'code' => $attributes['code'],
                 'credit_hours' => $attributes['credit_hours'],

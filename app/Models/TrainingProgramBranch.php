@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class TrainingProgramBranch extends Model
@@ -11,6 +12,7 @@ class TrainingProgramBranch extends Model
     protected $fillable = [
         'training_program_id',
         'title',
+        'code',
         'slug',
         'short_description',
         'long_description',
@@ -33,6 +35,12 @@ class TrainingProgramBranch extends Model
     public function trainingProgram(): BelongsTo
     {
         return $this->belongsTo(TrainingProgram::class);
+    }
+
+    public function registrableEntity(): HasOne
+    {
+        return $this->hasOne(RegistrableEntity::class, 'entity_id', 'id')
+            ->where('entity_type', 'training_program_branch');
     }
 
     protected static function boot(): void

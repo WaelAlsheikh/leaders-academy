@@ -17,12 +17,12 @@
             @include('employee.partials.sidebar')
 
             <main class="student-content doctor-portal employee-portal">
-                @include('admin.registrables.partials.manager')
+                @include('admin.study_years.partials.manager')
             </main>
         </div>
     @else
         <div class="page-content container-fluid">
-            @include('admin.registrables.partials.manager')
+            @include('admin.study_years.partials.manager')
         </div>
     @endif
 @endsection

@@ -1,4 +1,7 @@
-<div class="container-fluid employee-cycle-page">
+@php
+    $portalMode = ($portalContext ?? 'admin') === 'employee' ? 'employee' : 'voyager';
+@endphp
+<div class="container-fluid employee-cycle-page custom-admin-page custom-admin-page--{{ $portalMode }}" data-portal-context="{{ $portalMode }}">
     <div class="employee-cycle-header">
         <div>
             <h1 class="page-title employee-cycle-title">
@@ -40,6 +43,10 @@
                         <label>اسم الدورة</label>
                         <input type="text" name="name" class="form-control" required>
                     </div>
+                    <div class="col-md-2">
+                        <label>رمز الدورة</label>
+                        <input type="text" name="code" class="form-control">
+                    </div>
                     <div class="col-md-3">
                         <label>بداية التسجيل</label>
                         <input type="datetime-local" name="registration_starts_at" class="form-control">
@@ -68,6 +75,7 @@
                         <th>الكلية</th>
                         <th>النوع</th>
                         <th>الدورة</th>
+                        <th>الرمز</th>
                         <th>الحالة</th>
                         <th>الفصل</th>
                         <th>المدة</th>
@@ -80,6 +88,7 @@
                             <td>{{ $cycle->registrableEntity?->display_title }}</td>
                             <td>{{ $cycle->registrableEntity?->entity_type }}</td>
                             <td>{{ $cycle->name }}</td>
+                            <td>{{ $cycle->code ?: '—' }}</td>
                             <td>
                                 <span class="employee-cycle-status employee-cycle-status--{{ \Illuminate\Support\Str::slug($cycle->status, '-') }}">
                                     {{ $cycle->status }}
@@ -119,7 +128,7 @@
                     @endforeach
                     @if($cycles->isEmpty())
                         <tr>
-                            <td colspan="7" class="text-center">لا توجد دورات</td>
+                            <td colspan="8" class="text-center">لا توجد دورات</td>
                         </tr>
                     @endif
                 </tbody>

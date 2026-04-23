@@ -21,9 +21,19 @@
         إدارة الكليات
     </a>
 
-    <a href="{{ route('employee.colleges.index') }}#employee-subjects-anchor"
-       class="sidebar-link {{ request()->routeIs('employee.colleges.subjects', 'employee.subjects.*') ? 'active' : '' }}">
-        إدارة مواد الكليات
+    <a href="{{ route('employee.program_branches.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.program_branches.index') ? 'active' : '' }}">
+        إدارة فروع البرامج الجامعية
+    </a>
+
+    <a href="{{ route('employee.training_program_branches.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.training_program_branches.index') ? 'active' : '' }}">
+        إدارة فروع البرامج التدريبية
+    </a>
+
+    <a href="{{ route('employee.colleges.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.colleges.years', 'employee.registrables.years', 'employee.study_years.*', 'employee.study_terms.*', 'employee.registrables.subjects.*', 'employee.registrable_subjects.*', 'employee.subjects.*') ? 'active' : '' }}">
+        إدارة السنوات والفصول
     </a>
 
     <form method="POST" action="{{ route('employee.logout') }}">

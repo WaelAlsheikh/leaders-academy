@@ -16,6 +16,7 @@ class EnrollmentCycle extends Model
         'college_id',
         'registrable_entity_id',
         'name',
+        'code',
         'registration_starts_at',
         'registration_ends_at',
         'status',

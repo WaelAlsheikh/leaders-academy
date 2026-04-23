@@ -1,4 +1,7 @@
-<div class="container-fluid employee-cycle-page">
+@php
+    $portalMode = ($portalContext ?? 'admin') === 'employee' ? 'employee' : 'voyager';
+@endphp
+<div class="container-fluid employee-cycle-page custom-admin-page custom-admin-page--{{ $portalMode }}" data-portal-context="{{ $portalMode }}">
     <div class="employee-cycle-header">
         <div>
             <h1 class="page-title employee-cycle-title">
@@ -28,6 +31,7 @@
                         <th>الكيان</th>
                         <th>النوع</th>
                         <th>الدورة</th>
+                        <th>الرمز</th>
                         <th>الحالة الحالية</th>
                         <th>تاريخ الأرشفة</th>
                         <th>أرشفت بواسطة</th>
@@ -40,6 +44,7 @@
                             <td>{{ $cycle->registrableEntity?->display_title }}</td>
                             <td>{{ $cycle->registrableEntity?->entity_type }}</td>
                             <td>{{ $cycle->name }}</td>
+                            <td>{{ $cycle->code ?: '—' }}</td>
                             <td>
                                 <span class="employee-cycle-status employee-cycle-status--{{ \Illuminate\Support\Str::slug($cycle->status, '-') }}">
                                     {{ $cycle->status }}
@@ -70,7 +75,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">لا توجد دورات مؤرشفة</td>
+                            <td colspan="8" class="text-center">لا توجد دورات مؤرشفة</td>
                         </tr>
                     @endforelse
                 </tbody>

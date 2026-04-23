@@ -1,5 +1,9 @@
 @extends('voyager::master')
 
+@section('css')
+    @include('admin.partials.voyager_custom_styles')
+@endsection
+
 @section('content')
 <div class="page-content container-fluid">
     <h2>إدارة الأساتذة الجامعيين</h2>

@@ -47,6 +47,14 @@
                 <span>الكليات ذات المواد النشطة</span>
                 <strong>{{ $activeCollegeCount }}</strong>
             </div>
+            <div class="doctor-portal-stat">
+                <span>فروع البرامج الجامعية</span>
+                <strong>{{ $programBranchCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
+                <span>فروع البرامج التدريبية</span>
+                <strong>{{ $trainingProgramBranchCount }}</strong>
+            </div>
         </section>
 
         <section class="doctor-portal-panel">
@@ -70,12 +78,22 @@
 
                 <a href="{{ route('employee.colleges.index') }}" class="employee-quick-link">
                     <strong>إدارة الكليات</strong>
-                    <span>إضافة الكليات وتعديلها وحذفها ضمن الصلاحيات المتاحة.</span>
+                    <span>إضافة الكليات وتعديلها وحذفها ثم إدارة السنوات والفصول والمواد التابعة لها.</span>
                 </a>
 
-                <a href="{{ route('employee.colleges.index') }}#employee-subjects-anchor" class="employee-quick-link">
-                    <strong>إدارة مواد الكليات</strong>
-                    <span>الدخول إلى مواد كل كلية وإضافة المواد وتحديثها أو حذفها.</span>
+                <a href="{{ route('employee.program_branches.index') }}" class="employee-quick-link">
+                    <strong>إدارة فروع البرامج الجامعية</strong>
+                    <span>متابعة الفروع الجامعية ثم إدارة السنوات والفصول والمواد التابعة لكل فرع.</span>
+                </a>
+
+                <a href="{{ route('employee.training_program_branches.index') }}" class="employee-quick-link">
+                    <strong>إدارة فروع البرامج التدريبية</strong>
+                    <span>متابعة الفروع التدريبية ثم إدارة السنوات والفصول والمواد التابعة لكل فرع.</span>
+                </a>
+
+                <a href="{{ route('employee.colleges.index') }}" class="employee-quick-link">
+                    <strong>إدارة السنوات والفصول</strong>
+                    <span>الانتقال من الكيان إلى السنوات ثم الفصول ثم المواد وفق البنية الأكاديمية الجديدة.</span>
                 </a>
             </div>
         </section>

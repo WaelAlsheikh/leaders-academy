@@ -9,6 +9,7 @@ class College extends Model
 {
     protected $fillable = [
         'title',
+        'code',
         'slug',
         'short_description',
         'long_description',
@@ -38,6 +39,24 @@ class College extends Model
     public function subjects()
     {
         return $this->hasMany(Subject::class);
+    }
+
+    public function registrableEntity()
+    {
+        return $this->hasOne(RegistrableEntity::class, 'entity_id', 'id')
+            ->where('entity_type', 'college');
+    }
+
+    public function studyYears()
+    {
+        return $this->hasManyThrough(
+            StudyYear::class,
+            RegistrableEntity::class,
+            'entity_id',
+            'registrable_entity_id',
+            'id',
+            'id'
+        )->where('registrable_entities.entity_type', 'college');
     }
 
     public function enrollmentCycles()

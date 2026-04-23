@@ -4,7 +4,7 @@
             <h1 class="page-title">
                 <i class="voyager-university"></i> إدارة الكليات
             </h1>
-            <p class="doctor-portal-meta">إضافة الكليات وتحديث بياناتها مع متابعة المواد التابعة لكل كلية.</p>
+            <p class="doctor-portal-meta">إضافة الكليات وتحديث بياناتها مع متابعة السنوات والفصول والمواد التابعة لكل كلية.</p>
         </div>
     </div>
 
@@ -42,6 +42,10 @@
                     <label>اسم الكلية</label>
                     <input name="title" class="form-control" required>
                 </div>
+                <div class="col-md-3">
+                    <label>الرمز</label>
+                    <input name="code" class="form-control">
+                </div>
                 <div class="col-md-4">
                     <label>وصف مختصر</label>
                     <input name="short_description" class="form-control">
@@ -76,6 +80,10 @@
                                 </div>
                                 <h4>{{ $college->title }}</h4>
                                 <div style="margin:8px 0;color:#555;">
+                                    @if($college->code)
+                                        الرمز: <strong>{{ $college->code }}</strong>
+                                        —
+                                    @endif
                                     المواد: <strong>{{ $college->subjects_count }}</strong>
                                     — سعر الساعة: <strong>${{ number_format((float) $college->price_per_credit_hour, 2) }}</strong>
                                 </div>
@@ -84,8 +92,8 @@
                                 @endif
                             </div>
                             <div class="employee-college-card-actions">
-                                <a href="{{ route($routeBase . '.colleges.subjects', $college) }}" class="btn employee-action-btn employee-action-btn--primary">
-                                    إدارة المواد
+                                <a href="{{ route($routeBase . '.colleges.years', $college) }}" class="btn employee-action-btn employee-action-btn--primary">
+                                    إدارة السنوات
                                 </a>
                                 <button type="button" class="btn employee-action-btn employee-action-btn--edit" data-toggle="collapse" data-target="#edit-college-{{ $college->id }}">
                                     تعديل
@@ -106,6 +114,10 @@
                                     <div class="col-md-4">
                                         <label>اسم الكلية</label>
                                         <input name="title" class="form-control" value="{{ $college->title }}" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>الرمز</label>
+                                        <input name="code" class="form-control" value="{{ $college->code }}">
                                     </div>
                                     <div class="col-md-4">
                                         <label>وصف مختصر</label>

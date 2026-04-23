@@ -67,24 +67,44 @@
 
                             @php
                                 $subjectsForCollege = $entitySubjects[$entity->id] ?? collect();
+                                $subjectGroups = $entitySubjectGroups[$entity->id] ?? collect();
                             @endphp
 
                             @if($subjectsForCollege->isEmpty())
                                 <div style="color:#888;">لا توجد مواد متاحة لهذا الخيار حالياً</div>
                             @endif
 
-                            @foreach($subjectsForCollege as $subject)
-                                <label style="display:block;margin-bottom:10px;">
-                                    <input type="checkbox"
-                                           class="subject-checkbox"
-                                           name="subjects[]"
-                                           value="{{ $subject->id }}"
-                                           data-hours="{{ $subject->credit_hours }}">
-                                    {{ $subject->name }}
-                                    <small class="text-muted">
-                                        ({{ $subject->credit_hours }} ساعات)
-                                    </small>
-                                </label>
+                            @foreach($subjectGroups as $yearGroup)
+                                <div style="margin-bottom:16px;">
+                                    <h5 style="margin:0 0 10px;color:#0d5c86;">
+                                        {{ $yearGroup['study_year']?->name ?? 'سنة غير محددة' }}
+                                    </h5>
+
+                                    @foreach($yearGroup['terms'] as $termGroup)
+                                        <div style="padding:12px;border:1px solid #eee;border-radius:10px;margin-bottom:12px;background:#fff;">
+                                            <div style="margin-bottom:10px;font-weight:700;color:#083b59;">
+                                                {{ $termGroup['study_term']?->name ?? 'فصل غير محدد' }}
+                                                @if(!empty($termGroup['study_term']?->code))
+                                                    <small class="text-muted">({{ $termGroup['study_term']->code }})</small>
+                                                @endif
+                                            </div>
+
+                                            @foreach($termGroup['subjects'] as $subject)
+                                                <label style="display:block;margin-bottom:10px;">
+                                                    <input type="checkbox"
+                                                           class="subject-checkbox"
+                                                           name="subjects[]"
+                                                           value="{{ $subject->id }}"
+                                                           data-hours="{{ $subject->credit_hours }}">
+                                                    {{ $subject->name }}
+                                                    <small class="text-muted">
+                                                        ({{ $subject->credit_hours }} ساعات)
+                                                    </small>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    @endforeach
+                                </div>
                             @endforeach
 
                         </div>

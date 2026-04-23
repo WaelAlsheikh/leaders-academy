@@ -11,6 +11,7 @@ class RegistrableSubject extends Model
 {
     protected $fillable = [
         'registrable_entity_id',
+        'study_term_id',
         'legacy_subject_id',
         'doctor_id',
         'name',
@@ -31,6 +32,11 @@ class RegistrableSubject extends Model
     public function legacySubject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'legacy_subject_id');
+    }
+
+    public function studyTerm(): BelongsTo
+    {
+        return $this->belongsTo(StudyTerm::class);
     }
 
     public function doctor(): BelongsTo

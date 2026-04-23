@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use TCG\Voyager\Facades\Voyager;
-use App\Voyager\Actions\ManageSubjectsAction;
+use App\Voyager\Actions\ManageYearsAction;
 
 class VoyagerServiceProvider extends ServiceProvider
 {
@@ -21,6 +21,6 @@ class VoyagerServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Voyager::addAction(ManageSubjectsAction::class);
+        Voyager::addAction(ManageYearsAction::class);
     }
 }
