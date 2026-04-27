@@ -139,6 +139,41 @@ class StudentRegistrationEligibilityService
             ->values();
     }
 
+    public function summarizeStudentProgressForEntity(Student $student, RegistrableEntity $entity, ?Registration $beforeRegistration = null): array
+    {
+        $acceptedRegistrations = Registration::query()
+            ->with(['registrableSubjects' => fn ($query) => $query->with('studyTerm.studyYear'), 'enrollmentCycle.registrationSeason'])
+            ->where('student_id', $student->id)
+            ->where('registrable_entity_id', $entity->id)
+            ->where('status', 'accepted')
+            ->when($beforeRegistration, function ($query) use ($beforeRegistration) {
+                $query->where(function ($nested) use ($beforeRegistration) {
+                    $nested->where('created_at', '<', $beforeRegistration->created_at)
+                        ->orWhere(function ($sameTime) use ($beforeRegistration) {
+                            $sameTime->where('created_at', $beforeRegistration->created_at)
+                                ->where('id', '<', $beforeRegistration->id);
+                        });
+                });
+            })
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $lastAcceptedRegistration = $acceptedRegistrations->last();
+        $lastStudyTerm = $this->resolveHighestAttemptedTerm($acceptedRegistrations, $entity);
+
+        return [
+            'is_old_student' => $acceptedRegistrations->isNotEmpty(),
+            'registration_type_label' => $acceptedRegistrations->isNotEmpty() ? 'طالب قديم' : 'طالب جديد',
+            'last_accepted_registration' => $lastAcceptedRegistration,
+            'last_accepted_season_name' => $lastAcceptedRegistration?->enrollmentCycle?->registrationSeason?->name,
+            'last_study_term' => $lastStudyTerm,
+            'last_study_term_label' => $lastStudyTerm
+                ? trim(($lastStudyTerm->studyYear?->name ?? '') . ' / ' . $lastStudyTerm->name, ' /')
+                : null,
+        ];
+    }
+
     private function firstTermSubjects(RegistrableEntity $entity, Collection $openSubjects): Collection
     {
         $firstTermId = $entity->studyTerms()
@@ -155,5 +190,31 @@ class StudentRegistrationEligibilityService
             ->where('study_term_id', $firstTermId)
             ->sortBy('name')
             ->values();
+    }
+
+    private function resolveHighestAttemptedTerm(Collection $acceptedRegistrations, RegistrableEntity $entity): ?StudyTerm
+    {
+        $attemptedTermIds = [];
+
+        foreach ($acceptedRegistrations as $registration) {
+            foreach ($registration->registrableSubjects as $subject) {
+                if ($subject->study_term_id) {
+                    $attemptedTermIds[$subject->study_term_id] = true;
+                }
+            }
+        }
+
+        if ($attemptedTermIds === []) {
+            return null;
+        }
+
+        return $entity->studyTerms()
+            ->with('studyYear')
+            ->orderBy('study_years.sort_order')
+            ->orderBy('study_terms.sort_order')
+            ->orderBy('study_terms.id')
+            ->get()
+            ->filter(fn ($studyTerm) => isset($attemptedTermIds[$studyTerm->id]))
+            ->last();
     }
 }

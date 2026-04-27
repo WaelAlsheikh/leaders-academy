@@ -10,13 +10,15 @@ use App\Models\RegistrableSubject;
 use App\Models\Subject;
 use App\Models\TrainingProgramBranch;
 use App\Services\CollegeSubjectSyncService;
+use App\Services\RegistrationSeasonService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class RegistrableController extends Controller
 {
     public function __construct(
-        private readonly CollegeSubjectSyncService $collegeSubjectSyncService
+        private readonly CollegeSubjectSyncService $collegeSubjectSyncService,
+        private readonly RegistrationSeasonService $registrationSeasonService
     ) {
     }
 
@@ -128,7 +130,7 @@ class RegistrableController extends Controller
             return back()->with('success', 'تمت إضافة المادة');
         }
 
-        RegistrableSubject::create([
+        $subject = RegistrableSubject::create([
             'registrable_entity_id' => $entity->id,
             'study_term_id' => $this->resolveStudyTermId($entity, $request->integer('study_term_id')),
             'name' => $data['name'],
@@ -136,6 +138,8 @@ class RegistrableController extends Controller
             'credit_hours' => $data['credit_hours'],
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        $this->registrationSeasonService->syncOpenSeasonSubjectsForEntity($subject->registrableEntity);
 
         return back()->with('success', 'تمت إضافة المادة');
     }
@@ -176,6 +180,8 @@ class RegistrableController extends Controller
             'credit_hours' => $data['credit_hours'],
             'is_active' => $request->boolean('is_active'),
         ]);
+
+        $this->registrationSeasonService->syncOpenSeasonSubjectsForEntity($subject->registrableEntity);
 
         return back()->with('success', 'تم تحديث المادة');
     }

@@ -10,6 +10,7 @@ use App\Models\Registration;
 use App\Models\RegistrableEntity;
 use App\Models\RegistrableSubject;
 use App\Models\Semester;
+use App\Services\RegistrationSeasonService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -143,6 +144,12 @@ class EnrollmentCycleController extends Controller
         }
 
         $cycle->registrableSubjects()->sync($syncData);
+
+        if ($cycle->semester) {
+            app(RegistrationSeasonService::class)->syncSemesterSubjectsForCycle(
+                $cycle->fresh(['semester', 'registrableSubjects'])
+            );
+        }
 
         return back()->with('success', 'تم تحديث المواد المتاحة للدورة');
     }
@@ -463,23 +470,11 @@ class EnrollmentCycleController extends Controller
 
                 $targetSection = $this->resolveTargetSection($semester, $subject->id);
 
-                if (!$targetSection) {
-                    $legacySubjectId = RegistrableSubject::where('id', $subject->id)->value('legacy_subject_id');
-                    $targetSection = ClassSection::create([
-                        'semester_id' => $semester->id,
-                        'subject_id' => $legacySubjectId,
-                        'registrable_subject_id' => $subject->id,
-                        'doctor_id' => null,
-                        'name' => 'A',
-                        'mode' => 'online',
-                        'zoom_url' => null,
-                        'notes' => null,
+                if ($targetSection) {
+                    $targetSection->students()->syncWithoutDetaching([
+                        $registration->student_id => ['status' => 'active'],
                     ]);
                 }
-
-                $targetSection->students()->syncWithoutDetaching([
-                    $registration->student_id => ['status' => 'active'],
-                ]);
             }
 
             return;
@@ -603,7 +598,7 @@ class EnrollmentCycleController extends Controller
 
     private function buildCycleViewData(Request $request, EnrollmentCycle $cycle, bool $readonly): array
     {
-        $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects', 'archiveRecord.archivedBy']);
+        $cycle->load(['college', 'subjects', 'semester', 'registrableEntity', 'registrableSubjects', 'registrationSeason', 'archiveRecord.archivedBy']);
 
         $subjects = RegistrableSubject::where('registrable_entity_id', $cycle->registrable_entity_id)
             ->with('studyTerm.studyYear')

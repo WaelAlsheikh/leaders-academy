@@ -20,8 +20,12 @@
 
         <section class="doctor-portal-summary">
             <div class="doctor-portal-stat">
-                <span>الدورات النشطة</span>
+                <span>الدورات الفصلية</span>
                 <strong>{{ $cycleCount }}</strong>
+            </div>
+            <div class="doctor-portal-stat">
+                <span>الدورات المفتوحة</span>
+                <strong>{{ $openSeasonCount }}</strong>
             </div>
             <div class="doctor-portal-stat">
                 <span>الدورات المؤرشفة</span>
@@ -68,7 +72,7 @@
             <div class="employee-quick-links">
                 <a href="{{ route('employee.enrollment_cycles.index') }}" class="employee-quick-link">
                     <strong>إدارة الدورات</strong>
-                    <span>إنشاء دورات التسجيل ومتابعة الفصول والشعب والجلسات والطلاب المرتبطين بها.</span>
+                    <span>إنشاء دورة فصلية عامة واحدة ثم فتح الكليات والبرامج داخلها ومتابعة الشعب والجلسات والطلاب المرتبطين بها.</span>
                 </a>
 
                 <a href="{{ route('employee.archived_enrollment_cycles.index') }}" class="employee-quick-link">

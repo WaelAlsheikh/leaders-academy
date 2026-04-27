@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 class EnrollmentCycle extends Model
 {
     protected $fillable = [
+        'registration_season_id',
         'college_id',
         'registrable_entity_id',
         'name',
@@ -20,6 +21,7 @@ class EnrollmentCycle extends Model
         'registration_starts_at',
         'registration_ends_at',
         'status',
+        'is_enabled',
         'created_by',
         'approved_by',
         'approved_at',
@@ -29,7 +31,13 @@ class EnrollmentCycle extends Model
         'registration_starts_at' => 'datetime',
         'registration_ends_at' => 'datetime',
         'approved_at' => 'datetime',
+        'is_enabled' => 'boolean',
     ];
+
+    public function registrationSeason(): BelongsTo
+    {
+        return $this->belongsTo(RegistrationSeason::class);
+    }
 
     public function college(): BelongsTo
     {
@@ -92,6 +100,14 @@ class EnrollmentCycle extends Model
     public function isOpenNow(): bool
     {
         if ($this->is_archived) {
+            return false;
+        }
+
+        if (!$this->is_enabled) {
+            return false;
+        }
+
+        if ($this->registrationSeason && !$this->registrationSeason->isOpenNow()) {
             return false;
         }
 

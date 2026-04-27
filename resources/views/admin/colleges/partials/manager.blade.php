@@ -4,7 +4,7 @@
             <h1 class="page-title">
                 <i class="voyager-university"></i> إدارة الكليات
             </h1>
-            <p class="doctor-portal-meta">إضافة الكليات وتحديث بياناتها مع متابعة السنوات والفصول والمواد التابعة لكل كلية.</p>
+            <p class="doctor-portal-meta">إضافة الكليات وتحديث بياناتها مع متابعة السنوات والفصول والمواد وطلبات التسجيل التابعة لكل كلية.</p>
         </div>
     </div>
 
@@ -57,7 +57,7 @@
                 <div class="col-md-4">
                     <label>صورة الكلية</label>
                     <input name="image" type="file" accept="image/*" class="form-control employee-file-input">
-                    <p class="employee-file-help">يمكن رفع صورة جديدة بصيغ `jpg`, `png`, `webp`, `gif`.</p>
+                    <p class="employee-file-help">يمكن رفع صورة بصيغ `jpg`, `png`, `webp`, `gif`.</p>
                 </div>
                 <div class="col-md-12 employee-form-field-wide">
                     <label>وصف تفصيلي</label>
@@ -95,6 +95,11 @@
                                 <a href="{{ route($routeBase . '.colleges.years', $college) }}" class="btn employee-action-btn employee-action-btn--primary">
                                     إدارة السنوات
                                 </a>
+                                @if($college->registrableEntity)
+                                    <a href="{{ route($routeBase . '.registrables.registrations.index', $college->registrableEntity) }}" class="btn employee-action-btn employee-action-btn--neutral">
+                                        طلبات التسجيل
+                                    </a>
+                                @endif
                                 <button type="button" class="btn employee-action-btn employee-action-btn--edit" data-toggle="collapse" data-target="#edit-college-{{ $college->id }}">
                                     تعديل
                                 </button>
@@ -159,30 +164,27 @@
     @push('scripts')
         <script>
             (function () {
-                const textareaSelector = 'textarea.employee-rich-text-source';
+                const selector = 'textarea.employee-rich-text-source';
                 const toolbarButtons = [
                     { command: 'bold', label: 'ع', title: 'عريض' },
                     { command: 'italic', label: 'م', title: 'مائل' },
                     { command: 'underline', label: 'ت', title: 'تحته خط' },
-                    { command: 'insertUnorderedList', label: '• قائمة', title: 'قائمة نقطية' },
-                    { command: 'insertOrderedList', label: '1. قائمة', title: 'قائمة رقمية' },
+                    { command: 'insertUnorderedList', label: '•', title: 'قائمة نقطية' },
+                    { command: 'insertOrderedList', label: '1.', title: 'قائمة رقمية' },
                     { command: 'removeFormat', label: 'مسح', title: 'إزالة التنسيق' }
                 ];
 
                 function syncEditor(wrapper) {
                     const editor = wrapper.querySelector('.employee-rich-editor-surface');
-                    const textarea = wrapper.querySelector('textarea.employee-rich-text-source');
+                    const textarea = wrapper.querySelector(selector);
 
-                    if (!editor || !textarea) {
-                        return;
+                    if (editor && textarea) {
+                        textarea.value = editor.innerHTML.trim();
                     }
-
-                    textarea.value = editor.innerHTML.trim();
                 }
 
                 function execCommand(wrapper, command, value = null) {
                     const editor = wrapper.querySelector('.employee-rich-editor-surface');
-
                     if (!editor) {
                         return;
                     }
@@ -208,11 +210,9 @@
                         option.textContent = optionData.label;
                         blockSelect.appendChild(option);
                     });
-
                     blockSelect.addEventListener('change', function () {
                         execCommand(wrapper, 'formatBlock', blockSelect.value);
                     });
-
                     toolbar.appendChild(blockSelect);
 
                     toolbarButtons.forEach(function (buttonData) {
@@ -227,28 +227,15 @@
                         toolbar.appendChild(button);
                     });
 
-                    const linkButton = document.createElement('button');
-                    linkButton.type = 'button';
-                    linkButton.className = 'employee-rich-editor-btn';
-                    linkButton.textContent = 'رابط';
-                    linkButton.title = 'إضافة رابط';
-                    linkButton.addEventListener('click', function () {
-                        const url = window.prompt('أدخل رابط الصفحة:');
-                        if (url) {
-                            execCommand(wrapper, 'createLink', url);
-                        }
-                    });
-                    toolbar.appendChild(linkButton);
-
                     return toolbar;
                 }
 
-                function initEditor(textarea) {
-                    if (textarea.dataset.richEditorReady === '1') {
+                function initTextarea(textarea) {
+                    if (!textarea || textarea.dataset.richReady === '1') {
                         return;
                     }
 
-                    textarea.dataset.richEditorReady = '1';
+                    textarea.dataset.richReady = '1';
 
                     const wrapper = document.createElement('div');
                     wrapper.className = 'employee-rich-editor';
@@ -262,7 +249,6 @@
                     surface.addEventListener('input', function () {
                         syncEditor(wrapper);
                     });
-
                     surface.addEventListener('blur', function () {
                         syncEditor(wrapper);
                     });
@@ -271,29 +257,16 @@
                     wrapper.appendChild(toolbar);
                     wrapper.appendChild(surface);
                     wrapper.appendChild(textarea);
+                    textarea.style.display = 'none';
+                    syncEditor(wrapper);
                 }
 
-                function initEditors() {
-                    document.querySelectorAll(textareaSelector).forEach(function (textarea) {
-                        initEditor(textarea);
-                    });
+                function initAllEditors() {
+                    document.querySelectorAll(selector).forEach(initTextarea);
                 }
 
-                function syncAllEditors() {
-                    document.querySelectorAll('.employee-rich-editor').forEach(syncEditor);
-                }
-
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', initEditors);
-                } else {
-                    initEditors();
-                }
-
-                document.addEventListener('submit', function (event) {
-                    if (event.target.closest('.employee-management-panel, .employee-management-card')) {
-                        syncAllEditors();
-                    }
-                });
+                document.addEventListener('DOMContentLoaded', initAllEditors);
+                initAllEditors();
             })();
         </script>
     @endpush

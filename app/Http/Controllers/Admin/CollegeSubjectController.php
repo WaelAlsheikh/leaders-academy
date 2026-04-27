@@ -24,6 +24,7 @@ class CollegeSubjectController extends Controller
     public function colleges(Request $request)
     {
         $colleges = College::query()
+            ->with('registrableEntity')
             ->withCount('subjects')
             ->orderBy('title')
             ->get();

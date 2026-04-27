@@ -7,7 +7,7 @@
     </a>
 
     <a href="{{ route('employee.enrollment_cycles.index') }}"
-       class="sidebar-link {{ request()->routeIs('employee.enrollment_cycles.*', 'employee.semesters.sections.*', 'employee.sections.*', 'employee.meetings.*') ? 'active' : '' }}">
+       class="sidebar-link {{ request()->routeIs('employee.enrollment_cycles.*', 'employee.registration_seasons.*', 'employee.semesters.sections.*', 'employee.sections.*', 'employee.meetings.*', 'employee.registrables.registrations.index') ? 'active' : '' }}">
         إدارة الدورات
     </a>
 

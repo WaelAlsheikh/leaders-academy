@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 class CollegeSubjectSyncService
 {
     public function __construct(
-        private readonly StudyStructureService $studyStructureService
+        private readonly StudyStructureService $studyStructureService,
+        private readonly RegistrationSeasonService $registrationSeasonService
     ) {
     }
 
@@ -52,6 +53,8 @@ class CollegeSubjectSyncService
         }
 
         $registrableSubject->save();
+
+        $this->registrationSeasonService->syncOpenSeasonSubjectsForEntity($entity);
 
         return $registrableSubject;
     }

@@ -26,7 +26,9 @@ use App\Http\Controllers\Admin\DoctorAdminController;
 use App\Http\Controllers\Admin\EmployeeAdminController;
 use App\Http\Controllers\Admin\CollegeSubjectController;
 use App\Http\Controllers\Admin\EnrollmentCycleController;
+use App\Http\Controllers\Admin\RegistrationSeasonController;
 use App\Http\Controllers\Admin\RegistrableController;
+use App\Http\Controllers\Admin\RegistrableRegistrationController;
 use App\Http\Controllers\Admin\SemesterSectionController;
 use App\Http\Controllers\Admin\StudyStructureController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
@@ -195,16 +197,22 @@ Route::prefix('admin')
             ->name('admin.registrable_subjects.destroy');
 
         // Enrollment Cycles
-        Route::get('/enrollment-cycles', [EnrollmentCycleController::class, 'index'])
+        Route::get('/enrollment-cycles', [RegistrationSeasonController::class, 'index'])
             ->name('admin.enrollment_cycles.index');
-        Route::get('/archived-enrollment-cycles', [EnrollmentCycleController::class, 'archivedIndex'])
+        Route::get('/registration-seasons/{season}', [RegistrationSeasonController::class, 'show'])
+            ->name('admin.registration_seasons.show');
+        Route::post('/registration-seasons/{season}/archive', [RegistrationSeasonController::class, 'archive'])
+            ->name('admin.registration_seasons.archive');
+        Route::put('/registration-seasons/{season}', [RegistrationSeasonController::class, 'update'])
+            ->name('admin.registration_seasons.update');
+        Route::put('/registration-seasons/{season}/entities/{entity}', [RegistrationSeasonController::class, 'toggleEntity'])
+            ->name('admin.registration_seasons.entities.toggle');
+        Route::get('/archived-enrollment-cycles', [RegistrationSeasonController::class, 'archivedIndex'])
             ->name('admin.archived_enrollment_cycles.index');
-        Route::post('/enrollment-cycles', [EnrollmentCycleController::class, 'store'])
+        Route::post('/enrollment-cycles', [RegistrationSeasonController::class, 'store'])
             ->name('admin.enrollment_cycles.store');
         Route::get('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'show'])
             ->name('admin.enrollment_cycles.show');
-        Route::post('/enrollment-cycles/{cycle}/archive', [EnrollmentCycleController::class, 'archive'])
-            ->name('admin.enrollment_cycles.archive');
         Route::put('/enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'update'])
             ->name('admin.enrollment_cycles.update');
         Route::post('/enrollment-cycles/{cycle}/subjects', [EnrollmentCycleController::class, 'updateSubjects'])
@@ -226,12 +234,14 @@ Route::prefix('admin')
         Route::post('/enrollment-cycles/{cycle}/registrations/bulk-status',
             [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus']
         )->name('admin.enrollment_cycles.registrations.bulk_status');
-        Route::get('/archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'archivedShow'])
+        Route::get('/archived-enrollment-cycles/{season}', [RegistrationSeasonController::class, 'archivedShow'])
             ->name('admin.archived_enrollment_cycles.show');
-        Route::post('/archived-enrollment-cycles/{cycle}/restore', [EnrollmentCycleController::class, 'restore'])
+        Route::post('/archived-enrollment-cycles/{season}/restore', [RegistrationSeasonController::class, 'restore'])
             ->name('admin.archived_enrollment_cycles.restore');
-        Route::delete('/archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'destroyArchived'])
+        Route::delete('/archived-enrollment-cycles/{season}', [RegistrationSeasonController::class, 'destroyArchived'])
             ->name('admin.archived_enrollment_cycles.destroy');
+        Route::get('/registrables/{entity}/registrations', [RegistrableRegistrationController::class, 'index'])
+            ->name('admin.registrables.registrations.index');
 
         Route::get('/semesters/{semester}/sections', [SemesterSectionController::class, 'index'])
             ->name('admin.semesters.sections.index');
@@ -440,16 +450,22 @@ Route::prefix('employee')->name('employee.')->group(function () {
         Route::post('logout', [EmployeeAuthController::class, 'logout'])->name('logout');
         Route::get('dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('enrollment-cycles', [EnrollmentCycleController::class, 'index'])
+        Route::get('enrollment-cycles', [RegistrationSeasonController::class, 'index'])
             ->name('enrollment_cycles.index');
-        Route::get('archived-enrollment-cycles', [EnrollmentCycleController::class, 'archivedIndex'])
+        Route::get('registration-seasons/{season}', [RegistrationSeasonController::class, 'show'])
+            ->name('registration_seasons.show');
+        Route::post('registration-seasons/{season}/archive', [RegistrationSeasonController::class, 'archive'])
+            ->name('registration_seasons.archive');
+        Route::put('registration-seasons/{season}', [RegistrationSeasonController::class, 'update'])
+            ->name('registration_seasons.update');
+        Route::put('registration-seasons/{season}/entities/{entity}', [RegistrationSeasonController::class, 'toggleEntity'])
+            ->name('registration_seasons.entities.toggle');
+        Route::get('archived-enrollment-cycles', [RegistrationSeasonController::class, 'archivedIndex'])
             ->name('archived_enrollment_cycles.index');
-        Route::post('enrollment-cycles', [EnrollmentCycleController::class, 'store'])
+        Route::post('enrollment-cycles', [RegistrationSeasonController::class, 'store'])
             ->name('enrollment_cycles.store');
         Route::get('enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'show'])
             ->name('enrollment_cycles.show');
-        Route::post('enrollment-cycles/{cycle}/archive', [EnrollmentCycleController::class, 'archive'])
-            ->name('enrollment_cycles.archive');
         Route::put('enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'update'])
             ->name('enrollment_cycles.update');
         Route::post('enrollment-cycles/{cycle}/subjects', [EnrollmentCycleController::class, 'updateSubjects'])
@@ -468,12 +484,14 @@ Route::prefix('employee')->name('employee.')->group(function () {
             ->name('enrollment_cycles.registrations.results');
         Route::post('enrollment-cycles/{cycle}/registrations/bulk-status', [EnrollmentCycleController::class, 'bulkUpdateRegistrationStatus'])
             ->name('enrollment_cycles.registrations.bulk_status');
-        Route::get('archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'archivedShow'])
+        Route::get('archived-enrollment-cycles/{season}', [RegistrationSeasonController::class, 'archivedShow'])
             ->name('archived_enrollment_cycles.show');
-        Route::post('archived-enrollment-cycles/{cycle}/restore', [EnrollmentCycleController::class, 'restore'])
+        Route::post('archived-enrollment-cycles/{season}/restore', [RegistrationSeasonController::class, 'restore'])
             ->name('archived_enrollment_cycles.restore');
-        Route::delete('archived-enrollment-cycles/{cycle}', [EnrollmentCycleController::class, 'destroyArchived'])
+        Route::delete('archived-enrollment-cycles/{season}', [RegistrationSeasonController::class, 'destroyArchived'])
             ->name('archived_enrollment_cycles.destroy');
+        Route::get('registrables/{entity}/registrations', [RegistrableRegistrationController::class, 'index'])
+            ->name('registrables.registrations.index');
 
         Route::get('semesters/{semester}/sections', [SemesterSectionController::class, 'index'])
             ->name('semesters.sections.index');

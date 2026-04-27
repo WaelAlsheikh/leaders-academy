@@ -60,9 +60,14 @@
                             <td>${{ number_format((float) $entity->price_per_credit_hour, 2) }}</td>
                             <td>{{ $entity->is_active ? 'نعم' : 'لا' }}</td>
                             <td>
-                                <a href="{{ route($routeBase . '.registrables.years', $entity) }}" class="employee-action-btn employee-action-btn--primary employee-action-btn--sm">
-                                    إدارة السنوات
-                                </a>
+                                <div class="employee-cycle-actions">
+                                    <a href="{{ route($routeBase . '.registrables.years', $entity) }}" class="employee-action-btn employee-action-btn--primary employee-action-btn--sm">
+                                        إدارة السنوات
+                                    </a>
+                                    <a href="{{ route($routeBase . '.registrables.registrations.index', $entity) }}" class="employee-action-btn employee-action-btn--neutral employee-action-btn--sm">
+                                        طلبات التسجيل
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

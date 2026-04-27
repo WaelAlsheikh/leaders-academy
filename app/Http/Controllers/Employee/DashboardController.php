@@ -7,6 +7,7 @@ use App\Models\ClassSection;
 use App\Models\College;
 use App\Models\EnrollmentCycle;
 use App\Models\ProgramBranch;
+use App\Models\RegistrationSeason;
 use App\Models\SectionMeeting;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -25,7 +26,8 @@ class DashboardController extends Controller
         })->count();
         $programBranchCount = ProgramBranch::count();
         $trainingProgramBranchCount = TrainingProgramBranch::count();
-        $cycleCount = EnrollmentCycle::activeListing()->count();
+        $cycleCount = RegistrationSeason::count();
+        $openSeasonCount = RegistrationSeason::where('status', 'open')->count();
         $archivedCycleCount = EnrollmentCycle::archivedListing()->count();
         $semesterCount = Semester::count();
         $sectionCount = ClassSection::count();
@@ -39,6 +41,7 @@ class DashboardController extends Controller
             'programBranchCount',
             'trainingProgramBranchCount',
             'cycleCount',
+            'openSeasonCount',
             'archivedCycleCount',
             'semesterCount',
             'sectionCount',

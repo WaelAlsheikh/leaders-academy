@@ -9,7 +9,16 @@
     <main class="student-content">
         <div class="card" style="padding:30px;max-width:900px;margin:auto;">
 
-            <h3 style="margin-bottom:20px;">📝 تسجيل جديد</h3>
+            <h3 style="margin-bottom:8px;">📝 تسجيل جديد</h3>
+            @if($currentSeason)
+                <p style="margin-bottom:20px;color:#4b5563;">
+                    الدورة الحالية:
+                    <strong>{{ $currentSeason->name }}</strong>
+                    @if($currentSeason->code)
+                        ({{ $currentSeason->code }})
+                    @endif
+                </p>
+            @endif
 
             @php
                 $allEntitiesCount = ($entitiesByType['college']->count() ?? 0)
@@ -41,16 +50,28 @@
                         <option value="">-- اختر --</option>
                         @foreach(['college', 'program_branch', 'training_program_branch'] as $type)
                             @foreach($entitiesByType[$type] as $entity)
+                                @php
+                                    $activeRequestStatus = $activeRequestsByEntity[$entity->id] ?? null;
+                                @endphp
                                 <option
                                     value="{{ $entity->id }}"
                                     data-type="{{ $type }}"
                                     data-price="{{ $entity->price_per_credit_hour }}"
-                                    style="display:none;">
+                                    style="display:none;"
+                                    @disabled($activeRequestStatus)>
                                     {{ $entity->title_snapshot }}
+                                    @if($activeRequestStatus)
+                                        — لديك طلب {{ $activeRequestStatus === 'accepted' ? 'مقبول' : 'قائم' }} في هذه الدورة
+                                    @endif
                                 </option>
                             @endforeach
                         @endforeach
                     </select>
+                    @if($activeRequestsByEntity->isNotEmpty())
+                        <div class="text-muted" style="margin-top:8px;">
+                            الكيانات التي لديك عليها طلب غير مرفوض في الدورة الحالية تم تعطيلها مؤقتًا. يمكنك التسجيل على كيان آخر، أو إعادة التقديم فقط إذا أصبح الطلب السابق مرفوضًا.
+                        </div>
+                    @endif
                 </div>
 
                 {{-- المواد --}}

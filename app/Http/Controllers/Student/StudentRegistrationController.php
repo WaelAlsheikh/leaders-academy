@@ -5,8 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\EnrollmentCycle;
 use App\Models\PricingSetting;
 use App\Models\Registration;
+use App\Models\RegistrationSeason;
 use App\Models\RegistrableEntity;
-use App\Models\RegistrableSubject;
 use App\Services\StudentRegistrationEligibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,28 +23,42 @@ class StudentRegistrationController extends Controller
     {
         RegistrableEntity::syncFromSources();
 
-        $openCycles = EnrollmentCycle::with(['registrableEntity', 'registrableSubjects' => function ($q) {
-            $q->wherePivot('is_open', true);
-        }])
-            ->activeListing()
-            ->where('status', 'open')
-            ->get()
-            ->filter(fn ($cycle) => $cycle->isOpenNow())
-            ->values();
-
-        $registrableEntities = $openCycles->map(function ($cycle) {
-            return $cycle->registrableEntity;
-        })->filter()->unique('id')->values();
-
         $student = Auth::guard('student')->user();
         if (!$student) {
             abort(403);
         }
 
-        $latestCyclesByEntity = $openCycles
-            ->sortByDesc('id')
-            ->groupBy('registrable_entity_id')
-            ->map(fn ($cyclesForEntity) => $cyclesForEntity->first());
+        $currentSeason = RegistrationSeason::query()
+            ->with(['enabledEnrollmentCycles.registrableEntity'])
+            ->openListing()
+            ->latest('id')
+            ->get()
+            ->first(fn ($season) => $season->isOpenNow());
+
+        $openCycles = collect();
+        if ($currentSeason) {
+            $openCycles = EnrollmentCycle::with([
+                'registrableEntity',
+                'registrableSubjects' => function ($query) {
+                    $query->wherePivot('is_open', true);
+                },
+            ])
+                ->where('registration_season_id', $currentSeason->id)
+                ->where('is_enabled', true)
+                ->activeListing()
+                ->where('status', 'open')
+                ->get()
+                ->filter(fn ($cycle) => $cycle->registrableEntity?->is_active && $cycle->isOpenNow())
+                ->values();
+        }
+
+        $registrableEntities = $openCycles
+            ->map(fn ($cycle) => $cycle->registrableEntity)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $latestCyclesByEntity = $openCycles->keyBy('registrable_entity_id');
 
         $entitySubjects = $latestCyclesByEntity->map(function ($cycle) use ($student) {
             return $this->eligibilityService->eligibleSubjectsForCycle($student, $cycle);
@@ -64,13 +78,27 @@ class StudentRegistrationController extends Controller
         $minSubjects = $pricing?->min_subjects ?? 4;
         $registrationFee = (float) ($pricing?->registration_fee ?? 0);
 
+        $activeRequestsByEntity = collect();
+        if ($currentSeason && $registrableEntities->isNotEmpty()) {
+            $activeRequestsByEntity = Registration::query()
+                ->where('student_id', $student->id)
+                ->whereIn('registrable_entity_id', $registrableEntities->pluck('id'))
+                ->where('status', '!=', 'rejected')
+                ->whereHas('enrollmentCycle', function ($query) use ($currentSeason) {
+                    $query->where('registration_season_id', $currentSeason->id);
+                })
+                ->pluck('status', 'registrable_entity_id');
+        }
+
         return view('student.registration.create', compact(
+            'currentSeason',
             'entitiesByType',
             'openCycles',
             'entitySubjects',
             'entitySubjectGroups',
             'minSubjects',
-            'registrationFee'
+            'registrationFee',
+            'activeRequestsByEntity'
         ));
     }
 
@@ -101,12 +129,40 @@ class StudentRegistrationController extends Controller
         }
         $collegeId = $entity->entity_type === 'college' ? $entity->entity_id : null;
 
-        $cycle = EnrollmentCycle::where('registrable_entity_id', $entity->id)
+        $currentSeason = RegistrationSeason::query()
+            ->openListing()
+            ->latest('id')
+            ->get()
+            ->first(fn ($season) => $season->isOpenNow());
+
+        if (!$currentSeason) {
+            return back()
+                ->withInput()
+                ->withErrors(['registrable_entity_id' => 'لا توجد دورة فصلية عامة مفتوحة للتسجيل حالياً.']);
+        }
+
+        $hasActiveRequest = Registration::query()
+            ->where('student_id', $student->id)
+            ->where('registrable_entity_id', $entity->id)
+            ->where('status', '!=', 'rejected')
+            ->whereHas('enrollmentCycle', function ($query) use ($currentSeason) {
+                $query->where('registration_season_id', $currentSeason->id);
+            })
+            ->exists();
+
+        if ($hasActiveRequest) {
+            return back()
+                ->withInput()
+                ->withErrors(['registrable_entity_id' => 'لديك بالفعل طلب قائم لهذا الخيار داخل الدورة الحالية. يمكنك التقديم مجدداً فقط إذا كان الطلب السابق مرفوضاً.']);
+        }
+
+        $cycle = EnrollmentCycle::where('registration_season_id', $currentSeason->id)
+            ->where('registrable_entity_id', $entity->id)
+            ->where('is_enabled', true)
             ->activeListing()
             ->where('status', 'open')
             ->orderByDesc('id')
-            ->get()
-            ->first(fn ($c) => $c->isOpenNow());
+            ->first();
 
         if (!$cycle) {
             return back()
@@ -184,7 +240,7 @@ class StudentRegistrationController extends Controller
             abort(403);
         }
 
-        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'enrollmentCycle.archiveRecord', 'semester'])
+        $registrations = Registration::with(['college', 'registrableEntity', 'registrableSubjects', 'enrollmentCycle.registrationSeason', 'enrollmentCycle.archiveRecord', 'semester'])
             ->where('student_id', $student->id)
             ->latest()
             ->get();

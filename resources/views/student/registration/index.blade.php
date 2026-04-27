@@ -52,7 +52,10 @@
                             @endif
                             <div style="margin-bottom:12px;">
                                 <strong>الدورة:</strong>
-                                {{ $registration->enrollmentCycle?->name ?? '—' }}
+                                {{ $registration->enrollmentCycle?->registrationSeason?->name ?? $registration->enrollmentCycle?->name ?? '—' }}
+                                @if($registration->enrollmentCycle?->registrationSeason?->code)
+                                    <small style="color:#666;">({{ $registration->enrollmentCycle->registrationSeason->code }})</small>
+                                @endif
                             </div>
                             <div style="margin-bottom:12px;">
                                 <strong>الفصل:</strong>
