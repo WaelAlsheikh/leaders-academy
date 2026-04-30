@@ -69,4 +69,9 @@ class RegistrableSubject extends Model
     {
         return $this->hasMany(ClassSection::class, 'registrable_subject_id');
     }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(SubjectMaterial::class, 'registrable_subject_id');
+    }
 }

@@ -26,6 +26,11 @@
         📅 الجدول
     </a>
 
+    <a href="{{ route('student.materials.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.materials.*') ? 'active' : '' }}">
+        📁 ملفات المواد
+    </a>
+
     <form method="POST" action="{{ route('student.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">

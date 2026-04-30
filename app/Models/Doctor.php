@@ -37,4 +37,9 @@ class Doctor extends Authenticatable
     {
         return $this->hasMany(ClassSection::class);
     }
+
+    public function subjectMaterials(): HasMany
+    {
+        return $this->hasMany(SubjectMaterial::class);
+    }
 }

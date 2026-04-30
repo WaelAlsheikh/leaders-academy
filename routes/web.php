@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\StudyStructureController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\LiveSessionController as DoctorLiveSessionController;
+use App\Http\Controllers\Doctor\MaterialController as DoctorMaterialController;
 use App\Http\Controllers\Doctor\SectionController as DoctorSectionController;
 use App\Http\Controllers\Employee\AuthController as EmployeeAuthController;
 use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardController;
@@ -44,6 +45,7 @@ use App\Http\Controllers\Student\DashboardController;
 use App\Http\Controllers\Student\StudentRegistrationController;
 use App\Http\Controllers\Student\InvoiceController;
 use App\Http\Controllers\Student\LiveSessionController as StudentLiveSessionController;
+use App\Http\Controllers\Student\MaterialController as StudentMaterialController;
 use App\Http\Controllers\Student\ScheduleController;
 
 // Breeze
@@ -386,6 +388,10 @@ Route::prefix('student')->name('student.')->group(function () {
 
         Route::get('registrations', [StudentRegistrationController::class, 'index'])
             ->name('registrations.index');
+        Route::get('materials', [StudentMaterialController::class, 'index'])
+            ->name('materials.index');
+        Route::get('materials/{material}', [StudentMaterialController::class, 'download'])
+            ->name('materials.download');
 
         Route::get('invoices', [InvoiceController::class, 'index'])
             ->name('invoices.index');
@@ -418,6 +424,12 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
     Route::middleware('auth:doctor')->group(function () {
         Route::post('logout', [DoctorAuthController::class, 'logout'])->name('logout');
         Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('materials', [DoctorMaterialController::class, 'index'])->name('materials.index');
+        Route::post('materials/videos', [DoctorMaterialController::class, 'storeVideo'])->name('materials.videos.store');
+        Route::post('materials/files', [DoctorMaterialController::class, 'storeFile'])->name('materials.files.store');
+        Route::put('materials/{material}', [DoctorMaterialController::class, 'update'])->name('materials.update');
+        Route::delete('materials/{material}', [DoctorMaterialController::class, 'destroy'])->name('materials.destroy');
+        Route::get('materials/{material}/download', [DoctorMaterialController::class, 'download'])->name('materials.download');
         Route::get('sections/{section}', [DoctorSectionController::class, 'show'])->name('sections.show');
         Route::put('sections/{section}/next-link', [DoctorSectionController::class, 'updateNextLink'])->name('sections.next_link');
         Route::post('meetings/{meeting}/start', [DoctorLiveSessionController::class, 'start'])->name('meetings.start');

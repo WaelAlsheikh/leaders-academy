@@ -16,6 +16,11 @@
         موادي / شعبي
     </a>
 
+    <a href="{{ route('doctor.materials.index') }}"
+       class="sidebar-link {{ request()->routeIs('doctor.materials.*') ? 'active' : '' }}">
+        ملفات الجلسات
+    </a>
+
     <form method="POST" action="{{ route('doctor.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">
