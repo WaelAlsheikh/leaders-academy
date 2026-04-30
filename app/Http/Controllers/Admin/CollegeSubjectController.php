@@ -210,7 +210,7 @@ class CollegeSubjectController extends Controller
     {
         $registrableSubject = $subject->registrableSubject;
 
-        if (
+        /*if (
             $registrableSubject
             && (
                 $registrableSubject->enrollmentCycles()->exists()
@@ -220,7 +220,7 @@ class CollegeSubjectController extends Controller
             )
         ) {
             return back()->withErrors(['status' => 'لا يمكن حذف مادة مرتبطة بتسجيلات أو دورات أو شعب']);
-        }
+        }*/
 
         $this->collegeSubjectSyncService->deleteLegacyAndSyncedSubject($subject);
 
