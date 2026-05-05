@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Services\Meetings\LiveSessionAttendanceService;
 use App\Services\Meetings\LiveSessionManager;
 use App\Services\Meetings\MeetingProviderManager;
+use App\Services\Meetings\MeetingStandaloneWindowHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,8 +20,7 @@ class LiveSessionController extends Controller
         private readonly LiveSessionManager $liveSessionManager,
         private readonly MeetingProviderManager $providerManager,
         private readonly LiveSessionAttendanceService $attendanceService,
-    ) {
-    }
+    ) {}
 
     public function show(LiveSession $liveSession)
     {
@@ -43,11 +43,14 @@ class LiveSessionController extends Controller
                 ->buildEmbedPayload($liveSession, $student, 'student');
         }
 
+        $jitsiStandaloneWindow = MeetingStandaloneWindowHelper::shouldUse($embedPayload);
+
         $pageConfig = [
             'role' => 'student',
             'liveSessionId' => $liveSession->id,
             'embedEnabled' => ! $sessionState['ended'],
             'embedPayload' => $embedPayload,
+            'jitsiStandaloneWindow' => $jitsiStandaloneWindow,
             'endpoints' => [
                 'heartbeat' => route('student.live_sessions.heartbeat', $liveSession),
                 'comments' => route('student.live_sessions.comments', $liveSession),
@@ -79,6 +82,7 @@ class LiveSessionController extends Controller
             'sessionState' => $sessionState,
             'embedPayload' => $embedPayload,
             'pageConfig' => $pageConfig,
+            'jitsiStandaloneWindow' => $jitsiStandaloneWindow,
         ]);
     }
 
@@ -189,7 +193,7 @@ class LiveSessionController extends Controller
         $comment = $liveSession->comments()->create([
             'author_type' => 'student',
             'author_id' => $student->id,
-            'author_name_snapshot' => trim($student->first_name . ' ' . $student->last_name),
+            'author_name_snapshot' => trim($student->first_name.' '.$student->last_name),
             'body' => $data['body'],
         ]);
 

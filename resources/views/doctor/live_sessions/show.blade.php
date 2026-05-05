@@ -69,17 +69,23 @@
                 <a href="{{ route('doctor.dashboard') }}#doctor-live-sessions" class="btn btn-secondary">عودة للمحاضرات</a>
             </div>
 
-            <div class="doctor-inline-note" id="doctor-moderator-note">
-                ملاحظة: على <code>meet.jit.si</code> قد تحتاج تسجيل الدخول الخارجي لتصبح <strong>moderator</strong> وتعمل أدوات التحكم المتقدمة.
-            </div>
-
-            @if(!$liveSession->ended_at)
-                <div class="doctor-live-actions doctor-live-actions-inline">
-                    <button type="button" class="btn btn-secondary" id="doctor-open-direct-jitsi-btn">
-                        فتح الجلسة مباشرة في نافذة مستقلة
-                    </button>
+            @unless($jitsiStandaloneWindow ?? false)
+                <div class="doctor-inline-note" id="doctor-moderator-note">
+                    ملاحظة: على <code>meet.jit.si</code> قد تحتاج تسجيل الدخول الخارجي لتصبح <strong>moderator</strong> وتعمل أدوات التحكم المتقدمة.
                 </div>
-            @endif
+
+                @if(!$liveSession->ended_at)
+                    <div class="doctor-live-actions doctor-live-actions-inline">
+                        <button type="button" class="btn btn-secondary" id="doctor-open-direct-jitsi-btn">
+                            فتح الجلسة مباشرة في نافذة مستقلة
+                        </button>
+                    </div>
+                @endif
+            @else
+                <div class="live-session-tip live-session-tip-warning">
+                    يفرض الخادم العام لـ Jitsi حدًا زمنيًا قصيرًا على القاعات <strong>المدمجة داخل الصفحة</strong>، لذا تُفتَح المحاضرة في <strong>نافذة متصفّح كاملة</strong>. استخدم زر «السماح للطلاب بالدخول» بعد ظهور الفيديو لك كمُضيف.
+                </div>
+            @endunless
         </section>
 
         <section class="live-session-layout">
@@ -91,15 +97,21 @@
                             <button type="button" class="btn btn-secondary" id="doctor-toggle-comments-btn">
                                 {{ $liveSession->comments_enabled ? 'إيقاف التعليقات' : 'السماح بالتعليقات' }}
                             </button>
-                            <button type="button" class="btn btn-secondary" id="doctor-toggle-audio-moderation-btn">
-                                {{ $liveSession->audio_moderation_enabled ? 'فتح صوت الطلاب' : 'تقييد صوت الطلاب' }}
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="doctor-toggle-video-moderation-btn">
-                                {{ $liveSession->video_moderation_enabled ? 'فتح فيديو الطلاب' : 'تقييد فيديو الطلاب' }}
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="doctor-recording-btn">
-                                بدء تسجيل محلي
-                            </button>
+                            @unless($jitsiStandaloneWindow ?? false)
+                                <button type="button" class="btn btn-secondary" id="doctor-toggle-audio-moderation-btn">
+                                    {{ $liveSession->audio_moderation_enabled ? 'فتح صوت الطلاب' : 'تقييد صوت الطلاب' }}
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="doctor-toggle-video-moderation-btn">
+                                    {{ $liveSession->video_moderation_enabled ? 'فتح فيديو الطلاب' : 'تقييد فيديو الطلاب' }}
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="doctor-recording-btn">
+                                    بدء تسجيل محلي
+                                </button>
+                            @else
+                                <span class="doctor-portal-meta" style="margin:0;display:inline;margin-inline-start:8px;">
+                                    (صوت وفيديو الطلاب والتسجيل من أدوات Jitsi بعد فتح القاعة في النافذة المنفصلة.)
+                                </span>
+                            @endunless
                         </div>
                     </div>
 
@@ -116,7 +128,23 @@
 
                     <div class="live-session-embed-card">
                         @if(!$liveSession->ended_at)
-                            <div id="jitsi-meeting-container" class="live-session-embed"></div>
+                            @if($jitsiStandaloneWindow ?? false)
+                                <div class="live-session-standalone-actions">
+                                    <p class="doctor-portal-meta" style="margin-top:0;">
+                                        ١) افتح القاعة. ٢) انضَم بالفيديو/الصوت. ٣) اضغط الزر الثاني لتسمح للطلاب بفتح نفس الغرفة من صفحاتهم.
+                                    </p>
+                                    <div class="doctor-standalone-buttons">
+                                        <button type="button" class="btn btn-primary" id="doctor-open-direct-jitsi-btn">
+                                            فتح المحاضرة في نافذة كاملة
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="doctor-standalone-host-ready-btn">
+                                            تم الدخول — السماح للطلاب بالدخول إلى القاعة
+                                        </button>
+                                    </div>
+                                </div>
+                            @else
+                                <div id="jitsi-meeting-container" class="live-session-embed"></div>
+                            @endif
                         @else
                             <div class="doctor-portal-empty">
                                 انتهت هذه الجلسة، ويمكنك فقط مراجعة التعليقات والحضور.
@@ -185,5 +213,5 @@
     <script>
         window.liveSessionPageConfig = {{ \Illuminate\Support\Js::from($pageConfig) }};
     </script>
-    <script src="{{ asset('assets/js/live-session.js') }}"></script>
+    <script src="{{ asset('assets/js/live-session.js') }}?v={{ filemtime(public_path('assets/js/live-session.js')) }}"></script>
 @endpush

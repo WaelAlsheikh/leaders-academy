@@ -92,5 +92,5 @@
     <script>
         window.liveSessionPageConfig = {{ \Illuminate\Support\Js::from($pageConfig) }};
     </script>
-    <script src="{{ asset('assets/js/live-session.js') }}"></script>
+    <script src="{{ asset('assets/js/live-session.js') }}?v={{ filemtime(public_path('assets/js/live-session.js')) }}"></script>
 @endpush

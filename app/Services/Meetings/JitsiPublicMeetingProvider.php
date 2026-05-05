@@ -45,18 +45,19 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
         $payload = $liveSession->provider_payload ?? [];
         $displayName = $actorRole === 'doctor'
             ? $actor->full_name
-            : trim(($actor->first_name ?? '') . ' ' . ($actor->last_name ?? ''));
+            : trim(($actor->first_name ?? '').' '.($actor->last_name ?? ''));
 
         if ($displayName === '') {
             $displayName = $actor->username ?? 'Leaders User';
         }
 
         $subject = trim(
-            ($liveSession->section?->registrableSubject?->name ?? 'محاضرة') .
-            ' - الشعبة ' .
+            ($liveSession->section?->registrableSubject?->name ?? 'محاضرة').
+            ' - الشعبة '.
             ($liveSession->section?->name ?? '—')
         );
 
+        $domain = $payload['domain'] ?? config('meetings.jitsi_public_domain', 'meet.jit.si');
         $toolbarButtons = $actorRole === 'doctor'
             ? [
                 'microphone',
@@ -81,13 +82,14 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
             ];
 
         return [
-            'domain' => $payload['domain'] ?? config('meetings.jitsi_public_domain', 'meet.jit.si'),
+            'domain' => $domain,
             'roomName' => $liveSession->provider_room_name,
             'roomPassword' => $payload['room_password'] ?? null,
-            'meetingUrl' => sprintf(
-                'https://%s/%s#config.prejoinConfig.enabled=false',
-                $payload['domain'] ?? config('meetings.jitsi_public_domain', 'meet.jit.si'),
-                $liveSession->provider_room_name
+            'meetingUrl' => $this->standaloneMeetingUrl(
+                $domain,
+                $liveSession->provider_room_name,
+                $displayName,
+                $actor->email ?? null
             ),
             'subject' => $subject,
             'userInfo' => [
@@ -113,6 +115,29 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
                 'MOBILE_APP_PROMO' => false,
             ],
         ];
+    }
+
+    /**
+     * Opening Jitsi in a new tab (standalone) does not use External API flags; the display name must be in the URL hash.
+     *
+     * @see https://jitsi.github.io/handbook/docs/user-guide/user-guide-start-a-jitsi-meeting/#passing-parameters-at-url-level
+     */
+    private function standaloneMeetingUrl(string $domain, string $roomName, string $displayName, ?string $email): string
+    {
+        $fragments = [
+            'config.prejoinConfig.enabled' => 'false',
+            'userInfo.displayName' => $displayName,
+        ];
+
+        if ($email !== null && $email !== '') {
+            $fragments['userInfo.email'] = $email;
+        }
+
+        $hash = collect($fragments)
+            ->map(static fn (string $value, string $key): string => $key.'='.rawurlencode($value))
+            ->implode('&');
+
+        return sprintf('https://%s/%s#%s', $domain, $roomName, $hash);
     }
 
     public function supports(string $feature): bool

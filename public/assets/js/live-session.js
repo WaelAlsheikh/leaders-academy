@@ -24,6 +24,9 @@
     entryClosed: !!config.initialState?.entryClosed || config.initialState?.statusCode === 'entry_closed',
   };
 
+  const standaloneWindow = !!config.jitsiStandaloneWindow;
+  let studentStandaloneHeartbeatStarted = false;
+
   const els = {
     jitsiContainer: document.getElementById('jitsi-meeting-container'),
     statusBanner: document.getElementById('live-session-status-banner'),
@@ -44,6 +47,7 @@
     recordingBtn: document.getElementById('doctor-recording-btn'),
     moderatorNote: document.getElementById('doctor-moderator-note'),
     openDirectJitsiBtn: document.getElementById('doctor-open-direct-jitsi-btn'),
+    standaloneHostReadyBtn: document.getElementById('doctor-standalone-host-ready-btn'),
     screenShareNote: document.getElementById('doctor-screen-share-note'),
   };
 
@@ -179,7 +183,9 @@
     if (!state.doctorReady) {
       renderLeadersPlaceholder(
         'بانتظار اعتماد الدكتور للجلسة.',
-        'سيظهر الفيديو تلقائيًا هنا فور أن يبدأ الدكتور الاستضافة ويضغط "أنا المضيف".'
+        standaloneWindow
+          ? 'سيظهر هنا زر الدخول إلى القاعة بمجرد أن يفتح الدكتور المحاضرة في نافذة كاملة ويُفعّل السماح لطلابه بالحضور من صفحته.'
+          : 'سيظهر الفيديو تلقائيًا هنا فور أن يبدأ الدكتور الاستضافة ويضغط "أنا المضيف".'
       );
       return;
     }
@@ -187,7 +193,9 @@
     if (!state.canEmbed) {
       renderLeadersPlaceholder(
         'المحاضرة بدأت لكن الدخول غير متاح بعد.',
-        'يرجى الانتظار قليلًا، وسيتم فتح نافذة الفيديو تلقائيًا عند جاهزية الجلسة.'
+        standaloneWindow
+          ? 'انتظر أن يفعِّل الدكتور «السماح للطلاب بالدخول» من لوحته أو يعيد فتح باب الدخول.'
+          : 'يرجى الانتظار قليلًا، وسيتم فتح نافذة الفيديو تلقائيًا عند جاهزية الجلسة.'
       );
     }
   };
@@ -227,6 +235,49 @@
     }
   };
 
+  const ensureStudentStandaloneHeartbeat = () => {
+    if (state.role !== 'student' || studentStandaloneHeartbeatStarted || state.ended || state.localLeft) {
+      return;
+    }
+
+    studentStandaloneHeartbeatStarted = true;
+    heartbeat(null);
+    const heartbeatInterval = Math.max(Number(config.timers?.heartbeatIntervalSeconds || 12), 8) * 1000;
+    window.setInterval(() => heartbeat(), heartbeatInterval);
+  };
+
+  const renderStudentStandaloneJoinCard = () => {
+    if (!els.jitsiContainer) return;
+
+    const url = config.embedPayload?.meetingUrl;
+    const safeSubject = escapeHtml(config.embedPayload?.subject || 'قاعة المحاضرة');
+
+    els.jitsiContainer.innerHTML = `
+      <div class="live-session-placeholder student-standalone-room-card">
+        <div class="live-session-placeholder-message">الجلسة جارية</div>
+        <div class="live-session-placeholder-subtext">${safeSubject}<br/><span style="opacity:.85;font-size:.93em;display:inline-block;margin-top:10px;line-height:1.6;">مع الخادم العام لـ Jitsi لا يمكن إبقاء الفيديو مضمّناً هنا لفترات طويلة دون قطع؛ لذلك ادخل إلى القاعة من الزر أدناه في نافذة متصفّح كاملة.</span></div>
+        <button type="button" class="btn btn-primary" id="student-open-jitsi-standalone-btn" ${url ? '' : 'disabled'}>
+          فتح المحاضرة في نافذة جديدة
+        </button>
+      </div>
+    `;
+
+    if (!url) {
+      return;
+    }
+
+    const btn = document.getElementById('student-open-jitsi-standalone-btn');
+    btn?.addEventListener('click', () => {
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      ensureStudentStandaloneHeartbeat();
+      if (!opened) {
+        showBanner('لم تُفتَح النافذة؛ اسمح بالنوافذ المنبثقة لهذا الموقع ثم حاول مجدداً.');
+      } else if (els.statusBanner) {
+        els.statusBanner.style.display = 'none';
+      }
+    });
+  };
+
   const maybeInitStudentEmbed = () => {
     if (state.role !== 'student') {
       return;
@@ -242,6 +293,11 @@
 
     if (!state.canEmbed || !state.doctorReady) {
       renderStudentWaitingPlaceholder();
+      return;
+    }
+
+    if (standaloneWindow) {
+      renderStudentStandaloneJoinCard();
       return;
     }
 
@@ -813,13 +869,30 @@
       });
     }
 
+    if (els.standaloneHostReadyBtn) {
+      els.standaloneHostReadyBtn.addEventListener('click', () => {
+        syncDoctorPresence(true);
+        showBanner('تم تمكين الطلاب لرؤية زر الدخول إلى القاعة في لوحتهم بعد أن تكون قد ظهر لك الغرفة في النافذة المنفصلة.');
+      });
+    }
+
     document.querySelectorAll('[data-end-session-form="1"]').forEach((form) => {
       form.addEventListener('submit', (event) => {
-        if (state.role !== 'doctor' || !state.api || !state.isModerator || state.ended) {
+        if (state.role !== 'doctor' || state.ended) {
           return;
         }
 
         syncDoctorPresence(false);
+
+        if (standaloneWindow) {
+          showBanner('');
+          return;
+        }
+
+        if (!state.api || !state.isModerator) {
+          return;
+        }
+
         renderLeadersPlaceholder('جارٍ إنهاء الجلسة...', 'سيتم إغلاق قاعة Jitsi وإظهار واجهة ليدرز بدلاً منها.');
 
         try {
@@ -844,7 +917,9 @@
   bindEvents();
   initPolling();
   if (state.role === 'doctor') {
-    initJitsi();
+    if (!standaloneWindow) {
+      initJitsi();
+    }
   } else {
     maybeInitStudentEmbed();
   }

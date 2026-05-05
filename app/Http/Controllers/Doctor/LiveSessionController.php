@@ -11,13 +11,14 @@ use App\Models\SectionMeeting;
 use App\Services\Meetings\LiveSessionAttendanceService;
 use App\Services\Meetings\LiveSessionManager;
 use App\Services\Meetings\MeetingProviderManager;
+use App\Services\Meetings\MeetingStandaloneWindowHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use InvalidArgumentException;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class LiveSessionController extends Controller
 {
@@ -25,8 +26,7 @@ class LiveSessionController extends Controller
         private readonly LiveSessionManager $liveSessionManager,
         private readonly MeetingProviderManager $providerManager,
         private readonly LiveSessionAttendanceService $attendanceService,
-    ) {
-    }
+    ) {}
 
     public function start(Request $request, SectionMeeting $meeting): RedirectResponse
     {
@@ -92,16 +92,19 @@ class LiveSessionController extends Controller
 
         $status = $this->liveSessionManager->statusData($liveSession);
 
+        $jitsiStandaloneWindow = MeetingStandaloneWindowHelper::shouldUse($embedPayload);
+
         $pageConfig = [
             'role' => 'doctor',
             'liveSessionId' => $liveSession->id,
             'embedEnabled' => ! $liveSession->ended_at,
             'embedPayload' => $embedPayload,
+            'jitsiStandaloneWindow' => $jitsiStandaloneWindow,
             'endpoints' => [
                 'attendance' => route('doctor.live_sessions.attendance', $liveSession),
                 'comments' => route('doctor.live_sessions.comments', $liveSession),
                 'storeComment' => route('doctor.live_sessions.comments.store', $liveSession),
-                'hideCommentBase' => url('/doctor/live-sessions/' . $liveSession->id . '/comments'),
+                'hideCommentBase' => url('/doctor/live-sessions/'.$liveSession->id.'/comments'),
                 'commentBlocks' => route('doctor.live_sessions.comment_blocks', $liveSession),
                 'hostPresence' => route('doctor.live_sessions.host_presence', $liveSession),
                 'moderation' => route('doctor.live_sessions.moderation', $liveSession),
@@ -129,6 +132,7 @@ class LiveSessionController extends Controller
             'status' => $status,
             'embedPayload' => $embedPayload,
             'pageConfig' => $pageConfig,
+            'jitsiStandaloneWindow' => $jitsiStandaloneWindow,
         ]);
     }
 
@@ -204,7 +208,7 @@ class LiveSessionController extends Controller
 
             return [
                 'id' => $student->id,
-                'full_name' => trim($student->first_name . ' ' . $student->last_name),
+                'full_name' => trim($student->first_name.' '.$student->last_name),
                 'username' => $student->username,
                 'joined' => $attendance?->first_joined_at?->format('Y-m-d H:i:s'),
                 'last_seen' => $attendance?->last_seen_at?->format('Y-m-d H:i:s'),

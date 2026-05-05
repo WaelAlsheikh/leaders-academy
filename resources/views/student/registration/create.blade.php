@@ -37,7 +37,7 @@
 
                 <div class="registration-tabs">
                     <button type="button" class="reg-tab @if($defaultType === 'college') active @endif" data-type="college">الكليات</button>
-                    <button type="button" class="reg-tab @if($defaultType === 'program_branch') active @endif" data-type="program_branch">البرامج الجامعية</button>
+                    <button type="button" class="reg-tab @if($defaultType === 'program_branch') active @endif" data-type="program_branch">الدراسات العليا</button>
                     <button type="button" class="reg-tab @if($defaultType === 'training_program_branch') active @endif" data-type="training_program_branch">البرامج التدريبية</button>
                 </div>
 

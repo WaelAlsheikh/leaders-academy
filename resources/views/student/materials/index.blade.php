@@ -70,7 +70,7 @@
                                             <div style="font-size:14px;color:#4b5563;margin-top:6px;">{{ $material->description }}</div>
                                         @endif
                                     </div>
-                                    <a href="{{ route('student.materials.download', ['material' => $material, 'download' => 1]) }}" class="btn btn-default">
+                                    <a href="{{ route('student.materials.download', ['material' => $material, 'download' => 1]) }}" class="btn btn-primary">
                                         تنزيل
                                     </a>
                                 </div>
@@ -101,8 +101,8 @@
                                         <div style="font-size:14px;color:#4b5563;margin-top:6px;">{{ $material->description }}</div>
                                     @endif
                                 </div>
-                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                    <a href="{{ route('student.materials.download', $material) }}" class="btn btn-default" target="_blank">عرض</a>
+                                <div class="student-material-file-actions">
+                                    <a href="{{ route('student.materials.download', $material) }}" class="btn-student-view" target="_blank" rel="noopener noreferrer">عرض</a>
                                     <a href="{{ route('student.materials.download', ['material' => $material, 'download' => 1]) }}" class="btn btn-primary">تنزيل</a>
                                 </div>
                             </div>
