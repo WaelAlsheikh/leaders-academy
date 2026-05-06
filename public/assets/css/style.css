@@ -178,6 +178,71 @@ body{
 }
 
 /* ===========================
+   Doctor/Employee portals (no Bootstrap)
+   Provide minimal .btn styling used in portal blades.
+   =========================== */
+body.doctor-shell .btn,
+body.employee-shell .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+  border-radius:14px;
+  font-weight:800;
+  border:1px solid transparent;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+body.doctor-shell .btn:hover,
+body.employee-shell .btn:hover{
+  text-decoration:none;
+  transform:translateY(-1px);
+}
+
+body.doctor-shell .btn.btn-xs,
+body.employee-shell .btn.btn-xs{
+  min-height:34px;
+  padding:7px 12px;
+  font-size:.92rem;
+  border-radius:12px;
+}
+
+body.doctor-shell .btn.btn-sm,
+body.employee-shell .btn.btn-sm{
+  min-height:38px;
+  padding:9px 14px;
+  font-size:.95rem;
+}
+
+body.doctor-shell .btn.btn-default,
+body.employee-shell .btn.btn-default{
+  background:#fff;
+  color:var(--secondary-dark);
+  border-color:rgba(13,92,134,.14);
+  box-shadow:0 10px 22px rgba(13,92,134,.08);
+}
+
+body.doctor-shell .btn.btn-default:hover,
+body.employee-shell .btn.btn-default:hover{
+  box-shadow:0 12px 24px rgba(13,92,134,.12);
+}
+
+body.doctor-shell .btn.btn-danger,
+body.employee-shell .btn.btn-danger{
+  background:linear-gradient(135deg, #ffebe8 0%, #ffd9d3 100%);
+  color:#b23b30;
+  border-color:rgba(178,59,48,.16);
+  box-shadow:0 10px 22px rgba(178,59,48,.10);
+}
+
+body.doctor-shell .btn.btn-danger:hover,
+body.employee-shell .btn.btn-danger:hover{
+  color:#932f26;
+  box-shadow:0 12px 24px rgba(178,59,48,.16);
+}
+
+/* ===========================
    Sections / Layout helpers
    =========================== */
 .section{padding:80px 0}

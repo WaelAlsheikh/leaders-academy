@@ -56,12 +56,6 @@ class RegistrationSeasonController extends Controller
             'entity_ids.*' => 'integer|exists:registrable_entities,id',
         ]);
 
-        if (RegistrationSeason::query()->activeListing()->where('status', 'open')->exists()) {
-            return back()
-                ->withInput()
-                ->withErrors(['status' => 'يوجد دورة فصلية عامة مفتوحة بالفعل. أغلقها أولاً قبل إنشاء دورة جديدة.']);
-        }
-
         $entities = RegistrableEntity::query()
             ->where('is_active', true)
             ->whereIn('id', $data['entity_ids'])
@@ -180,17 +174,6 @@ class RegistrationSeasonController extends Controller
             'registration_ends_at' => 'nullable|date|after_or_equal:registration_starts_at',
             'status' => 'required|in:open,closed',
         ]);
-
-        if (
-            $data['status'] === 'open'
-            && RegistrationSeason::query()
-                ->activeListing()
-                ->where('status', 'open')
-                ->where('id', '!=', $season->id)
-                ->exists()
-        ) {
-            return back()->withErrors(['status' => 'يوجد دورة فصلية عامة مفتوحة بالفعل. أغلقها أولاً قبل فتح هذه الدورة.']);
-        }
 
         $season->update([
             'name' => $data['name'],
