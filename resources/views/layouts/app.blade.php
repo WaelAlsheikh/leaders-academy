@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? ($siteAbout->title ?? __('messages.Leaders Institute')) }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+
+    <title>{{ ((isset($title) && $title) ? ($title . ' - ') : '') . __('messages.Leaders Institute', [], 'en') }}</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
@@ -33,7 +35,8 @@
 <body class="@yield('body-class')">
 
 @php
-    $brandingTitle = $siteAbout->title ?? __('messages.Leaders Institute');
+    // Always display the academy name in English (required branding).
+    $brandingTitle = __('messages.Leaders Institute', [], 'en');
     $brandingImage = null;
 
     if (!empty($siteAbout?->image)) {
@@ -41,8 +44,6 @@
             ? $siteAbout->image
             : asset('storage/' . ltrim($siteAbout->image, '/'));
     }
-
-    $brandingImage = $brandingImage ?: asset('assets/images/logo.png');
 @endphp
 
 @hasSection('hide-navbar')
@@ -51,7 +52,11 @@
     <div class="container">
         <div class="logo">
             <a href="{{ route('home') }}">
-                <img src="{{ $brandingImage }}" alt="{{ $brandingTitle }}">
+                @if($brandingImage)
+                    <img src="{{ $brandingImage }}" alt="{{ $brandingTitle }}">
+                @else
+                    <x-application-logo class="app-navbar-logo" />
+                @endif
             </a>
             <span>{{ $brandingTitle }}</span>
         </div>

@@ -71,8 +71,8 @@ class LiveSessionController extends Controller
                 'entryClosed' => (bool) $sessionState['entry_closed'],
             ],
             'branding' => [
-                'logoUrl' => asset('assets/images/logo.png'),
-                'title' => 'أكاديمية ليدرز',
+                'logoUrl' => asset('favicon.svg'),
+                'title' => 'Leaders Academy',
             ],
         ];
 

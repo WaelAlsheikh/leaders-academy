@@ -121,8 +121,8 @@ class LiveSessionController extends Controller
                 'videoModerationEnabled' => (bool) $liveSession->video_moderation_enabled,
             ],
             'branding' => [
-                'logoUrl' => asset('assets/images/logo.png'),
-                'title' => 'أكاديمية ليدرز',
+                'logoUrl' => asset('favicon.svg'),
+                'title' => 'Leaders Academy',
             ],
         ];
 

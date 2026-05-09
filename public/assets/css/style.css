@@ -67,6 +67,13 @@ body{
 }
 .logo{display:flex;align-items:center;gap:8px}
 .logo img{height:45px;width:auto;border-radius:6px}
+.logo .app-navbar-logo{
+  height:45px;
+  width:auto;
+  border-radius:6px;
+  display:block;
+  fill:var(--primary);
+}
 .logo span{
   font-weight:700;
   color:var(--primary);
