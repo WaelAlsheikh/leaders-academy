@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class StudentAdminController extends Controller
 {
@@ -37,5 +38,18 @@ class StudentAdminController extends Controller
         ]);
 
         return back()->with('success', 'تم تحديث حالة الطالب بنجاح');
+    }
+
+    public function resetPassword(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $student->update([
+            'password' => Hash::make($data['new_password']),
+        ]);
+
+        return back()->with('success', 'تمت إعادة تعيين كلمة مرور الطالب بنجاح.');
     }
 }

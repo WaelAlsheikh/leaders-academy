@@ -127,6 +127,9 @@ Route::prefix('admin')
         Route::post('/students/{student}/toggle', [StudentAdminController::class, 'toggle'])
             ->name('admin.students.toggle');
 
+        Route::post('/students/{student}/reset-password', [StudentAdminController::class, 'resetPassword'])
+            ->name('admin.students.reset_password');
+
         // Colleges & Subjects (الربط الصحيح)
         Route::get('/colleges-management',
             [CollegeSubjectController::class, 'colleges']
