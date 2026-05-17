@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -88,6 +89,14 @@ class LiveSessionController extends Controller
             $embedPayload = $this->providerManager
                 ->for($liveSession->meeting_provider)
                 ->buildEmbedPayload($liveSession, $doctor, 'doctor');
+
+            $ttl = (int) config('meetings.meet_launch_url_ttl_minutes', 45);
+            $embedPayload['meetLaunchUrl'] = URL::temporarySignedRoute(
+                'doctor.live_sessions.meet',
+                now()->addMinutes($ttl),
+                ['liveSession' => $liveSession->id, 'actor' => $doctor->id]
+            );
+            unset($embedPayload['meetingUrl']);
         }
 
         $status = $this->liveSessionManager->statusData($liveSession);

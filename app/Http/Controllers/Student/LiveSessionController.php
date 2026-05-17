@@ -12,6 +12,7 @@ use App\Services\Meetings\MeetingStandaloneWindowHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class LiveSessionController extends Controller
@@ -41,6 +42,14 @@ class LiveSessionController extends Controller
             $embedPayload = $this->providerManager
                 ->for($liveSession->meeting_provider)
                 ->buildEmbedPayload($liveSession, $student, 'student');
+
+            $ttl = (int) config('meetings.meet_launch_url_ttl_minutes', 45);
+            $embedPayload['meetLaunchUrl'] = URL::temporarySignedRoute(
+                'student.live_sessions.meet',
+                now()->addMinutes($ttl),
+                ['liveSession' => $liveSession->id, 'actor' => $student->id]
+            );
+            unset($embedPayload['meetingUrl']);
         }
 
         $jitsiStandaloneWindow = MeetingStandaloneWindowHelper::shouldUse($embedPayload);

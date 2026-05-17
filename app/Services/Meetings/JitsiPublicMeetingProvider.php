@@ -81,7 +81,40 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
                 'hangup',
             ];
 
-        return [
+        $jwt = JitsiJwtTokenBuilder::issue(
+            $actor,
+            $actorRole,
+            (string) $liveSession->provider_room_name,
+            $displayName,
+            $actor->email ?? null
+        );
+
+        $configOverwrite = [
+            'disableDeepLinking' => true,
+            'startWithAudioMuted' => true,
+            'startWithVideoMuted' => true,
+            'buttonsWithNotifyClick' => [
+                [
+                    'key' => 'hangup',
+                    'preventExecution' => true,
+                ],
+            ],
+            'prejoinConfig' => [
+                'enabled' => false,
+            ],
+            'toolbarButtons' => $toolbarButtons,
+        ];
+
+        // On open servers without JWT, these reduce risky UI for guests (true enforcement needs JWT + own Jitsi).
+        if ($actorRole === 'student' && $jwt === null) {
+            $configOverwrite['disableRemoteMute'] = true;
+            $configOverwrite['remoteVideoMenu'] = [
+                'disableKick' => true,
+                'disableGrantModerator' => true,
+            ];
+        }
+
+        $embed = [
             'domain' => $domain,
             'roomName' => $liveSession->provider_room_name,
             'roomPassword' => $payload['room_password'] ?? null,
@@ -89,32 +122,25 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
                 $domain,
                 $liveSession->provider_room_name,
                 $displayName,
-                $actor->email ?? null
+                $actor->email ?? null,
+                $jwt
             ),
             'subject' => $subject,
             'userInfo' => [
                 'displayName' => $displayName,
                 'email' => $actor->email ?? null,
             ],
-            'configOverwrite' => [
-                'disableDeepLinking' => true,
-                'startWithAudioMuted' => true,
-                'startWithVideoMuted' => true,
-                'buttonsWithNotifyClick' => [
-                    [
-                        'key' => 'hangup',
-                        'preventExecution' => true,
-                    ],
-                ],
-                'prejoinConfig' => [
-                    'enabled' => false,
-                ],
-                'toolbarButtons' => $toolbarButtons,
-            ],
+            'configOverwrite' => $configOverwrite,
             'interfaceConfigOverwrite' => [
                 'MOBILE_APP_PROMO' => false,
             ],
         ];
+
+        if ($jwt !== null) {
+            $embed['jwt'] = $jwt;
+        }
+
+        return $embed;
     }
 
     /**
@@ -122,7 +148,7 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
      *
      * @see https://jitsi.github.io/handbook/docs/user-guide/user-guide-start-a-jitsi-meeting/#passing-parameters-at-url-level
      */
-    private function standaloneMeetingUrl(string $domain, string $roomName, string $displayName, ?string $email): string
+    private function standaloneMeetingUrl(string $domain, string $roomName, string $displayName, ?string $email, ?string $jwt): string
     {
         $fragments = [
             'config.prejoinConfig.enabled' => 'false',
@@ -137,7 +163,24 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
             ->map(static fn (string $value, string $key): string => $key.'='.rawurlencode($value))
             ->implode('&');
 
-        return sprintf('https://%s/%s#%s', $domain, $roomName, $hash);
+        $path = sprintf('https://%s/%s', $domain, $this->encodeRoomPathSegment($roomName));
+        if ($jwt !== null && $jwt !== '') {
+            $path .= '?jwt='.rawurlencode($jwt);
+        }
+
+        return $path.'#'.$hash;
+    }
+
+    /**
+     * Jitsi room names are typically unreserved ASCII; avoid encoding unless needed so hash userInfo is parsed reliably.
+     */
+    private function encodeRoomPathSegment(string $roomName): string
+    {
+        if (preg_match('/^[A-Za-z0-9._~-]+$/', $roomName) === 1) {
+            return $roomName;
+        }
+
+        return rawurlencode($roomName);
     }
 
     public function supports(string $feature): bool

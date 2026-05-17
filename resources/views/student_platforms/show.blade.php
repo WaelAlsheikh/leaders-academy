@@ -30,8 +30,8 @@
         @endif
 
         @if($item->content1)
-          <div style="color:#333; line-height:1.8; margin-bottom:18px;">
-            {!! nl2br(e($item->content1)) !!}
+          <div class="platform-rich-text" style="color:#333; line-height:1.8; margin-bottom:18px;">
+            {!! $item->content1 !!}
           </div>
         @endif
 
@@ -64,8 +64,8 @@
         @endif
 
         @if($item->content2)
-          <div style="color:#333; line-height:1.8; margin-bottom:18px;">
-            {!! nl2br(e($item->content2)) !!}
+          <div class="platform-rich-text" style="color:#333; line-height:1.8; margin-bottom:18px;">
+            {!! $item->content2 !!}
           </div>
         @endif
 

@@ -47,6 +47,7 @@ use App\Http\Controllers\Student\InvoiceController;
 use App\Http\Controllers\Student\LiveSessionController as StudentLiveSessionController;
 use App\Http\Controllers\Student\MaterialController as StudentMaterialController;
 use App\Http\Controllers\Student\ScheduleController;
+use App\Http\Controllers\LiveSessionMeetLaunchController;
 
 // Breeze
 use App\Http\Controllers\ProfileController;
@@ -402,6 +403,10 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::get('schedule', [ScheduleController::class, 'index'])
             ->name('schedule.index');
 
+        Route::get('live-sessions/{liveSession}/meet', [LiveSessionMeetLaunchController::class, 'student'])
+            ->middleware('signed')
+            ->name('live_sessions.meet');
+
         Route::get('live-sessions/{liveSession}', [StudentLiveSessionController::class, 'show'])
             ->name('live_sessions.show');
         Route::post('live-sessions/{liveSession}/heartbeat', [StudentLiveSessionController::class, 'heartbeat'])
@@ -436,6 +441,9 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('sections/{section}', [DoctorSectionController::class, 'show'])->name('sections.show');
         Route::put('sections/{section}/next-link', [DoctorSectionController::class, 'updateNextLink'])->name('sections.next_link');
         Route::post('meetings/{meeting}/start', [DoctorLiveSessionController::class, 'start'])->name('meetings.start');
+        Route::get('live-sessions/{liveSession}/meet', [LiveSessionMeetLaunchController::class, 'doctor'])
+            ->middleware('signed')
+            ->name('live_sessions.meet');
         Route::get('live-sessions/{liveSession}', [DoctorLiveSessionController::class, 'show'])->name('live_sessions.show');
         Route::post('live-sessions/{liveSession}/close-entry', [DoctorLiveSessionController::class, 'closeEntry'])->name('live_sessions.close_entry');
         Route::post('live-sessions/{liveSession}/reopen-entry', [DoctorLiveSessionController::class, 'reopenEntry'])->name('live_sessions.reopen_entry');

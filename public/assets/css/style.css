@@ -524,6 +524,12 @@ h2{text-align:center;color:var(--secondary-dark);margin-bottom:40px}
   .program-card-wrapper{flex:0 0 48%;max-width:48%}
   @media (max-width:900px){ .program-card{min-height:280px} }
 }
+.platform-rich-text p{margin:0 0 .75em}
+.platform-rich-text p:last-child{margin-bottom:0}
+.platform-rich-text ul,.platform-rich-text ol{margin:.75em 0;padding-inline-start:1.5em}
+.platform-rich-text li{margin-bottom:.35em}
+.platform-rich-text ul{list-style:disc}
+.platform-rich-text ol{list-style:decimal}
 @media (max-width:900px){
   .duration-row,.certificates-section .certificates-row,.overview-grid,.platform-row{flex-direction:column-reverse;align-items:center}
   .duration-image,.cert-image,.overview-image,.platform-image{order:1;flex:1 1 100%}

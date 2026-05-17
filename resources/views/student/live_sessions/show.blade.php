@@ -33,6 +33,10 @@
             <div id="live-session-status-banner" class="doctor-inline-note" @if(!$sessionState['ended'] && !$sessionState['entry_closed']) style="display:none;" @endif>
                 {{ $sessionState['status_label'] }}
             </div>
+
+            @if($errors->has('meet'))
+                <div class="alert alert-danger">{{ $errors->first('meet') }}</div>
+            @endif
         </section>
 
         <section class="live-session-layout live-session-layout-student">

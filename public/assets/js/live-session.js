@@ -249,7 +249,7 @@
   const renderStudentStandaloneJoinCard = () => {
     if (!els.jitsiContainer) return;
 
-    const url = config.embedPayload?.meetingUrl;
+    const url = config.embedPayload?.meetLaunchUrl || config.embedPayload?.meetingUrl;
     const safeSubject = escapeHtml(config.embedPayload?.subject || 'قاعة المحاضرة');
 
     els.jitsiContainer.innerHTML = `
@@ -628,6 +628,25 @@
     });
   };
 
+  const applyLocalDisplayName = () => {
+    const displayName = config.embedPayload?.userInfo?.displayName;
+    if (!displayName || !state.api) {
+      return;
+    }
+    try {
+      state.api.executeCommand('displayName', displayName);
+    } catch (error) {
+      console.warn('Unable to set display name in Jitsi', error);
+    }
+  };
+
+  const scheduleDisplayNameRetries = () => {
+    applyLocalDisplayName();
+    [120, 350].forEach((ms) => {
+      window.setTimeout(() => applyLocalDisplayName(), ms);
+    });
+  };
+
   const initJitsi = async () => {
     if (!config.embedEnabled || !config.embedPayload || !els.jitsiContainer) {
       return;
@@ -653,6 +672,10 @@
       interfaceConfigOverwrite: config.embedPayload.interfaceConfigOverwrite || {},
       lang: 'ar',
     };
+
+    if (config.embedPayload.jwt) {
+      options.jwt = config.embedPayload.jwt;
+    }
 
     try {
       state.api = new window.JitsiMeetExternalAPI(config.embedPayload.domain, options);
@@ -709,6 +732,7 @@
     state.api.addEventListener('videoConferenceJoined', (event) => {
       state.joinedConference = true;
       state.localLeft = false;
+      scheduleDisplayNameRetries();
       applyConferenceViewPreferences();
       if (state.role === 'student') {
         heartbeat(event.id || null);
@@ -860,12 +884,12 @@
 
     if (els.openDirectJitsiBtn) {
       els.openDirectJitsiBtn.addEventListener('click', () => {
-        if (!config.embedPayload?.meetingUrl) {
+        if (!config.embedPayload?.meetLaunchUrl && !config.embedPayload?.meetingUrl) {
           alert('رابط الجلسة المباشر غير متاح حالياً.');
           return;
         }
 
-        window.open(config.embedPayload.meetingUrl, '_blank', 'noopener,noreferrer');
+        window.open(config.embedPayload.meetLaunchUrl || config.embedPayload.meetingUrl, '_blank', 'noopener,noreferrer');
       });
     }
 
