@@ -29,7 +29,7 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
             );
         }
 
-        $payload['domain'] = $this->jitsiDomain();
+        $payload['domain'] = config('meetings.jitsi_public_domain', 'meet.jit.si');
         $payload['room_password'] = Arr::get($payload, 'room_password', Str::random(16));
 
         $liveSession->forceFill([
@@ -57,7 +57,7 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
             ($liveSession->section?->name ?? '—')
         );
 
-        $domain = $this->jitsiDomain();
+        $domain = $payload['domain'] ?? config('meetings.jitsi_public_domain', 'meet.jit.si');
         $toolbarButtons = $actorRole === 'doctor'
             ? [
                 'microphone',
@@ -191,10 +191,5 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
             'room_password',
             'embed',
         ], true);
-    }
-
-    private function jitsiDomain(): string
-    {
-        return strtolower(trim((string) config('meetings.jitsi_public_domain', 'meet.leaders-academy.net')));
     }
 }

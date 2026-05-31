@@ -6,38 +6,19 @@ class MeetingStandaloneWindowHelper
 {
     /**
      * When true: do not embed Jitsi inside the LMS page — open meeting in a separate browser tab/window instead.
+     * Required for domains like meet.jit.si that disconnect embedded demos after ~5 minutes.
      *
      * @param  array<string, mixed>|null  $embedPayload  Output of {@see MeetingProviderInterface::buildEmbedPayload}
      */
     public static function shouldUse(?array $embedPayload): bool
     {
-        $domain = self::resolveDomain($embedPayload);
-
-        if ($domain === '') {
+        if (! config('meetings.jitsi_prefer_standalone_window')) {
             return false;
         }
 
-        if (! self::domainRequiresStandalone($domain)) {
-            return false;
-        }
+        $domain = (string) ($embedPayload['domain'] ?? config('meetings.jitsi_public_domain', ''));
+        $domain = strtolower(trim($domain));
 
-        if (config('meetings.jitsi_embed_enabled')) {
-            return true;
-        }
-
-        return (bool) config('meetings.jitsi_prefer_standalone_window');
-    }
-
-    /**
-     * @param  array<string, mixed>|null  $embedPayload
-     */
-    private static function resolveDomain(?array $embedPayload): string
-    {
-        return strtolower(trim((string) ($embedPayload['domain'] ?? config('meetings.jitsi_public_domain', ''))));
-    }
-
-    private static function domainRequiresStandalone(string $domain): bool
-    {
         foreach (self::standaloneDomainsNormalized() as $allowed) {
             if ($allowed !== '' && $domain === $allowed) {
                 return true;

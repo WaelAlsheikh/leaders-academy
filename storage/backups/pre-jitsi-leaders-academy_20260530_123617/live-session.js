@@ -83,10 +83,9 @@
   };
 
   const showDeviceHelpMessage = (fallbackMessage) => {
-    const jitsiDomain = config.embedPayload?.domain || 'Jitsi';
     showBanner(
       fallbackMessage ||
-      `تعذر تجهيز الكاميرا أو الميكروفون داخل نافذة المحاضرة. اسمح بالأذونات لنطاق ${jitsiDomain} أو افتح الجلسة في نافذة مستقلة ثم فعّل الكاميرا/الصوت من هناك.`
+      'تعذر تجهيز الكاميرا أو الميكروفون داخل نافذة المحاضرة. اسمح بالأذونات لنطاق meet.jit.si أو افتح الجلسة في نافذة مستقلة ثم فعّل الكاميرا/الصوت من هناك.'
     );
   };
 
@@ -256,7 +255,7 @@
     els.jitsiContainer.innerHTML = `
       <div class="live-session-placeholder student-standalone-room-card">
         <div class="live-session-placeholder-message">الجلسة جارية</div>
-        <div class="live-session-placeholder-subtext">${safeSubject}<br/><span style="opacity:.85;font-size:.93em;display:inline-block;margin-top:10px;line-height:1.6;">ادخل إلى القاعة من الزر أدناه في نافذة متصفّح كاملة.</span></div>
+        <div class="live-session-placeholder-subtext">${safeSubject}<br/><span style="opacity:.85;font-size:.93em;display:inline-block;margin-top:10px;line-height:1.6;">مع الخادم العام لـ Jitsi لا يمكن إبقاء الفيديو مضمّناً هنا لفترات طويلة دون قطع؛ لذلك ادخل إلى القاعة من الزر أدناه في نافذة متصفّح كاملة.</span></div>
         <button type="button" class="btn btn-primary" id="student-open-jitsi-standalone-btn" ${url ? '' : 'disabled'}>
           فتح المحاضرة في نافذة جديدة
         </button>

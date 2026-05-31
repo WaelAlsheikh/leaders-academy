@@ -3,36 +3,22 @@
 return [
     'default_provider' => env('MEETING_PROVIDER_DEFAULT', 'jitsi_public'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Jitsi domain
-    |--------------------------------------------------------------------------
-    |
-    | JITSI_PUBLIC_DOMAIN is the primary setting. JITSI_DOMAIN is supported as
-    | a backward-compatible alias.
-    |
-    */
-    'jitsi_public_domain' => env('JITSI_PUBLIC_DOMAIN', env('JITSI_DOMAIN', 'meet.leaders-academy.net')),
+    'jitsi_public_domain' => env('JITSI_PUBLIC_DOMAIN', 'meet.jit.si'),
 
     /**
-     * When true, Jitsi runs inside the LMS page via JitsiMeetExternalAPI (iframe).
-     * Standalone tab mode is used only for hosts listed in jitsi_standalone_window_domains.
+     * If true and the resolved Jitsi host is listed in {@see jitsi_standalone_window_domains},
+     * the UI opens the conference in a new browser tab instead of an embedded iframe.
+     * avoids meet.jit.si’s ~5 minute embedded-session limit (“demo embedding only”).
      */
-    'jitsi_embed_enabled' => filter_var(env('JITSI_EMBED_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+    'jitsi_prefer_standalone_window' => filter_var(env('JITSI_PREFER_STANDALONE_WINDOW', true), FILTER_VALIDATE_BOOLEAN),
 
     /**
-     * Legacy flag: when jitsi_embed_enabled is false, and this is true, domains listed
-     * below open in a separate browser tab instead of an embedded iframe.
-     */
-    'jitsi_prefer_standalone_window' => filter_var(env('JITSI_PREFER_STANDALONE_WINDOW', false), FILTER_VALIDATE_BOOLEAN),
-
-    /**
-     * Comma-separated hostnames (without https://) that must use standalone mode.
-     * Leave empty for self-hosted servers that support iframe embedding (recommended).
+     * Comma-separated hostnames (without https://) that must use standalone mode when the flag above is on.
+     * Self-hosted domains are typically omitted here so iframe embedding keeps working inside the LMS.
      */
     'jitsi_standalone_window_domains' => array_values(array_unique(array_filter(array_map(
         static fn (string $chunk): string => strtolower(trim($chunk)),
-        explode(',', (string) env('JITSI_STANDALONE_WINDOW_DOMAINS', ''))
+        explode(',', (string) env('JITSI_STANDALONE_WINDOW_DOMAINS', 'meet.jit.si'))
     )))),
 
     'comment_poll_seconds' => (int) env('LIVE_SESSION_COMMENT_POLL_SECONDS', 3),
@@ -42,7 +28,7 @@ return [
     'heartbeat_timeout_seconds' => (int) env('LIVE_SESSION_HEARTBEAT_TIMEOUT_SECONDS', 45),
 
     /**
-     * When true, doctor live-session pages show long operator tips about Jitsi hosting.
+     * When true, doctor live-session pages show long operator tips (Jitsi embed limits, meet.jit.si moderator notes).
      * Default false for production-friendly UI.
      */
     'show_operator_tips' => filter_var(env('MEETING_SHOW_OPERATOR_TIPS', false), FILTER_VALIDATE_BOOLEAN),
@@ -57,7 +43,8 @@ return [
     | Jitsi JWT (self-hosted or JaaS only)
     |--------------------------------------------------------------------------
     |
-    | Set JITSI_JWT_* on your own Jitsi deployment to enforce moderator = lecturer only.
+    | meet.jit.si ignores third-party JWTs — to enforce moderator = lecturer only,
+    | run your own Jitsi (docker-jitsi-meet) or 8x8 JaaS and set the variables below.
     | jitsi_jwt_sub must match the Jitsi deployment hostname (same idea as JITSI_PUBLIC_DOMAIN).
     |
     */

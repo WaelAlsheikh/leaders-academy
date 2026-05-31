@@ -72,7 +72,7 @@
             @unless($jitsiStandaloneWindow ?? false)
                 @if(config('meetings.show_operator_tips'))
                     <div class="doctor-inline-note" id="doctor-moderator-note">
-                        ملاحظة: على خادم Jitsi الحالي (<code>{{ config('meetings.jitsi_public_domain') }}</code>) يُفضّل تفعيل JWT (<code>JITSI_JWT_*</code>) لضمان أن تكون وحدك المشرف (moderator) في القاعة.
+                        ملاحظة: على الخادم العام <code>meet.jit.si</code> لا يمكن ضمان أن تكون وحدك المشرف (moderator) — أي ضيف قد ينال صلاحيات المشرف إن دخل قبلك أو بلا توثيق. لسيادة كاملة على القاعة استخدم Jitsi على خادمكم مع JWT (متغيرات <code>JITSI_JWT_*</code> في الإعدادات).
                     </div>
                 @endif
 
@@ -86,10 +86,8 @@
             @else
                 @if(config('meetings.show_operator_tips'))
                     <div class="live-session-tip live-session-tip-warning">
-                        تُعرض المحاضرة داخل المنصة. بعد ظهور الفيديو لك كمُضيف، استخدم «السماح للطلاب بالدخول» من لوحة التحكم.
-                        @unless(config('meetings.jitsi_jwt_app_id'))
-                            يُفضّل تفعيل JWT على <code>{{ config('meetings.jitsi_public_domain') }}</code> لضمان صلاحيات المشرف للمحاضر فقط.
-                        @endunless
+                        يفرض الخادم العام لـ Jitsi حدًا زمنيًا قصيرًا على القاعات <strong>المدمجة داخل الصفحة</strong>، لذا تُفتَح المحاضرة في <strong>نافذة متصفّح كاملة</strong>. استخدم زر «السماح للطلاب بالدخول» بعد ظهور الفيديو لك كمُضيف.
+                        على <code>meet.jit.si</code> يُفضّل أن تدخل القاعة <strong>قبل الطلاب</strong> حتى تقل احتمالية حصولهم على صلاحيات المشرف؛ للتحكم المضمون استخدم خادم Jitsi خاص مع JWT.
                     </div>
                 @endif
             @endunless

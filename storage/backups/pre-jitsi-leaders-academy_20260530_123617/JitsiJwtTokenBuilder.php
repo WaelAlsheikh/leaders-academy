@@ -36,7 +36,7 @@ final class JitsiJwtTokenBuilder
             return null;
         }
 
-        // Public Jitsi (meet.jit.si) does not accept application-issued JWTs; tokens would break joins.
+        // meet.jit.si does not accept application-issued JWTs; tokens would break joins.
         if (strtolower((string) config('meetings.jitsi_public_domain', '')) === 'meet.jit.si') {
             return null;
         }
