@@ -9,6 +9,7 @@ use App\Services\Meetings\LiveSessionAttendanceService;
 use App\Services\Meetings\LiveSessionManager;
 use App\Services\Meetings\MeetingProviderManager;
 use App\Services\Meetings\MeetingStandaloneWindowHelper;
+use App\Services\SharedLectureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class LiveSessionController extends Controller
         private readonly LiveSessionManager $liveSessionManager,
         private readonly MeetingProviderManager $providerManager,
         private readonly LiveSessionAttendanceService $attendanceService,
+        private readonly SharedLectureService $sharedLectureService,
     ) {}
 
     public function show(LiveSession $liveSession)
@@ -230,12 +232,10 @@ class LiveSessionController extends Controller
 
     private function authorizeStudent(LiveSession $liveSession, Student $student): void
     {
-        $isEnrolled = $student->sections()
-            ->wherePivot('status', 'active')
-            ->where('class_sections.id', $liveSession->section_id)
-            ->exists();
-
-        abort_unless($isEnrolled, 403);
+        abort_unless(
+            $this->sharedLectureService->studentCanAccessLiveSession($student, (int) $liveSession->section_id),
+            403
+        );
     }
 
     private function sessionState(LiveSession $liveSession, Student $student): array

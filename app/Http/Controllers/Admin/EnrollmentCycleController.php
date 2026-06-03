@@ -11,6 +11,7 @@ use App\Models\RegistrableEntity;
 use App\Models\RegistrableSubject;
 use App\Models\Semester;
 use App\Services\RegistrationSeasonService;
+use App\Services\SharedLectureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,11 @@ use Illuminate\Support\Collection;
 
 class EnrollmentCycleController extends Controller
 {
+    public function __construct(
+        private readonly SharedLectureService $sharedLectureService,
+    ) {
+    }
+
     public function index(Request $request)
     {
         RegistrableEntity::syncFromSources();
@@ -359,7 +365,7 @@ class EnrollmentCycleController extends Controller
 
                 foreach ($registrations as $registration) {
                     foreach ($registration->registrableSubjects as $subject) {
-                        $targetSection = $this->resolveTargetSection($semester, $subject->id);
+                        $targetSection = $this->sharedLectureService->resolveTargetSection($semester, $subject->id);
                         if (!$targetSection) {
                             continue;
                         }
@@ -368,6 +374,7 @@ class EnrollmentCycleController extends Controller
                             ->syncWithoutDetaching([
                                 $registration->student_id => ['status' => 'active'],
                             ]);
+                        $this->sharedLectureService->attachStudentToSharedHostIfApplicable($registration, $subject);
                     }
                 }
             });
@@ -468,12 +475,13 @@ class EnrollmentCycleController extends Controller
                     continue;
                 }
 
-                $targetSection = $this->resolveTargetSection($semester, $subject->id);
+                $targetSection = $this->sharedLectureService->resolveTargetSection($semester, $subject->id);
 
                 if ($targetSection) {
                     $targetSection->students()->syncWithoutDetaching([
                         $registration->student_id => ['status' => 'active'],
                     ]);
+                    $this->sharedLectureService->attachStudentToSharedHostIfApplicable($registration, $subject);
                 }
             }
 
@@ -582,18 +590,6 @@ class EnrollmentCycleController extends Controller
                 }
             }
         }
-    }
-
-    private function resolveTargetSection(Semester $semester, int $registrableSubjectId): ?ClassSection
-    {
-        return ClassSection::query()
-            ->where('semester_id', $semester->id)
-            ->where('registrable_subject_id', $registrableSubjectId)
-            ->withCount(['students', 'meetings'])
-            ->orderByDesc('meetings_count')
-            ->orderBy('students_count')
-            ->orderBy('id')
-            ->first();
     }
 
     private function buildCycleViewData(Request $request, EnrollmentCycle $cycle, bool $readonly): array

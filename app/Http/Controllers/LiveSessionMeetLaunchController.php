@@ -6,6 +6,7 @@ use App\Models\Doctor;
 use App\Models\LiveSession;
 use App\Models\Student;
 use App\Services\Meetings\MeetingProviderManager;
+use App\Services\SharedLectureService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,7 @@ class LiveSessionMeetLaunchController extends Controller
 {
     public function __construct(
         private readonly MeetingProviderManager $providerManager,
+        private readonly SharedLectureService $sharedLectureService,
     ) {}
 
     public function student(Request $request, LiveSession $liveSession): RedirectResponse
@@ -63,12 +65,10 @@ class LiveSessionMeetLaunchController extends Controller
 
     private function authorizeStudentLiveSession(LiveSession $liveSession, Student $student): void
     {
-        $isEnrolled = $student->sections()
-            ->wherePivot('status', 'active')
-            ->where('class_sections.id', $liveSession->section_id)
-            ->exists();
-
-        abort_unless($isEnrolled, 403);
+        abort_unless(
+            $this->sharedLectureService->studentCanAccessLiveSession($student, (int) $liveSession->section_id),
+            403
+        );
     }
 
     private function authorizeDoctorLiveSession(LiveSession $liveSession, Doctor $doctor): void
