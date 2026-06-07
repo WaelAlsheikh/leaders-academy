@@ -8,6 +8,7 @@ use App\Models\LiveSession;
 use App\Models\SectionMeeting;
 use App\Services\Meetings\LiveSessionManager;
 use App\Services\Meetings\MeetingOccurrenceService;
+use App\Services\SharedLectureService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,6 +17,7 @@ class DashboardController extends Controller
     public function __construct(
         private readonly MeetingOccurrenceService $occurrenceService,
         private readonly LiveSessionManager $liveSessionManager,
+        private readonly SharedLectureService $sharedLectureService,
     ) {
     }
 
@@ -92,6 +94,7 @@ class DashboardController extends Controller
             $liveSession = $liveSessions->get($occurrence['section_meeting']->id . '|' . $occurrence['occurrence_date']);
             $status = $this->liveSessionManager->statusData($liveSession);
             $scheduledStartsAt = $occurrence['scheduled_starts_at']->copy()->setTimezone($timezone);
+            $sectionId = (int) $occurrence['section']->id;
 
             return [
                 'section' => $occurrence['section'],
@@ -102,8 +105,16 @@ class DashboardController extends Controller
                 'live_session' => $liveSession,
                 'status' => $status,
                 'can_start_today' => $scheduledStartsAt->toDateString() === Carbon::now($timezone)->toDateString(),
+                'shared_lecture_label' => $this->sharedLectureService->doctorLabelForSection($sectionId),
             ];
         })->groupBy(fn (array $item) => $item['scheduled_starts_at']->toDateString());
+
+        $sharedLectureLabelsBySectionId = $sections
+            ->mapWithKeys(fn (ClassSection $section) => [
+                $section->id => $this->sharedLectureService->doctorLabelForSection($section->id),
+            ])
+            ->filter()
+            ->all();
 
         return view('doctor.dashboard', compact(
             'doctor',
@@ -111,7 +122,8 @@ class DashboardController extends Controller
             'subjectCount',
             'sectionCount',
             'studentCount',
-            'upcomingSessions'
+            'upcomingSessions',
+            'sharedLectureLabelsBySectionId'
         ));
     }
 }

@@ -79,6 +79,10 @@
                                         </span>
                                     </div>
 
+                                    @if(!empty($item['shared_lecture_label']))
+                                        @include('doctor.partials.shared-lecture-badge', ['sharedLectureLabel' => $item['shared_lecture_label']])
+                                    @endif
+
                                     <div class="doctor-occurrence-meta">
                                         <div><strong>الفصل:</strong> {{ $section->semester?->name ?? '—' }}</div>
                                         <div><strong>الشعبة:</strong> {{ $section->name }}</div>
@@ -191,6 +195,11 @@
                                         </div>
                                         <p>الدورة: {{ $section->semester?->enrollmentCycle?->name ?? '—' }}</p>
                                         <p>الفصل: {{ $section->semester?->name ?? '—' }}</p>
+                                        @if(!empty($sharedLectureLabelsBySectionId[$section->id] ?? null))
+                                            <p class="doctor-shared-lecture-badge doctor-shared-lecture-badge--compact">
+                                                {{ $sharedLectureLabelsBySectionId[$section->id] }}
+                                            </p>
+                                        @endif
                                         <p>طريقة الحضور: {{ $section->mode === 'online' ? 'أونلاين' : 'حضوري' }}</p>
                                         <p>عدد الطلاب: {{ $section->students_count }}</p>
                                     </a>

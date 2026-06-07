@@ -41,6 +41,10 @@ return [
     'medical_terminology_health_medicine' => [
         'name' => 'اللغة الطبية (المصطلحات) — مشتركة',
         'subject_name' => 'اللغة الطبية (المصطلحات)',
+        // أسماء بديلة قديمة (إن وُجدت في قاعدة البيانات قبل توحيد التسمية)
+        'subject_names' => [
+            'اللغة الطبية / المصطلحات',
+        ],
         'college_ids' => [15, 5],
         'host_college_id' => 15,
         'study_year_sort' => 1,

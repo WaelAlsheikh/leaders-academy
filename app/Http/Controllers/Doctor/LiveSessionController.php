@@ -12,6 +12,7 @@ use App\Services\Meetings\LiveSessionAttendanceService;
 use App\Services\Meetings\LiveSessionManager;
 use App\Services\Meetings\MeetingProviderManager;
 use App\Services\Meetings\MeetingStandaloneWindowHelper;
+use App\Services\SharedLectureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class LiveSessionController extends Controller
         private readonly LiveSessionManager $liveSessionManager,
         private readonly MeetingProviderManager $providerManager,
         private readonly LiveSessionAttendanceService $attendanceService,
+        private readonly SharedLectureService $sharedLectureService,
     ) {}
 
     public function start(Request $request, SectionMeeting $meeting): RedirectResponse
@@ -135,6 +137,8 @@ class LiveSessionController extends Controller
             ],
         ];
 
+        $sharedLectureLabel = $this->sharedLectureService->doctorLabelForSection((int) $liveSession->section_id);
+
         return view('doctor.live_sessions.show', [
             'doctor' => $doctor,
             'liveSession' => $liveSession,
@@ -142,6 +146,7 @@ class LiveSessionController extends Controller
             'embedPayload' => $embedPayload,
             'pageConfig' => $pageConfig,
             'jitsiStandaloneWindow' => $jitsiStandaloneWindow,
+            'sharedLectureLabel' => $sharedLectureLabel,
         ]);
     }
 

@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassSection;
+use App\Services\SharedLectureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SectionController extends Controller
 {
+    public function __construct(
+        private readonly SharedLectureService $sharedLectureService,
+    ) {
+    }
+
     public function show(ClassSection $section)
     {
         $doctor = Auth::guard('doctor')->user();
@@ -24,7 +30,9 @@ class SectionController extends Controller
 
         abort_unless($section->doctor_id === $doctor->id, 403);
 
-        return view('doctor.sections.show', compact('doctor', 'section'));
+        $sharedLectureLabel = $this->sharedLectureService->doctorLabelForSection($section->id);
+
+        return view('doctor.sections.show', compact('doctor', 'section', 'sharedLectureLabel'));
     }
 
     public function updateNextLink(Request $request, ClassSection $section)

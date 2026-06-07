@@ -32,6 +32,8 @@
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
 
+            @include('doctor.partials.shared-lecture-badge', ['sharedLectureLabel' => $sharedLectureLabel ?? null])
+
             <div class="doctor-section-info-grid">
                 <div><strong>الأستاذ:</strong> {{ $section->doctor?->full_name ?? '—' }}</div>
                 <div><strong>طريقة الحضور:</strong> {{ $section->mode === 'online' ? 'أونلاين' : 'حضوري' }}</div>

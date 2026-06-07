@@ -32,6 +32,8 @@
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
 
+            @include('doctor.partials.shared-lecture-badge', ['sharedLectureLabel' => $sharedLectureLabel ?? null])
+
             <div class="doctor-section-info-grid">
                 <div><strong>الأستاذ:</strong> {{ $doctor->full_name }}</div>
                 <div><strong>الموعد:</strong> {{ $liveSession->scheduled_starts_at?->format('Y-m-d H:i') }} - {{ $liveSession->scheduled_ends_at?->format('H:i') }}</div>

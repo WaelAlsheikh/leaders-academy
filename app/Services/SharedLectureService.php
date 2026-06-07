@@ -104,6 +104,47 @@ class SharedLectureService
             ->first();
     }
 
+    public function doctorLabelForSection(int $sectionId): ?string
+    {
+        $group = $this->groupForSection($sectionId);
+
+        return $group ? $this->doctorLabelForGroup($group) : null;
+    }
+
+    public function doctorLabelForGroup(SharedLectureGroup $group): string
+    {
+        $group->loadMissing([
+            'hostRegistrableSubject',
+            'registrableSubjects.registrableEntity',
+        ]);
+
+        $subjectName = trim((string) (
+            $group->hostRegistrableSubject?->name
+            ?? $group->registrableSubjects->first()?->name
+            ?? 'المادة'
+        ));
+
+        $collegeTitles = $group->registrableSubjects
+            ->map(fn (RegistrableSubject $subject) => $subject->registrableEntity?->display_title)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($group->key === 'prep_program' || $collegeTitles->count() > 2) {
+            return "جلسة لمادة {$subjectName} — محاضرة موحدة لجميع الكليات";
+        }
+
+        if ($collegeTitles->count() === 2) {
+            return "جلسة لمادة {$subjectName} — دمج بين {$collegeTitles[0]} و{$collegeTitles[1]}";
+        }
+
+        if ($collegeTitles->count() === 1) {
+            return "جلسة لمادة {$subjectName} — محاضرة مشتركة ({$collegeTitles[0]})";
+        }
+
+        return "جلسة لمادة {$subjectName} — محاضرة مشتركة";
+    }
+
     public function studentCanAccessLiveSession(Student $student, int $sectionId): bool
     {
         if ($student->sections()
@@ -228,12 +269,41 @@ class SharedLectureService
     /**
      * @param  array<string, mixed>  $config
      */
+    /**
+     * @param  array<string, mixed>  $config
+     * @return list<string>
+     */
+    private function resolveSubjectNameList(array $config): array
+    {
+        $names = [];
+
+        if (! empty($config['subject_name'])) {
+            $names[] = trim((string) $config['subject_name']);
+        }
+
+        foreach ((array) ($config['subject_names'] ?? []) as $name) {
+            $name = trim((string) $name);
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
     private function resolveLinkedSubjectIds(array $config): Collection
     {
-        $subjectName = trim((string) ($config['subject_name'] ?? ''));
+        $subjectNames = $this->resolveSubjectNameList($config);
+        if ($subjectNames === []) {
+            return collect();
+        }
 
         $query = RegistrableSubject::query()
-            ->whereRaw('TRIM(name) = ?', [$subjectName]);
+            ->where(function ($builder) use ($subjectNames): void {
+                foreach ($subjectNames as $subjectName) {
+                    $builder->orWhereRaw('TRIM(name) = ?', [$subjectName]);
+                }
+            });
 
         if (! empty($config['college_ids'])) {
             $entityIds = RegistrableEntity::query()
