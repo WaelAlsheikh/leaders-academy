@@ -57,4 +57,17 @@ return [
             'ends_at' => '12:00:00',
         ],
     ],
+    'vital_signs_shared' => [
+
+    'name' => 'العلامات الحيوية - مشتركة',
+
+    'host_college_id' => 15,
+
+    'college_ids' => [
+        15,
+        5,
+    ],
+
+    'subject_name' => 'العلامات الحيوية',
+    ],
 ];
