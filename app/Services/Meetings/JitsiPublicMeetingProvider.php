@@ -103,6 +103,10 @@ class JitsiPublicMeetingProvider implements MeetingProviderInterface
                 'enabled' => false,
             ],
             'toolbarButtons' => $toolbarButtons,
+            'localRecording' => [
+                'disable' => false,
+                'notifyAllParticipants' => false,
+            ],
         ];
 
         // On open servers without JWT, these reduce risky UI for guests (true enforcement needs JWT + own Jitsi).

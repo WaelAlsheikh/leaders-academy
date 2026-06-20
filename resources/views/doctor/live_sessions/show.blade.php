@@ -113,6 +113,12 @@
                                 <button type="button" class="btn btn-secondary" id="doctor-toggle-video-moderation-btn">
                                     {{ $liveSession->video_moderation_enabled ? 'فتح فيديو الطلاب' : 'تقييد فيديو الطلاب' }}
                                 </button>
+                                <label class="doctor-auto-recording-toggle" for="doctor-auto-recording-toggle">
+                                    <input type="checkbox"
+                                           id="doctor-auto-recording-toggle"
+                                           checked>
+                                    <span>التسجيل التلقائي</span>
+                                </label>
                                 <button type="button" class="btn btn-secondary" id="doctor-recording-btn">
                                     بدء تسجيل محلي
                                 </button>
@@ -153,6 +159,11 @@
                                 </div>
                             @else
                                 <div id="jitsi-meeting-container" class="live-session-embed"></div>
+                                <div id="recording-activation-prompt" class="recording-activation-prompt" style="display:none;">
+                                    <p class="recording-activation-text">لتفعيل التسجيل: اختر «هذا التبويب»، فعّل «مشاركة صوت التبويب»، واسمح بالميكروفون.</p>
+                                    <button type="button" class="btn btn-primary" id="recording-activation-btn">بدء تسجيل المحاضرة</button>
+                                </div>
+                                <div id="recording-audio-status" class="recording-audio-status" style="display:none;"></div>
                             @endif
                         @else
                             <div class="doctor-portal-empty">
@@ -216,11 +227,42 @@
         </section>
     </main>
 </div>
+
+<div id="recording-save-modal-backdrop" class="recording-save-modal-backdrop" style="display:none;">
+    <div id="recording-save-modal" class="recording-save-modal" role="dialog" aria-modal="true" aria-labelledby="recording-save-modal-title">
+        <div class="recording-save-modal-head">
+            <h3 id="recording-save-modal-title">حفظ تسجيل المحاضرة</h3>
+            <p class="doctor-portal-meta" id="recording-save-status-note">
+                اختر مجلد الحفظ ليتم حفظ فيديو تسجيل هذه المحاضرة مباشرةً فيه.
+            </p>
+        </div>
+
+        <div class="recording-save-steps">
+            <div class="recording-save-step">
+                <div class="recording-save-step-label">مجلد الحفظ</div>
+                <div class="recording-save-step-value" id="recording-folder-label">لم يُختر مجلد بعد</div>
+                <button type="button" class="btn btn-primary" id="recording-pick-folder-btn">اختيار مسار حفظ الفيديو</button>
+            </div>
+        </div>
+
+        <div id="recording-save-progress-wrap" class="recording-save-progress-wrap" style="display:none;">
+            <div class="recording-save-progress-track">
+                <div id="recording-save-progress-bar" class="recording-save-progress-bar"></div>
+            </div>
+            <div id="recording-save-progress-text" class="recording-save-progress-text"></div>
+        </div>
+
+        <div class="recording-save-modal-actions">
+            <button type="button" class="btn btn-secondary" id="recording-save-skip-btn">تخطّي</button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
     <script>
         window.liveSessionPageConfig = {{ \Illuminate\Support\Js::from($pageConfig) }};
     </script>
+    <script src="{{ asset('assets/js/live-session-recording.js') }}?v={{ filemtime(public_path('assets/js/live-session-recording.js')) }}"></script>
     <script src="{{ asset('assets/js/live-session.js') }}?v={{ filemtime(public_path('assets/js/live-session.js')) }}"></script>
 @endpush

@@ -4,6 +4,24 @@
     return;
   }
 
+  const recordingManager = window.LiveSessionRecording?.init(config, {
+    endConference: () => {
+      if (standaloneWindow || !state.api || !state.isModerator) {
+        return;
+      }
+
+      try {
+        state.api.executeCommand('endConference');
+      } catch (error) {
+        console.warn('Unable to end conference from Jitsi API', error);
+      }
+    },
+    onRecordingStateChange: (isRecording) => {
+      state.recordingOn = !!isRecording;
+      updateDoctorActionLabels();
+    },
+  }) || null;
+
   const state = {
     role: config.role,
     api: null,
@@ -49,6 +67,7 @@
     openDirectJitsiBtn: document.getElementById('doctor-open-direct-jitsi-btn'),
     standaloneHostReadyBtn: document.getElementById('doctor-standalone-host-ready-btn'),
     screenShareNote: document.getElementById('doctor-screen-share-note'),
+    autoRecordingToggle: document.getElementById('doctor-auto-recording-toggle'),
   };
 
   const request = async (method, url, data) => {
@@ -139,6 +158,7 @@
     }
     if (els.recordingBtn) {
       els.recordingBtn.textContent = state.recordingOn ? 'إيقاف التسجيل المحلي' : 'بدء تسجيل محلي';
+      els.recordingBtn.classList.toggle('is-recording-active', state.recordingOn);
     }
     if (els.commentsMeta) {
       els.commentsMeta.textContent = state.commentsEnabled ? 'مفعّلة' : 'متوقفة';
@@ -146,6 +166,16 @@
     if (els.moderatorNote) {
       els.moderatorNote.style.display = state.isModerator ? 'none' : 'block';
     }
+  };
+
+  state.onRecordingStateChange = updateDoctorActionLabels;
+
+  const maybeAutoStartRecording = () => {
+    if (!recordingManager || state.role !== 'doctor') {
+      return;
+    }
+
+    recordingManager.tryAutoStartRecording();
   };
 
   const renderLeadersPlaceholder = (message, subtext) => {
@@ -717,6 +747,7 @@
         } catch (error) {
           console.warn('Unable to set conference subject', error);
         }
+        maybeAutoStartRecording();
       }
     });
 
@@ -743,6 +774,7 @@
         updateDoctorActionLabels();
         applyRoomPassword();
         applyModerationSettings();
+        maybeAutoStartRecording();
       }
     });
 
@@ -863,22 +895,16 @@
     }
 
     if (els.recordingBtn) {
-      els.recordingBtn.addEventListener('click', () => {
-        if (!state.api) {
-          alert('منصة الفيديو غير جاهزة بعد.');
+      els.recordingBtn.addEventListener('click', async () => {
+        if (!recordingManager) {
+          alert('التسجيل المحلي غير متاح حالياً.');
           return;
         }
 
         try {
-          if (state.recordingOn) {
-            state.api.executeCommand('stopRecording', { mode: 'local' });
-          } else {
-            state.api.executeCommand('startRecording', { mode: 'local' });
-          }
-          state.recordingOn = !state.recordingOn;
-          updateDoctorActionLabels();
+          await recordingManager.toggleCustomRecording();
         } catch (error) {
-          alert('التسجيل المحلي غير متاح حالياً في هذا المتصفح أو هذا المزود.');
+          alert('التسجيل المحلي غير متاح حالياً في هذا المتصفح.');
         }
       });
     }
@@ -902,8 +928,40 @@
     }
 
     document.querySelectorAll('[data-end-session-form="1"]').forEach((form) => {
-      form.addEventListener('submit', (event) => {
+      form.addEventListener('submit', async (event) => {
         if (state.role !== 'doctor' || state.ended) {
+          return;
+        }
+
+        if (form.dataset.recordingSaveCompleted === '1') {
+          return;
+        }
+
+        if (recordingManager) {
+          event.preventDefault();
+
+          await recordingManager.handleEndSessionRequest(
+            form,
+            state,
+            {
+              beforeEnd: () => {
+                syncDoctorPresence(false);
+
+                if (standaloneWindow) {
+                  showBanner('');
+                  return;
+                }
+
+                if (state.api && state.isModerator) {
+                  renderLeadersPlaceholder(
+                    'جارٍ إنهاء الجلسة...',
+                    'سيتم إغلاق قاعة Jitsi وإظهار واجهة ليدرز بدلاً منها.'
+                  );
+                }
+              },
+            }
+          );
+
           return;
         }
 

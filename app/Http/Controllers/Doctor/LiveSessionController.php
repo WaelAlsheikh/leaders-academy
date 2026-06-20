@@ -18,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -134,6 +135,20 @@ class LiveSessionController extends Controller
             'branding' => [
                 'logoUrl' => asset('favicon.svg'),
                 'title' => 'Leaders Academy',
+            ],
+            'recording' => [
+                'autoStartDefault' => (bool) config('meetings.local_recording_auto_start', true),
+                'videoKbps' => (int) config('meetings.local_recording_target_video_kbps', 100),
+                'audioKbps' => (int) config('meetings.local_recording_target_audio_kbps', 64),
+                'outputHeight' => (int) config('meetings.local_recording_output_height', 480),
+                'storageKey' => 'leaders.doctor.autoLocalRecording',
+                'suggestedFilename' => sprintf(
+                    '%s_%s_%s',
+                    Str::slug($liveSession->section?->registrableSubject?->name ?? 'lecture', '-'),
+                    $liveSession->occurrence_date?->format('Y-m-d') ?? now()->format('Y-m-d'),
+                    $liveSession->id
+                ),
+                'subjectTitle' => $liveSession->section?->registrableSubject?->name ?? 'محاضرة',
             ],
         ];
 

@@ -66,4 +66,17 @@ return [
     'jitsi_jwt_sub' => env('JITSI_JWT_SUB'),
     'jitsi_jwt_audience' => env('JITSI_JWT_AUDIENCE', 'jitsi'),
     'jitsi_jwt_ttl_seconds' => (int) env('JITSI_JWT_TTL_SECONDS', 21600),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Local recording (doctor embedded Jitsi sessions)
+    |--------------------------------------------------------------------------
+    */
+    'local_recording_auto_start' => filter_var(env('LIVE_SESSION_AUTO_LOCAL_RECORDING', true), FILTER_VALIDATE_BOOLEAN),
+
+    'local_recording_target_video_kbps' => max(50, (int) env('LIVE_SESSION_RECORDING_VIDEO_KBPS', 100)),
+
+    'local_recording_target_audio_kbps' => max(32, (int) env('LIVE_SESSION_RECORDING_AUDIO_KBPS', 64)),
+
+    'local_recording_output_height' => max(240, (int) env('LIVE_SESSION_RECORDING_HEIGHT', 480)),
 ];
