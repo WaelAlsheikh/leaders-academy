@@ -70,4 +70,17 @@ return [
 
     'subject_name' => 'العلامات الحيوية',
     ],
+    'medical_and_professional_ethics' => [
+
+    'name' => 'الأخلاقيات الطبية والمهنية - مشتركة',
+
+    'host_college_id' => 15,
+
+    'college_ids' => [
+        15,
+        5,
+    ],
+
+    'subject_name' => 'الأخلاقيات الطبية والمهنية',
+    ],
 ];
