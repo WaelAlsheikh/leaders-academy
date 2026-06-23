@@ -83,4 +83,17 @@ return [
 
     'subject_name' => 'الأخلاقيات الطبية والمهنية',
     ],
+    'medicine_legal' => [
+
+    'name' => 'القانون الطبي - مشتركة',
+
+    'host_college_id' => 15,
+
+    'college_ids' => [
+        15,
+        5,
+    ],
+
+    'subject_name' => 'القانون الطبي',
+    ],
 ];
