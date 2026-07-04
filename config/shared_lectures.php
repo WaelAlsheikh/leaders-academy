@@ -94,6 +94,34 @@ return [
         5,
     ],
 
-    'subject_name' => 'القانون الطبي',
+    'subject_name' => 'الاسعافات الأولية',
+    ],
+    'first_aid' => [
+
+    'name' => 'الاسعافات  الأولية - مشتركة',
+
+    'host_college_id' => 15,
+
+    'college_ids' => [
+        15,
+        5,
+    ],
+
+    'subject_name' => 'الاسعافات الأولية',
+    ],
+    'midical_statics' => [
+        'name' => 'الاحصاء الطبي — مشتركة',
+        'subject_name' => 'الاحصاء الطبي',
+        'college_ids' => [15, 5], // العلوم الصحية + الطب العام
+        'host_college_id' => 15,
+        'study_year_sort' => 1,
+        'study_term_sort' => 2,
+        'copy_subject_to_colleges' => [5],
+        'source_college_id' => 15,
+        'default_meeting' => [
+            'day_of_week' => 2, // الثلاثاء
+            'starts_at' => '14:00:00',
+            'ends_at' => '16:00:00',
+        ],
     ],
 ];

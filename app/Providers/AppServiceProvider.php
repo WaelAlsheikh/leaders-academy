@@ -2,52 +2,55 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
 use App\Models\About;
-use App\Models\Program;
 use App\Models\College;
+use App\Models\Program;
 use App\Models\StudentPlatform;
 use App\Models\TrainingProgram;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // مشاركة البيانات في جميع الصفحات
         View::composer('*', function ($view) {
+            static $shared = null;
 
-            // جميع البرامج الأكاديمية
-            $view->with('allPrograms', Program::select('id', 'title', 'slug')->get());
+            if ($shared !== null) {
+                $view->with($shared);
 
-            // جميع الكليات
-            $view->with('allColleges', College::select('id', 'title', 'slug')->get());
+                return;
+            }
 
-            // جميع روابط منصة الطالب
-            View::share('allStudentPlatforms', StudentPlatform::orderBy('title')->get());
+            try {
+                $shared = [
+                    'allPrograms' => Program::select('id', 'title', 'slug')->orderBy('id')->get(),
+                    'allColleges' => College::select('id', 'title', 'slug')->orderBy('id')->get(),
+                    'allStudentPlatforms' => StudentPlatform::orderBy('title')->get(),
+                    'allTrainingPrograms' => TrainingProgram::select('id', 'title', 'slug', 'category')->orderBy('title')->get(),
+                    'siteAbout' => About::query()
+                        ->orderByDesc('updated_at')
+                        ->orderByDesc('id')
+                        ->first(),
+                ];
+            } catch (Throwable) {
+                $shared = [
+                    'allPrograms' => collect(),
+                    'allColleges' => collect(),
+                    'allStudentPlatforms' => collect(),
+                    'allTrainingPrograms' => collect(),
+                    'siteAbout' => null,
+                ];
+            }
 
-            // ✅ جميع البرامج التدريبية — Training Programs
-            $view->with('allTrainingPrograms', TrainingProgram::select('id','title','slug','category')->orderBy('title')->get());
-
-            // بيانات الهوية الرئيسية من جدول abouts
-            $view->with(
-                'siteAbout',
-                About::query()
-                    ->orderByDesc('updated_at')
-                    ->orderByDesc('id')
-                    ->first()
-            );
+            $view->with($shared);
         });
     }
 }

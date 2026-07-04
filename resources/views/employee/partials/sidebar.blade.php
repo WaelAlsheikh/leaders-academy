@@ -36,6 +36,11 @@
         إدارة السنوات والفصول
     </a>
 
+    <a href="{{ route('employee.exams.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.exams.*', 'employee.exam_settings.*', 'employee.exam_grades.*') ? 'active' : '' }}">
+        الامتحانات
+    </a>
+
     <form method="POST" action="{{ route('employee.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">

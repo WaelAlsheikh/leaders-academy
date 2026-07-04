@@ -31,6 +31,11 @@
         📁 ملفات المواد
     </a>
 
+    <a href="{{ route('student.exams.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.exams.*') ? 'active' : '' }}">
+        📝 الامتحانات
+    </a>
+
     <form method="POST" action="{{ route('student.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">

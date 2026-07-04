@@ -2926,3 +2926,24 @@ body.recording-save-modal-open{
     border-radius:20px;
   }
 }
+
+.exam-choice-option{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:10px 0;
+  padding:12px 14px;
+  border:1px solid #e5edf2;
+  border-radius:10px;
+  background:#fff;
+  cursor:pointer;
+}
+
+.exam-choice-option input{
+  margin-top:4px;
+}
+
+.exam-choice-option span{
+  flex:1;
+  line-height:1.6;
+}

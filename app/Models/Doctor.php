@@ -42,4 +42,19 @@ class Doctor extends Authenticatable
     {
         return $this->hasMany(SubjectMaterial::class);
     }
+
+    public function examQuestionCategories(): HasMany
+    {
+        return $this->hasMany(ExamQuestionCategory::class);
+    }
+
+    public function examQuestions(): HasMany
+    {
+        return $this->hasMany(ExamQuestion::class);
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class);
+    }
 }

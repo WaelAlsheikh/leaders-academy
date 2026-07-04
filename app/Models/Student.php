@@ -71,5 +71,14 @@ public function scopeInactive($query)
         return $this->hasMany(LiveSessionAttendance::class);
     }
 
+    public function examAttempts(): HasMany
+    {
+        return $this->hasMany(ExamAttempt::class);
+    }
+
+    public function examGrades(): HasMany
+    {
+        return $this->hasMany(ExamGrade::class);
+    }
 }
 

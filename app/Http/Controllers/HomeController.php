@@ -2,49 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\About;
-use App\Models\Program;
 use App\Models\Accreditation;
-use App\Models\Partner;
+use App\Models\AccreditationSection;
+use App\Models\College;
 use App\Models\Gallery;
+use App\Models\Partner;
+use App\Models\Program;
 use App\Models\Setting;
 use App\Models\TrainingProgram;
-use App\Models\College;
-use Illuminate\Support\Facades\View;
-use App\Models\AccreditationSection;
 
 class HomeController extends Controller
 {
-    public function __construct()
-    {
-        // مشاركة جميع البرامج مع كل الصفحات (layout)
-        $allPrograms = Program::orderBy('id', 'asc')->get();
-        View::share('allPrograms', $allPrograms);
-    }
-
-    // الصفحة الرئيسية
     public function index()
     {
-        $about = About::query()
-            ->orderByDesc('updated_at')
-            ->orderByDesc('id')
-            ->first();
-
-        // جلب البرامج التدريبية — الآن من الأقدم إلى الأحدث (asc)
+        $about = About::query()->orderByDesc('updated_at')->orderByDesc('id')->first();
         $trainingPrograms = TrainingProgram::orderBy('id', 'asc')->get();
-
-        // جلب الكليات — الآن من الأقدم إلى الأحدث (asc)
         $colleges = College::orderBy('id', 'asc')->get();
-
-        // جلب "برامج الجامعة" — من الأقدم إلى الأحدث
         $universityPrograms = Program::orderBy('id', 'asc')->get();
-
         $accreditations = Accreditation::all();
         $partners = Partner::all();
         $galleries = Gallery::take(4)->get();
-    
-        $sections = AccreditationSection::orderBy('order','asc')->get();
+        $sections = AccreditationSection::orderBy('order', 'asc')->get();
 
         return view('home', compact(
             'about',
@@ -58,23 +37,19 @@ class HomeController extends Controller
         ));
     }
 
-    // بقية الدوال تبقى كما هي...
     public function programs()
     {
-        $programs = Program::all();
-        return view('programs', compact('programs'));
+        return view('programs', ['programs' => Program::all()]);
     }
 
     public function programDetails($id)
     {
-        $program = Program::findOrFail($id);
-        return view('program-details', compact('program'));
+        return view('program-details', ['program' => Program::findOrFail($id)]);
     }
 
     public function contact()
     {
-        $settings = Setting::pluck('value', 'key');
-        return view('contact', compact('settings'));
+        return view('contact', ['settings' => Setting::pluck('value', 'key')]);
     }
 
     public function virtualUniversity()
