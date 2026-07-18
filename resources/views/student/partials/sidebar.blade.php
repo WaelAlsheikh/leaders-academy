@@ -36,6 +36,11 @@
         📝 الامتحانات
     </a>
 
+    <a href="{{ route('student.assignments.index') }}"
+       class="sidebar-link {{ request()->routeIs('student.assignments.*', 'student.assignment_files.*') ? 'active' : '' }}">
+        📂 الوظائف
+    </a>
+
     <form method="POST" action="{{ route('student.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">

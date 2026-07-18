@@ -5,9 +5,17 @@
 <div class="student-layout">
     @include('doctor.partials.sidebar')
     <main class="student-content doctor-portal">
-        <section class="doctor-portal-panel">
-            <h3>{{ isset($question) ? 'تعديل سؤال' : 'سؤال جديد' }}</h3>
-            <form method="POST" action="{{ isset($question) ? route('doctor.exams.questions.update', $question) : route('doctor.exams.questions.store') }}" id="question-form">
+        <section class="exam-portal-page">
+            <div class="exam-portal-header">
+                <div>
+                    <h3>{{ isset($question) ? 'تعديل سؤال' : 'سؤال جديد' }}</h3>
+                    <p class="exam-portal-subtitle">أضف سؤالاً لبنك المادة مع الخيارات أو الإجابة التحريرية.</p>
+                </div>
+                <a href="{{ route('doctor.exams.questions.index') }}" class="btn btn-secondary">العودة للقائمة</a>
+            </div>
+
+            <div class="exam-portal-panel">
+            <form method="POST" action="{{ isset($question) ? route('doctor.exams.questions.update', $question) : route('doctor.exams.questions.store') }}" id="question-form" enctype="multipart/form-data">
                 @csrf
                 @if(isset($question)) @method('PUT') @endif
                 <div class="form-group">
@@ -38,6 +46,22 @@
                     </select>
                 </div>
                 <div class="form-group"><label>نص السؤال</label><textarea name="question_text" class="form-control" rows="4" required>{{ old('question_text', $question->question_text ?? '') }}</textarea></div>
+
+                <div class="exam-question-image-upload">
+                    <label>صورة السؤال (اختياري)</label>
+                    <p class="exam-portal-subtitle" style="margin-bottom:10px;">يمكن إرفاق رسم أو مخطط مع أي نوع سؤال. الصورة اختيارية، ويُفضّل وضوحها بنسبة مناسبة للعرض.</p>
+                    @if(isset($question) && $question->imageUrl())
+                        <div class="exam-question-image-current">
+                            @include('exams.partials.question_image', ['imageUrl' => $question->imageUrl()])
+                            <label style="display:flex;align-items:center;gap:8px;font-weight:500;">
+                                <input type="checkbox" name="remove_image" value="1"> حذف الصورة الحالية
+                            </label>
+                        </div>
+                    @endif
+                    <input type="file" name="image" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif">
+                    <small class="doctor-portal-meta">الصيغ المدعومة: JPG, PNG, WEBP, GIF — الحد الأقصى 5MB</small>
+                </div>
+
                 <div class="form-group"><label>الدرجة الافتراضية</label><input type="number" step="0.01" name="default_points" class="form-control" value="{{ old('default_points', $question->default_points ?? 1) }}"></div>
                 <div class="form-group">
                     <label>الصعوبة</label>
@@ -59,8 +83,11 @@
                 </div>
 
                 @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <div class="exam-portal-actions">
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
             </form>
+            </div>
         </section>
     </main>
 </div>
@@ -71,13 +98,24 @@
     const typeEl = document.getElementById('question-type');
     const list = document.getElementById('choices-list');
     const block = document.getElementById('choices-block');
+    const addChoiceBtn = document.getElementById('add-choice');
     const defaultsEl = document.getElementById('question-choice-defaults');
     const existing = JSON.parse(defaultsEl ? defaultsEl.textContent : '[]');
+
     function renderChoices(){
         const isEssay = typeEl.value === 'essay';
         block.style.display = isEssay ? 'none' : 'block';
-        if(isEssay) return;
+        if (addChoiceBtn) {
+            addChoiceBtn.style.display = isEssay ? 'none' : '';
+            addChoiceBtn.disabled = isEssay;
+        }
+
+        // Always clear: hidden required fields otherwise block HTML5 submit silently.
         list.innerHTML = '';
+        if (isEssay) {
+            return;
+        }
+
         existing.forEach((c, i) => {
             const row = document.createElement('div');
             row.className = 'doctor-live-actions';
@@ -103,8 +141,12 @@
             list.appendChild(row);
         });
     }
-    document.getElementById('add-choice').addEventListener('click',()=>{existing.push({choice_text:'',is_correct:false});renderChoices();});
-    typeEl.addEventListener('change',renderChoices);
+
+    document.getElementById('add-choice').addEventListener('click', () => {
+        existing.push({choice_text: '', is_correct: false});
+        renderChoices();
+    });
+    typeEl.addEventListener('change', renderChoices);
     renderChoices();
 })();
 </script>

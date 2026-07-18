@@ -47,4 +47,38 @@ class ExamAttemptAnswer extends Model
     {
         return $this->belongsTo(Doctor::class, 'graded_by_doctor_id');
     }
+
+    public function isChoiceSelected(int $choiceId): bool
+    {
+        $type = $this->quizQuestion?->type_snapshot;
+
+        if ($type === 'single_choice') {
+            return (int) $this->selected_choice_id === $choiceId;
+        }
+
+        if ($type === 'multiple_choice') {
+            return in_array($choiceId, $this->selected_choice_ids ?? [], true);
+        }
+
+        return false;
+    }
+
+    public function hasAnySelection(): bool
+    {
+        $type = $this->quizQuestion?->type_snapshot;
+
+        if ($type === 'single_choice') {
+            return $this->selected_choice_id !== null;
+        }
+
+        if ($type === 'multiple_choice') {
+            return ! empty($this->selected_choice_ids);
+        }
+
+        if ($type === 'essay') {
+            return filled(trim((string) $this->answer_text));
+        }
+
+        return false;
+    }
 }

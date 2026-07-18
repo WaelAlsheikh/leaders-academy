@@ -31,6 +31,11 @@
         الامتحانات
     </a>
 
+    <a href="{{ route('doctor.assignments.index') }}"
+       class="sidebar-link {{ request()->routeIs('doctor.assignments.*', 'doctor.assignment_submissions.*', 'doctor.assignment_files.*') ? 'active' : '' }}">
+        الوظائف
+    </a>
+
     <a href="{{ route('doctor.exam_grades.index') }}"
        class="sidebar-link {{ request()->routeIs('doctor.exam_grades.*', 'doctor.exams.grading.*') ? 'active' : '' }}">
         درجات الامتحانات

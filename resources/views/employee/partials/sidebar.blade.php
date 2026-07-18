@@ -41,6 +41,16 @@
         الامتحانات
     </a>
 
+    <a href="{{ route('employee.exam_question_bank.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.exam_question_bank.*') ? 'active' : '' }}">
+        بنك الأسئلة
+    </a>
+
+    <a href="{{ route('employee.assignments.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.assignments.*', 'employee.assignment_files.*') ? 'active' : '' }}">
+        الوظائف
+    </a>
+
     <form method="POST" action="{{ route('employee.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">

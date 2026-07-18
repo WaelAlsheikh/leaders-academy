@@ -34,6 +34,8 @@ use App\Http\Controllers\Admin\StudyStructureController;
 use App\Http\Controllers\Admin\ExamController as AdminExamController;
 use App\Http\Controllers\Admin\ExamSettingsController;
 use App\Http\Controllers\Admin\ExamGradeController as AdminExamGradeController;
+use App\Http\Controllers\Admin\ExamQuestionBankController as AdminExamQuestionBankController;
+use App\Http\Controllers\Admin\AssignmentController as AdminAssignmentController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\LiveSessionController as DoctorLiveSessionController;
@@ -41,6 +43,7 @@ use App\Http\Controllers\Doctor\MaterialController as DoctorMaterialController;
 use App\Http\Controllers\Doctor\SectionController as DoctorSectionController;
 use App\Http\Controllers\Doctor\ExamController as DoctorExamController;
 use App\Http\Controllers\Doctor\ExamGradingController as DoctorExamGradingController;
+use App\Http\Controllers\Doctor\AssignmentController as DoctorAssignmentController;
 use App\Http\Controllers\Doctor\QuestionController as DoctorQuestionController;
 use App\Http\Controllers\Doctor\QuestionCategoryController as DoctorQuestionCategoryController;
 use App\Http\Controllers\Employee\AuthController as EmployeeAuthController;
@@ -55,6 +58,7 @@ use App\Http\Controllers\Student\LiveSessionController as StudentLiveSessionCont
 use App\Http\Controllers\Student\MaterialController as StudentMaterialController;
 use App\Http\Controllers\Student\ScheduleController;
 use App\Http\Controllers\Student\ExamController as StudentExamController;
+use App\Http\Controllers\Student\AssignmentController as StudentAssignmentController;
 use App\Http\Controllers\LiveSessionMeetLaunchController;
 
 // Breeze
@@ -292,8 +296,14 @@ Route::prefix('admin')
         Route::post('/exams/{exam}/schedule', [AdminExamController::class, 'schedule'])->name('admin.exams.schedule');
         Route::post('/exams/{exam}/archive', [AdminExamController::class, 'archive'])->name('admin.exams.archive');
         Route::get('/exam-grades', [AdminExamGradeController::class, 'index'])->name('admin.exam_grades.index');
+        Route::get('/exam-attempts/{attempt}', [AdminExamGradeController::class, 'showAttempt'])->name('admin.exam_attempts.show');
         Route::post('/exam-grades/{grade}/approve', [AdminExamGradeController::class, 'approve'])->name('admin.exam_grades.approve');
         Route::post('/exam-grades/{grade}/publish', [AdminExamGradeController::class, 'publish'])->name('admin.exam_grades.publish');
+        Route::get('/exam-question-bank', [AdminExamQuestionBankController::class, 'index'])->name('admin.exam_question_bank.index');
+        Route::get('/exam-question-bank/subjects', [AdminExamQuestionBankController::class, 'subjects'])->name('admin.exam_question_bank.subjects');
+        Route::get('/assignments', [AdminAssignmentController::class, 'index'])->name('admin.assignments.index');
+        Route::get('/assignments/{assignment}', [AdminAssignmentController::class, 'show'])->name('admin.assignments.show');
+        Route::get('/assignment-files/{file}/download', [AdminAssignmentController::class, 'downloadFile'])->name('admin.assignment_files.download');
     });
 
 /*
@@ -448,6 +458,13 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::post('exam-attempts/{attempt}/autosave', [StudentExamController::class, 'autosave'])->name('exams.autosave');
         Route::post('exam-attempts/{attempt}/submit', [StudentExamController::class, 'submit'])->name('exams.submit');
         Route::get('exam-attempts/{attempt}/result', [StudentExamController::class, 'result'])->name('exams.result');
+
+        Route::get('assignments', [StudentAssignmentController::class, 'index'])->name('assignments.index');
+        Route::get('assignments/{assignment}', [StudentAssignmentController::class, 'show'])->name('assignments.show');
+        Route::post('assignments/{assignment}/upload', [StudentAssignmentController::class, 'upload'])->name('assignments.upload');
+        Route::post('assignment-files/{file}/replace', [StudentAssignmentController::class, 'replace'])->name('assignment_files.replace');
+        Route::delete('assignment-files/{file}', [StudentAssignmentController::class, 'destroyFile'])->name('assignment_files.destroy');
+        Route::get('assignment-files/{file}/download', [StudentAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
     });
 });
 
@@ -504,9 +521,21 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::post('exams', [DoctorExamController::class, 'store'])->name('exams.store');
         Route::get('exams/{exam}', [DoctorExamController::class, 'show'])->name('exams.show');
         Route::get('exam-grades', [DoctorExamGradingController::class, 'index'])->name('exam_grades.index');
+        Route::get('exam-attempts/{attempt}', [DoctorExamGradingController::class, 'showAttempt'])->name('exam_attempts.show');
         Route::get('exams/{exam}/grading', [DoctorExamGradingController::class, 'review'])->name('exams.grading.review');
         Route::post('exam-answers/{answer}/grade', [DoctorExamGradingController::class, 'gradeEssay'])->name('exam_answers.grade');
         Route::post('exam-grades/{grade}/publish', [DoctorExamGradingController::class, 'publish'])->name('exam_grades.publish');
+
+        Route::get('assignments', [DoctorAssignmentController::class, 'index'])->name('assignments.index');
+        Route::get('assignments/create', [DoctorAssignmentController::class, 'create'])->name('assignments.create');
+        Route::post('assignments', [DoctorAssignmentController::class, 'store'])->name('assignments.store');
+        Route::get('assignments/{assignment}', [DoctorAssignmentController::class, 'show'])->name('assignments.show');
+        Route::get('assignments/{assignment}/edit', [DoctorAssignmentController::class, 'edit'])->name('assignments.edit');
+        Route::put('assignments/{assignment}', [DoctorAssignmentController::class, 'update'])->name('assignments.update');
+        Route::post('assignments/{assignment}/close', [DoctorAssignmentController::class, 'close'])->name('assignments.close');
+        Route::post('assignments/{assignment}/archive', [DoctorAssignmentController::class, 'archive'])->name('assignments.archive');
+        Route::post('assignment-submissions/{submission}/notes', [DoctorAssignmentController::class, 'updateNotes'])->name('assignment_submissions.notes');
+        Route::get('assignment-files/{file}/download', [DoctorAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
     });
 });
 
@@ -651,8 +680,14 @@ Route::prefix('employee')->name('employee.')->group(function () {
         Route::post('exams/{exam}/schedule', [AdminExamController::class, 'schedule'])->name('exams.schedule');
         Route::post('exams/{exam}/archive', [AdminExamController::class, 'archive'])->name('exams.archive');
         Route::get('exam-grades', [AdminExamGradeController::class, 'index'])->name('exam_grades.index');
+        Route::get('exam-attempts/{attempt}', [AdminExamGradeController::class, 'showAttempt'])->name('exam_attempts.show');
         Route::post('exam-grades/{grade}/approve', [AdminExamGradeController::class, 'approve'])->name('exam_grades.approve');
         Route::post('exam-grades/{grade}/publish', [AdminExamGradeController::class, 'publish'])->name('exam_grades.publish');
+        Route::get('exam-question-bank', [AdminExamQuestionBankController::class, 'index'])->name('exam_question_bank.index');
+        Route::get('exam-question-bank/subjects', [AdminExamQuestionBankController::class, 'subjects'])->name('exam_question_bank.subjects');
+        Route::get('assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
+        Route::get('assignments/{assignment}', [AdminAssignmentController::class, 'show'])->name('assignments.show');
+        Route::get('assignment-files/{file}/download', [AdminAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
     });
 });
 

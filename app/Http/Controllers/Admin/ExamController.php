@@ -194,7 +194,7 @@ class ExamController extends Controller
 
     {
 
-        $exam->load(['registrableSubject', 'classSection', 'doctor', 'quizQuestions.choices', 'grades.student']);
+        $exam->load(['registrableSubject', 'classSection', 'doctor', 'quizQuestions.choices', 'quizQuestions.question', 'grades.student']);
 
 
 

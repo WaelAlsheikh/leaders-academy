@@ -17,6 +17,7 @@ class ExamQuestion extends Model
         'category_id',
         'type',
         'question_text',
+        'image_path',
         'default_points',
         'difficulty',
         'tags',
@@ -47,6 +48,15 @@ class ExamQuestion extends Model
     public function choices(): HasMany
     {
         return $this->hasMany(ExamQuestionChoice::class, 'question_id')->orderBy('sort_order');
+    }
+
+    public function imageUrl(): ?string
+    {
+        if (! $this->image_path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($this->image_path, '/'));
     }
 
     public function isAutoGradable(): bool

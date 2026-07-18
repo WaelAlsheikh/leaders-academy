@@ -14,6 +14,7 @@ class ExamQuizQuestion extends Model
         'sort_order',
         'points',
         'question_text_snapshot',
+        'image_path_snapshot',
         'type_snapshot',
     ];
 
@@ -34,6 +35,22 @@ class ExamQuizQuestion extends Model
     public function choices(): HasMany
     {
         return $this->hasMany(ExamQuizQuestionChoice::class)->orderBy('sort_order');
+    }
+
+    public function resolvedImagePath(): ?string
+    {
+        return $this->image_path_snapshot ?: $this->question?->image_path;
+    }
+
+    public function imageUrl(): ?string
+    {
+        $path = $this->resolvedImagePath();
+
+        if (! $path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     public function isAutoGradable(): bool

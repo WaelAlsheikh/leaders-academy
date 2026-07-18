@@ -20,6 +20,7 @@
         <div class="employee-inline-form">
             <a href="{{ route($routeBase . '.exam_settings.edit') }}" class="employee-action-btn employee-action-btn--neutral">إعدادات الامتحانات</a>
             <a href="{{ route($routeBase . '.exams.create') }}" class="employee-action-btn employee-action-btn--primary">إنشاء امتحان عشوائي</a>
+            <a href="{{ route($routeBase . '.exam_question_bank.index') }}" class="employee-action-btn employee-action-btn--neutral">بنك الأسئلة</a>
             <a href="{{ route($routeBase . '.exam_grades.index') }}" class="employee-action-btn employee-action-btn--neutral">الدرجات</a>
         </div>
     </div>

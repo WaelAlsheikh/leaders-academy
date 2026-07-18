@@ -267,6 +267,7 @@ class ExamCreationService
                 'sort_order' => $index + 1,
                 'points' => $pointsList[$index] ?? 0,
                 'question_text_snapshot' => $question->question_text,
+                'image_path_snapshot' => $question->image_path,
                 'type_snapshot' => $question->type,
             ]);
 

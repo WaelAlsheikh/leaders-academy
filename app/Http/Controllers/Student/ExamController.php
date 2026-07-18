@@ -93,7 +93,7 @@ class ExamController extends Controller
         }
 
         $this->creationService->syncQuizChoicesFromBank($attempt->exam);
-        $attempt->load(['exam.quizQuestions.choices', 'answers']);
+        $attempt->load(['exam.quizQuestions.choices', 'exam.quizQuestions.question', 'answers']);
 
         return view('student.exams.attempt', [
             'student' => $student,

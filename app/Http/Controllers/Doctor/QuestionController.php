@@ -120,6 +120,8 @@ class QuestionController extends Controller
             'category_id' => 'nullable|exists:exam_question_categories,id',
             'type' => 'required|in:single_choice,multiple_choice,essay',
             'question_text' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif|max:5120',
+            'remove_image' => 'nullable|boolean',
             'default_points' => 'nullable|numeric|min:0.01',
             'difficulty' => 'nullable|in:easy,medium,hard',
             'tags' => 'nullable|string',
@@ -136,6 +138,8 @@ class QuestionController extends Controller
         }
 
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['remove_image'] = $request->boolean('remove_image');
+        $data['image'] = $request->file('image');
 
         $subjectIds = $this->bankQuery->subjectsForDoctor($this->doctor())->pluck('id')->all();
         if (! in_array((int) $data['registrable_subject_id'], $subjectIds, true)) {

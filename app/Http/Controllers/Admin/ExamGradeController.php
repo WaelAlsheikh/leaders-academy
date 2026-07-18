@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ExamAttempt;
 use App\Models\ExamGrade;
 use App\Services\Exams\ExamGradingService;
 use Illuminate\Http\Request;
@@ -23,6 +24,24 @@ class ExamGradeController extends Controller
 
         return view('admin.exams.grades.index', array_merge(
             compact('grades'),
+            $this->portalViewData($request)
+        ));
+    }
+
+    public function showAttempt(Request $request, ExamAttempt $attempt)
+    {
+        abort_unless($attempt->isSubmitted(), 404);
+
+        $attempt->load([
+            'student',
+            'grade',
+            'exam.registrableSubject',
+            'answers.quizQuestion.choices',
+            'answers.quizQuestion.question',
+        ]);
+
+        return view('admin.exams.attempts.show', array_merge(
+            compact('attempt'),
             $this->portalViewData($request)
         ));
     }

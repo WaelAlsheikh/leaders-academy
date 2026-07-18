@@ -1,24 +1,74 @@
 @extends('layouts.app')
+@section('hide-navbar', '1')
 @section('content')
+@php
+    $examStatusClasses = [
+        'draft' => 'exam-badge--muted',
+        'scheduled' => 'exam-badge--info',
+        'running' => 'exam-badge--success',
+        'finished' => 'exam-badge--warning',
+        'archived' => 'exam-badge--muted',
+    ];
+@endphp
 <div class="student-layout">
     @include('student.partials.sidebar')
     <main class="student-content">
-        <section class="doctor-portal-panel">
-            <h3>{{ $exam->title }}</h3>
-            <p>{{ $exam->registrableSubject?->name }} — شعبة {{ $exam->classSection?->name }}</p>
-            <p>يبدأ: {{ $exam->starts_at?->format('Y-m-d H:i') }} | ينتهي: {{ $exam->ends_at?->format('Y-m-d H:i') }} | المدة: {{ $exam->duration_minutes }} دقيقة</p>
-            @if($grade && $grade->isPublished())
-                <div class="alert alert-success">نتيجتك المنشورة: {{ $grade->raw_score }} / {{ $grade->max_score }}</div>
-            @elseif($attempt)
-                <a href="{{ route('student.exams.attempt', $attempt) }}" class="btn btn-primary">متابعة الامتحان</a>
-                @if($attempt->isSubmitted())
-                    <a href="{{ route('student.exams.result', $attempt) }}" class="btn btn-secondary">عرض النتيجة</a>
+        <section class="exam-portal-page">
+            <div class="exam-portal-header">
+                <div>
+                    <h3>{{ $exam->title }}</h3>
+                    <p class="exam-portal-subtitle">{{ $exam->registrableSubject?->name }} — شعبة {{ $exam->classSection?->name }}</p>
+                </div>
+                <a href="{{ route('student.exams.index') }}" class="btn btn-secondary">العودة للقائمة</a>
+            </div>
+
+            <div class="exam-portal-panel">
+                <div class="exam-portal-meta-grid">
+                    <div class="exam-portal-meta-card">
+                        <span>يبدأ</span>
+                        <strong>{{ $exam->starts_at?->format('Y-m-d H:i') ?? '—' }}</strong>
+                    </div>
+                    <div class="exam-portal-meta-card">
+                        <span>ينتهي</span>
+                        <strong>{{ $exam->ends_at?->format('Y-m-d H:i') ?? '—' }}</strong>
+                    </div>
+                    <div class="exam-portal-meta-card">
+                        <span>المدة</span>
+                        <strong>{{ $exam->duration_minutes }} دقيقة</strong>
+                    </div>
+                    <div class="exam-portal-meta-card">
+                        <span>حالة الامتحان</span>
+                        <strong>
+                            <span class="exam-badge {{ $examStatusClasses[$exam->status] ?? 'exam-badge--muted' }}">
+                                {{ config('exams.exam_statuses')[$exam->status] ?? $exam->status }}
+                            </span>
+                        </strong>
+                    </div>
+                </div>
+
+                @if($grade && $grade->isPublished())
+                    <div class="exam-score-card">
+                        <div>
+                            <div class="exam-portal-subtitle">نتيجتك المنشورة</div>
+                            <div class="exam-score-value">{{ number_format((float) $grade->raw_score, 2) }} <small>/ {{ number_format((float) $grade->max_score, 2) }}</small></div>
+                        </div>
+                        <span class="exam-badge exam-badge--success">منشورة</span>
+                    </div>
+                @elseif($attempt)
+                    <div class="exam-portal-actions">
+                        <a href="{{ route('student.exams.attempt', $attempt) }}" class="btn btn-primary">متابعة الامتحان</a>
+                        @if($attempt->isSubmitted())
+                            <a href="{{ route('student.exams.result', $attempt) }}" class="btn btn-secondary">عرض النتيجة</a>
+                        @endif
+                    </div>
+                @elseif($canStart)
+                    <div class="exam-portal-actions">
+                        <form method="POST" action="{{ route('student.exams.start', $exam) }}">@csrf<button class="btn btn-primary">بدء الامتحان</button></form>
+                    </div>
+                @else
+                    <div class="alert alert-warning">الامتحان غير متاح للبدء حالياً. تحقق من موعد البداية والنهاية.</div>
                 @endif
-            @elseif($canStart)
-                <form method="POST" action="{{ route('student.exams.start', $exam) }}">@csrf<button class="btn btn-primary">بدء الامتحان</button></form>
-            @else
-                <div class="alert alert-warning">الامتحان غير متاح للبدء حالياً.</div>
-            @endif
+            </div>
         </section>
     </main>
 </div>

@@ -1,8 +1,35 @@
-<div class="page-content container-fluid">
-    <div class="employee-management-panel doctor-portal-panel">
-        <h3>إنشاء امتحان (توليد عشوائي من بنك الأسئلة)</h3>
-        <p class="doctor-portal-meta">يُختار الامتحان للشعبة والمادة المسجّل عليها الطلاب، وتُسحب الأسئلة من بنك دكتور الشعبة للمادة نفسها — مشابه لفكرة Question Bank في Moodle.</p>
+@php
+    $examPortalMode = ($portalContext ?? 'admin') === 'employee' ? 'employee' : 'voyager';
+    $examStatusLabels = [
+        'draft' => 'default',
+        'scheduled' => 'info',
+        'running' => 'success',
+        'finished' => 'warning',
+        'archived' => 'default',
+    ];
+    $gradeStatusLabels = [
+        'draft' => 'default',
+        'auto_corrected' => 'info',
+        'pending_review' => 'warning',
+        'reviewed' => 'info',
+        'approved' => 'primary',
+        'published' => 'success',
+    ];
+@endphp
 
+<div class="container-fluid employee-cycle-page custom-admin-page custom-admin-page--{{ $examPortalMode }}" data-portal-context="{{ $examPortalMode }}">
+    <div class="employee-cycle-header">
+        <div>
+            <h1 class="page-title employee-cycle-title">
+                <i class="voyager-plus"></i> إنشاء امتحان عشوائي
+            </h1>
+            <p class="employee-cycle-subtitle">يُختار الامتحان للشعبة والمادة، وتُسحب الأسئلة من بنك دكتور الشعبة — مشابه لفكرة Question Bank في Moodle.</p>
+        </div>
+        <a href="{{ route($routeBase . '.exams.index') }}" class="employee-action-btn employee-action-btn--neutral employee-cycle-header-link">العودة للقائمة</a>
+    </div>
+
+    <div class="panel panel-bordered employee-management-panel employee-cycle-create-panel">
+        <div class="panel-body employee-management-form-panel">
         <form method="POST" action="{{ route($routeBase . '.exams.store') }}" class="doctor-portal-form" id="exam-create-form">
             @csrf
             <div class="form-group">
@@ -73,8 +100,11 @@
             <label><input type="checkbox" name="allow_late_entry" value="1" @checked(old('allow_late_entry'))> السماح بالدخول المتأخر</label>
 
             @if($errors->any())<div class="alert alert-danger" style="margin-top:12px;">{{ $errors->first() }}</div>@endif
-            <button type="submit" class="btn btn-primary" style="margin-top:16px;">إنشاء وتوليد الأسئلة</button>
+            <div class="employee-form-actions">
+                <button type="submit" class="employee-action-btn employee-action-btn--primary employee-action-btn--submit">إنشاء وتوليد الأسئلة</button>
+            </div>
         </form>
+        </div>
     </div>
 </div>
 

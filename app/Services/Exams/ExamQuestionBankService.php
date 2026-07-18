@@ -6,7 +6,9 @@ use App\Models\Doctor;
 use App\Models\ExamQuestion;
 use App\Models\ExamQuestionCategory;
 use App\Models\ExamQuestionChoice;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ExamQuestionBankService
@@ -37,12 +39,18 @@ class ExamQuestionBankService
     public function createQuestion(Doctor $doctor, array $data): ExamQuestion
     {
         return DB::transaction(function () use ($doctor, $data) {
+            $imagePath = null;
+            if (! empty($data['image']) && $data['image'] instanceof UploadedFile) {
+                $imagePath = $data['image']->store('exam-questions', 'public');
+            }
+
             $question = ExamQuestion::query()->create([
                 'doctor_id' => $doctor->id,
                 'registrable_subject_id' => $data['registrable_subject_id'] ?? null,
                 'category_id' => $data['category_id'] ?? null,
                 'type' => $data['type'],
                 'question_text' => $data['question_text'],
+                'image_path' => $imagePath,
                 'default_points' => $data['default_points'] ?? 1,
                 'difficulty' => $data['difficulty'] ?? null,
                 'tags' => $data['tags'] ?? null,
@@ -60,11 +68,24 @@ class ExamQuestionBankService
     public function updateQuestion(ExamQuestion $question, array $data): ExamQuestion
     {
         return DB::transaction(function () use ($question, $data) {
+            $imagePath = $question->image_path;
+
+            if (! empty($data['remove_image'])) {
+                $this->deleteImageFile($imagePath);
+                $imagePath = null;
+            }
+
+            if (! empty($data['image']) && $data['image'] instanceof UploadedFile) {
+                $this->deleteImageFile($imagePath);
+                $imagePath = $data['image']->store('exam-questions', 'public');
+            }
+
             $question->update([
                 'registrable_subject_id' => $data['registrable_subject_id'] ?? $question->registrable_subject_id,
                 'category_id' => $data['category_id'] ?? $question->category_id,
                 'type' => $data['type'] ?? $question->type,
                 'question_text' => $data['question_text'] ?? $question->question_text,
+                'image_path' => $imagePath,
                 'default_points' => $data['default_points'] ?? $question->default_points,
                 'difficulty' => $data['difficulty'] ?? $question->difficulty,
                 'tags' => $data['tags'] ?? $question->tags,
@@ -114,6 +135,13 @@ class ExamQuestionBankService
                 'is_correct' => (bool) ($choice['is_correct'] ?? false),
                 'sort_order' => $index + 1,
             ]);
+        }
+    }
+
+    private function deleteImageFile(?string $path): void
+    {
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
         }
     }
 }

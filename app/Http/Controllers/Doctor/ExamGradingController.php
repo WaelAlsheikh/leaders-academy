@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Models\ExamAttempt;
 use App\Models\ExamAttemptAnswer;
 use App\Models\ExamGrade;
 use App\Services\Exams\ExamGradingService;
@@ -35,7 +36,7 @@ class ExamGradingController extends Controller
         $this->authorizeExam($exam);
 
         $attempts = $exam->attempts()
-            ->with(['student', 'answers.quizQuestion', 'grade'])
+            ->with(['student', 'answers.quizQuestion.choices', 'answers.quizQuestion.question', 'grade'])
             ->whereIn('status', ['submitted', 'expired'])
             ->get();
 
@@ -43,6 +44,26 @@ class ExamGradingController extends Controller
             'doctor' => $this->doctor(),
             'exam' => $exam,
             'attempts' => $attempts,
+        ]);
+    }
+
+    public function showAttempt(ExamAttempt $attempt)
+    {
+        abort_unless($attempt->isSubmitted(), 404);
+        abort_unless($attempt->exam?->doctor_id === $this->doctor()->id, 403);
+
+        $attempt->load([
+            'student',
+            'grade',
+            'exam.registrableSubject',
+            'answers.quizQuestion.choices',
+            'answers.quizQuestion.question',
+        ]);
+
+        return view('doctor.exams.attempts.show', [
+            'doctor' => $this->doctor(),
+            'attempt' => $attempt,
+            'canGradeEssays' => true,
         ]);
     }
 
