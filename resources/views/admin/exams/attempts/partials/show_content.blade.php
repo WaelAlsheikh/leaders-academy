@@ -55,6 +55,10 @@
                     <div class="text-muted">الدرجة</div>
                     @if($grade)
                         <strong>{{ $grade->raw_score }} / {{ $grade->max_score }}</strong>
+                        <div class="text-muted" style="margin-top:4px;">{{ number_format((float) $grade->percentage, 1) }}% — حد النجاح {{ $grade->passThreshold() }}%</div>
+                        <span class="label label-{{ $grade->isPassed() ? 'success' : 'danger' }}" style="margin-inline-start:0;margin-top:6px;display:inline-block;">
+                            {{ $grade->resultLabel() }}
+                        </span>
                         <span class="label label-{{ $gradeStatusLabels[$grade->status] ?? 'default' }}" style="margin-inline-start:6px;">
                             {{ config('exams.grade_statuses')[$grade->status] ?? $grade->status }}
                         </span>

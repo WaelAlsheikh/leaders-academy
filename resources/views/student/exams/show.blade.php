@@ -46,14 +46,40 @@
                     </div>
                 </div>
 
-                @if($grade && $grade->isPublished())
-                    <div class="exam-score-card">
+                @if($grade)
+                    @php
+                        $passed = $grade->isPassed();
+                        $resultMod = $grade->resultCssModifier();
+                    @endphp
+                    <div class="exam-score-card exam-score-card--{{ $resultMod }}">
                         <div>
-                            <div class="exam-portal-subtitle">نتيجتك المنشورة</div>
-                            <div class="exam-score-value">{{ number_format((float) $grade->raw_score, 2) }} <small>/ {{ number_format((float) $grade->max_score, 2) }}</small></div>
+                            <div class="exam-result-banner exam-result-banner--{{ $resultMod }}">
+                                {{ $grade->resultLabel() }}
+                            </div>
+                            <div class="exam-portal-subtitle" style="margin-top:10px;">
+                                {{ $grade->isPublished() ? 'نتيجتك المنشورة' : 'نتيجتك بعد التسليم' }}
+                            </div>
+                            <div class="exam-score-value">
+                                {{ number_format((float) $grade->raw_score, 2) }}
+                                <small>/ {{ number_format((float) $grade->max_score, 2) }}</small>
+                            </div>
+                            <div class="exam-portal-subtitle" style="margin-top:8px;">
+                                النسبة: <strong>{{ number_format((float) $grade->percentage, 1) }}%</strong>
+                                — حد النجاح: {{ $grade->passThreshold() }}%
+                            </div>
                         </div>
-                        <span class="exam-badge exam-badge--success">منشورة</span>
+                        <div class="exam-score-card-side">
+                            <span class="exam-badge exam-badge--{{ $passed ? 'success' : 'danger' }}">{{ $grade->resultLabel() }}</span>
+                            @if($grade->isPublished())
+                                <span class="exam-badge exam-badge--success">منشورة</span>
+                            @endif
+                        </div>
                     </div>
+                    @if($grade->attempt_id || $attempt)
+                        <div class="exam-portal-actions">
+                            <a href="{{ route('student.exams.result', $grade->attempt_id ?: $attempt) }}" class="btn btn-secondary">عرض شاشة النتيجة</a>
+                        </div>
+                    @endif
                 @elseif($attempt)
                     <div class="exam-portal-actions">
                         <a href="{{ route('student.exams.attempt', $attempt) }}" class="btn btn-primary">متابعة الامتحان</a>

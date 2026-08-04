@@ -36,6 +36,9 @@ use App\Http\Controllers\Admin\ExamSettingsController;
 use App\Http\Controllers\Admin\ExamGradeController as AdminExamGradeController;
 use App\Http\Controllers\Admin\ExamQuestionBankController as AdminExamQuestionBankController;
 use App\Http\Controllers\Admin\AssignmentController as AdminAssignmentController;
+use App\Http\Controllers\Admin\Email\MailAccountController as AdminMailAccountController;
+use App\Http\Controllers\Admin\Email\WebmailSsoController as AdminWebmailSsoController;
+use App\Http\Controllers\Portal\MyEmailController;
 use App\Http\Controllers\Doctor\AuthController as DoctorAuthController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\LiveSessionController as DoctorLiveSessionController;
@@ -304,6 +307,23 @@ Route::prefix('admin')
         Route::get('/assignments', [AdminAssignmentController::class, 'index'])->name('admin.assignments.index');
         Route::get('/assignments/{assignment}', [AdminAssignmentController::class, 'show'])->name('admin.assignments.show');
         Route::get('/assignment-files/{file}/download', [AdminAssignmentController::class, 'downloadFile'])->name('admin.assignment_files.download');
+
+        Route::get('/my-email', [MyEmailController::class, 'show'])->name('admin.my_email.show');
+        Route::get('/my-email/open', [MyEmailController::class, 'openWebmail'])->name('admin.my_email.open');
+
+        Route::get('/email/accounts', [AdminMailAccountController::class, 'index'])->name('admin.email.accounts.index');
+        Route::get('/email/accounts/{account}', [AdminMailAccountController::class, 'show'])->name('admin.email.accounts.show');
+        Route::post('/email/accounts/{account}/disable', [AdminMailAccountController::class, 'disable'])->name('admin.email.accounts.disable');
+        Route::post('/email/accounts/{account}/enable', [AdminMailAccountController::class, 'enable'])->name('admin.email.accounts.enable');
+        Route::post('/email/accounts/{account}/reset-password', [AdminMailAccountController::class, 'resetPassword'])->name('admin.email.accounts.reset_password');
+        Route::post('/email/accounts/{account}/quota', [AdminMailAccountController::class, 'updateQuota'])->name('admin.email.accounts.quota');
+        Route::post('/email/accounts/{account}/aliases', [AdminMailAccountController::class, 'storeAlias'])->name('admin.email.accounts.aliases.store');
+        Route::post('/email/accounts/{account}/webmail-sso', [AdminWebmailSsoController::class, 'handshake'])->name('admin.email.accounts.webmail_sso');
+        Route::delete('/email/aliases/{alias}', [AdminMailAccountController::class, 'destroyAlias'])->name('admin.email.aliases.destroy');
+        Route::get('/email/lists', [AdminMailAccountController::class, 'lists'])->name('admin.email.lists.index');
+        Route::post('/email/lists', [AdminMailAccountController::class, 'storeList'])->name('admin.email.lists.store');
+        Route::post('/email/lists/{list}/sync', [AdminMailAccountController::class, 'syncList'])->name('admin.email.lists.sync');
+        Route::get('/email/logs', [AdminMailAccountController::class, 'logs'])->name('admin.email.logs.index');
     });
 
 /*
@@ -465,6 +485,9 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::post('assignment-files/{file}/replace', [StudentAssignmentController::class, 'replace'])->name('assignment_files.replace');
         Route::delete('assignment-files/{file}', [StudentAssignmentController::class, 'destroyFile'])->name('assignment_files.destroy');
         Route::get('assignment-files/{file}/download', [StudentAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
+
+        Route::get('my-email', [MyEmailController::class, 'show'])->name('my_email.show');
+        Route::get('my-email/open', [MyEmailController::class, 'openWebmail'])->name('my_email.open');
     });
 });
 
@@ -536,6 +559,9 @@ Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::post('assignments/{assignment}/archive', [DoctorAssignmentController::class, 'archive'])->name('assignments.archive');
         Route::post('assignment-submissions/{submission}/notes', [DoctorAssignmentController::class, 'updateNotes'])->name('assignment_submissions.notes');
         Route::get('assignment-files/{file}/download', [DoctorAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
+
+        Route::get('my-email', [MyEmailController::class, 'show'])->name('my_email.show');
+        Route::get('my-email/open', [MyEmailController::class, 'openWebmail'])->name('my_email.open');
     });
 });
 
@@ -688,6 +714,22 @@ Route::prefix('employee')->name('employee.')->group(function () {
         Route::get('assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
         Route::get('assignments/{assignment}', [AdminAssignmentController::class, 'show'])->name('assignments.show');
         Route::get('assignment-files/{file}/download', [AdminAssignmentController::class, 'downloadFile'])->name('assignment_files.download');
+
+        Route::get('my-email', [MyEmailController::class, 'show'])->name('my_email.show');
+        Route::get('my-email/open', [MyEmailController::class, 'openWebmail'])->name('my_email.open');
+
+        Route::get('email/accounts', [AdminMailAccountController::class, 'index'])->name('email.accounts.index');
+        Route::get('email/accounts/{account}', [AdminMailAccountController::class, 'show'])->name('email.accounts.show');
+        Route::post('email/accounts/{account}/disable', [AdminMailAccountController::class, 'disable'])->name('email.accounts.disable');
+        Route::post('email/accounts/{account}/enable', [AdminMailAccountController::class, 'enable'])->name('email.accounts.enable');
+        Route::post('email/accounts/{account}/reset-password', [AdminMailAccountController::class, 'resetPassword'])->name('email.accounts.reset_password');
+        Route::post('email/accounts/{account}/quota', [AdminMailAccountController::class, 'updateQuota'])->name('email.accounts.quota');
+        Route::post('email/accounts/{account}/aliases', [AdminMailAccountController::class, 'storeAlias'])->name('email.accounts.aliases.store');
+        Route::delete('email/aliases/{alias}', [AdminMailAccountController::class, 'destroyAlias'])->name('email.aliases.destroy');
+        Route::get('email/lists', [AdminMailAccountController::class, 'lists'])->name('email.lists.index');
+        Route::post('email/lists', [AdminMailAccountController::class, 'storeList'])->name('email.lists.store');
+        Route::post('email/lists/{list}/sync', [AdminMailAccountController::class, 'syncList'])->name('email.lists.sync');
+        Route::get('email/logs', [AdminMailAccountController::class, 'logs'])->name('email.logs.index');
     });
 });
 

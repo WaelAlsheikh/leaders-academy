@@ -25,14 +25,21 @@
                         </thead>
                         <tbody>
                         @forelse($exams as $exam)
-                            @php $publishedGrade = $grades[$exam->id] ?? null; @endphp
+                            @php $grade = $grades[$exam->id] ?? null; @endphp
                             <tr>
                                 <td><strong>{{ $exam->title }}</strong></td>
                                 <td>{{ $exam->registrableSubject?->name }}</td>
                                 <td>{{ $exam->starts_at?->format('Y-m-d H:i') }}</td>
                                 <td>
-                                    @if($publishedGrade)
-                                        <span class="exam-badge exam-badge--success">منشور: {{ $publishedGrade }} / 100</span>
+                                    @if($grade)
+                                        <span class="exam-badge exam-badge--{{ $grade->isPassed() ? 'success' : 'danger' }}">
+                                            {{ $grade->resultLabel() }}
+                                            — {{ number_format((float) $grade->percentage, 1) }}%
+                                            ({{ number_format((float) $grade->raw_score, 1) }}/{{ number_format((float) $grade->max_score, 1) }})
+                                        </span>
+                                        @if($grade->isPublished())
+                                            <span class="exam-badge exam-badge--info" style="margin-inline-start:4px;">منشورة</span>
+                                        @endif
                                     @else
                                         <span class="exam-badge exam-badge--info">{{ config('exams.exam_statuses')[$exam->status] ?? $exam->status }}</span>
                                     @endif

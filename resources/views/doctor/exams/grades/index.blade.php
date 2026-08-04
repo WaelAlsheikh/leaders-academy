@@ -32,6 +32,7 @@
                                 <th>الامتحان</th>
                                 <th>المادة</th>
                                 <th>الدرجة</th>
+                                <th>النتيجة</th>
                                 <th>الحالة</th>
                                 <th></th>
                             </tr>
@@ -42,7 +43,15 @@
                                 <td><strong>{{ $grade->student?->first_name }} {{ $grade->student?->last_name }}</strong></td>
                                 <td>{{ $grade->exam?->title }}</td>
                                 <td>{{ $grade->exam?->registrableSubject?->name }}</td>
-                                <td><strong>{{ $grade->raw_score }}</strong> / {{ $grade->max_score }}</td>
+                                <td>
+                                    <strong>{{ $grade->raw_score }}</strong> / {{ $grade->max_score }}
+                                    <div class="exam-portal-subtitle">{{ number_format((float) $grade->percentage, 1) }}%</div>
+                                </td>
+                                <td>
+                                    <span class="exam-badge exam-badge--{{ $grade->isPassed() ? 'success' : 'danger' }}">
+                                        {{ $grade->resultLabel() }}
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="exam-badge {{ $gradeStatusClasses[$grade->status] ?? 'exam-badge--muted' }}">
                                         {{ config('exams.grade_statuses')[$grade->status] ?? $grade->status }}
@@ -58,7 +67,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6"><div class="exam-portal-empty">لا توجد درجات بعد.</div></td></tr>
+                            <tr><td colspan="7"><div class="exam-portal-empty">لا توجد درجات بعد.</div></td></tr>
                         @endforelse
                         </tbody>
                     </table>

@@ -1,6 +1,4 @@
-<aside class="student-sidebar">
-    <h3 class="sidebar-title">لوحة الطالب</h3>
-
+<x-portal-sidebar title="لوحة الطالب" portal="student">
     <a href="{{ route('student.dashboard') }}"
        class="sidebar-link {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
         🏠 الرئيسية
@@ -41,10 +39,15 @@
         📂 الوظائف
     </a>
 
+    <a href="{{ route('student.my_email.show') }}"
+       class="sidebar-link {{ request()->routeIs('student.my_email.*') ? 'active' : '' }}">
+        ✉️ الإيميل
+    </a>
+
     <form method="POST" action="{{ route('student.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">
             🚪 تسجيل الخروج
         </button>
     </form>
-</aside>
+</x-portal-sidebar>

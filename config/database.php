@@ -64,6 +64,22 @@ return [
             ]) : [],
         ],
 
+        'mailserver' => [
+            'driver' => 'mysql',
+            'host' => env('MAILSERVER_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('MAILSERVER_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('MAILSERVER_DB_DATABASE', 'mailserver'),
+            'username' => env('MAILSERVER_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('MAILSERVER_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('MAILSERVER_DB_SOCKET', env('DB_SOCKET', '')),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

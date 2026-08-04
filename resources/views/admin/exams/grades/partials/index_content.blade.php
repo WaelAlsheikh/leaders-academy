@@ -45,6 +45,7 @@
                             <th>المادة</th>
                             <th>الدرجة</th>
                             <th>النسبة</th>
+                            <th>النتيجة</th>
                             <th>الحالة</th>
                             <th></th>
                         </tr>
@@ -57,6 +58,11 @@
                             <td>{{ $grade->exam?->registrableSubject?->name ?? '—' }}</td>
                             <td><strong>{{ $grade->raw_score }}</strong> / {{ $grade->max_score }}</td>
                             <td>{{ number_format((float) $grade->percentage, 1) }}%</td>
+                            <td>
+                                <span class="label label-{{ $grade->isPassed() ? 'success' : 'danger' }}">
+                                    {{ $grade->resultLabel() }}
+                                </span>
+                            </td>
                             <td>
                                 <span class="label label-{{ $gradeStatusLabels[$grade->status] ?? 'default' }}">
                                     {{ config('exams.grade_statuses')[$grade->status] ?? $grade->status }}
@@ -75,7 +81,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center">لا توجد درجات بعد.</td></tr>
+                        <tr><td colspan="8" class="text-center">لا توجد درجات بعد.</td></tr>
                     @endforelse
                     </tbody>
                 </table>

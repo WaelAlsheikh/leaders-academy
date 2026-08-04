@@ -50,6 +50,20 @@
                         <strong>
                             @if($grade)
                                 {{ $grade->raw_score }} / {{ $grade->max_score }}
+                                <div class="exam-portal-subtitle">{{ number_format((float) $grade->percentage, 1) }}%</div>
+                            @else
+                                —
+                            @endif
+                        </strong>
+                    </div>
+                    <div class="exam-portal-meta-card">
+                        <span>ناجح / راسب</span>
+                        <strong>
+                            @if($grade)
+                                <span class="exam-badge exam-badge--{{ $grade->isPassed() ? 'success' : 'danger' }}">
+                                    {{ $grade->resultLabel() }}
+                                </span>
+                                <div class="exam-portal-subtitle">حد النجاح {{ $grade->passThreshold() }}%</div>
                             @else
                                 —
                             @endif

@@ -1,6 +1,4 @@
-<aside class="student-sidebar">
-    <h3 class="sidebar-title">لوحة الموظف</h3>
-
+<x-portal-sidebar title="لوحة الموظف" portal="employee">
     <a href="{{ route('employee.dashboard') }}"
        class="sidebar-link {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}">
         الرئيسية
@@ -51,10 +49,20 @@
         الوظائف
     </a>
 
+    <a href="{{ route('employee.my_email.show') }}"
+       class="sidebar-link {{ request()->routeIs('employee.my_email.*') ? 'active' : '' }}">
+        الإيميل
+    </a>
+
+    <a href="{{ route('employee.email.accounts.index') }}"
+       class="sidebar-link {{ request()->routeIs('employee.email.accounts.*', 'employee.email.lists.*', 'employee.email.logs.*', 'employee.email.aliases.*') ? 'active' : '' }}">
+        إدارة البريد
+    </a>
+
     <form method="POST" action="{{ route('employee.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">
             تسجيل الخروج
         </button>
     </form>
-</aside>
+</x-portal-sidebar>

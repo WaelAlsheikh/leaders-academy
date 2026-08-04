@@ -1,6 +1,4 @@
-<aside class="student-sidebar">
-    <h3 class="sidebar-title">لوحة الأستاذ</h3>
-
+<x-portal-sidebar title="لوحة الأستاذ" portal="doctor">
     <a href="{{ route('doctor.dashboard') }}"
        class="sidebar-link {{ request()->routeIs('doctor.dashboard') ? 'active' : '' }}">
         الرئيسية
@@ -41,10 +39,15 @@
         درجات الامتحانات
     </a>
 
+    <a href="{{ route('doctor.my_email.show') }}"
+       class="sidebar-link {{ request()->routeIs('doctor.my_email.*') ? 'active' : '' }}">
+        الإيميل
+    </a>
+
     <form method="POST" action="{{ route('doctor.logout') }}">
         @csrf
         <button type="submit" class="sidebar-link sidebar-link-button sidebar-logout">
             تسجيل الخروج
         </button>
     </form>
-</aside>
+</x-portal-sidebar>

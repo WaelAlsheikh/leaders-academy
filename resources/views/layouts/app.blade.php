@@ -188,6 +188,12 @@
     });
 </script>
 
+@php
+    $portalSidebarJsPath = public_path('assets/js/portal-sidebar.js');
+    $portalSidebarJsVersion = file_exists($portalSidebarJsPath) ? filemtime($portalSidebarJsPath) : null;
+@endphp
+<script src="{{ asset('assets/js/portal-sidebar.js') }}{{ $portalSidebarJsVersion ? '?v=' . $portalSidebarJsVersion : '' }}" defer></script>
+
 @stack('scripts')
 
 </body>

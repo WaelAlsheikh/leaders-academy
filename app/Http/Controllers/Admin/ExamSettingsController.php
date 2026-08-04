@@ -22,6 +22,7 @@ class ExamSettingsController extends Controller
     {
         $data = $request->validate([
             'creation_mode' => 'required|in:random,manual',
+            'pass_percentage' => 'required|integer|min:0|max:100',
         ]);
 
         ExamSetting::current()->update($data);

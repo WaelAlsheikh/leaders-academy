@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
+use App\Domain\Email\Concerns\HasInstitutionalMail;
 
 class Doctor extends Authenticatable
 {
+    use Notifiable;
+    use HasInstitutionalMail;
+
     protected $table = 'doctors';
     protected $guard = 'doctor';
 
@@ -14,6 +19,7 @@ class Doctor extends Authenticatable
         'full_name',
         'username',
         'email',
+        'institutional_email',
         'password',
         'academic_degree',
         'specialization',

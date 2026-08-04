@@ -40,8 +40,8 @@ class ExamController extends Controller
 
         $grades = ExamGrade::query()
             ->where('student_id', $student->id)
-            ->where('status', 'published')
-            ->pluck('raw_score', 'exam_id');
+            ->get()
+            ->keyBy('exam_id');
 
         $attempts = ExamAttempt::query()
             ->where('student_id', $student->id)

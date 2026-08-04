@@ -62,4 +62,28 @@ class ExamGrade extends Model
     {
         return $this->status === 'published';
     }
+
+    public function passThreshold(): int
+    {
+        return ExamSetting::passPercentage();
+    }
+
+    public function isPassed(): bool
+    {
+        if ($this->percentage === null) {
+            return false;
+        }
+
+        return (float) $this->percentage >= $this->passThreshold();
+    }
+
+    public function resultLabel(): string
+    {
+        return $this->isPassed() ? 'ناجح' : 'راسب';
+    }
+
+    public function resultCssModifier(): string
+    {
+        return $this->isPassed() ? 'pass' : 'fail';
+    }
 }

@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
+use App\Domain\Email\Concerns\HasInstitutionalMail;
 
 class Student extends Authenticatable
 {
     use Notifiable;
+    use HasInstitutionalMail;
 
     protected $guard = 'student';
 
@@ -18,6 +20,7 @@ class Student extends Authenticatable
         'first_name_en',
         'username',
         'email',
+        'institutional_email',
         'phone',
         'is_active',
         'password',
